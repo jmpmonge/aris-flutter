@@ -1,4 +1,4 @@
-# Arquitectura Flutter — v0.22 (fase 1)
+# Arquitectura Flutter — ARIS (base v0.22 → design v0.23)
 
 ## Objetivo
 Base **mobile-first** centrada en **iOS/App Store**, producto **Aris** y asistente **Clara**, con fronteras claras entre capas antes de introducir integraciones.
@@ -7,23 +7,32 @@ Base **mobile-first** centrada en **iOS/App Store**, producto **Aris** y asisten
 - **Sin backend en UI**: datos y servicios falsos hasta la fase de integración.
 - **Sin dependencias añadidas** salvo las del template (`cupertino_icons`, `flutter_lints`) y el SDK.
 - **Features acotadas**: cada dominio de producto vive bajo `lib/features/<nombre>/`.
-- **Compartido mínimo**: solo utilidades transversales en `lib/shared/` y tokens/tema en `lib/theme/`.
+- **Compartido mínimo**: utilidades transversales en `lib/shared/` y **tokens + tema** en `lib/theme/`.
 
 ## Estructura actual
 
 ```
 lib/
   main.dart                 # Entrada
-  app.dart                  # ArisApp + pantalla bootstrap mínima
+  app.dart                  # ArisApp + vista previa mínima del design system (mock)
   theme/
-    app_theme.dart          # ThemeData inicial (Material 3)
+    app_colors.dart         # Tokens de color Clara / Aris
+    app_spacing.dart        # Escala, radios, touch target
+    app_typography.dart     # TextTheme claro
+    app_theme.dart          # ThemeData M3 + temas de componentes
   shared/
     widgets/
-      app_sizes.dart        # Constantes táctiles (referencia iOS)
+      app_card.dart
+      app_header.dart
+      app_search_bar.dart
+      app_floating_action_button.dart
+      app_bottom_navigation.dart
+      section_title.dart
+      empty_state_card.dart
     layout/
-      breakpoints.dart      # Ancho “narrow” orientativo
+      breakpoints.dart
     navigation/
-      app_routes.dart       # Constantes de ruta (sin router todavía)
+      app_routes.dart
   features/
     home/              …_feature_shell.dart
     calendar/          …
@@ -32,35 +41,35 @@ lib/
     profile/           …
     assistant/         …
     settings/          …
-assets/                   # Activos estáticos (vacío salvo .gitkeep)
+assets/
 ```
 
 ## Flujo de arranque
 1. `main()` arranca `ArisApp`.
-2. `ArisApp` aplica `AppTheme.light()` y fija `home` en la pantalla bootstrap interna.
-3. Los `*FeatureShell` **no** participan aún en el árbol; sirven como ancla de módulo para fases 3–4.
+2. `ArisApp` aplica `AppTheme.light()` y muestra `_DesignSystemPreview`: lista scroll con componentes para **validar tokens** (no es shell de producto).
+3. Los `*FeatureShell` siguen sin estar cableados al flujo principal; son anclas de módulo para fases 3–4.
 
-## Navegación (estado fase 1)
-- `AppRoutes` define **strings** para futuro router (p. ej. `go_router` u otro) sin añadir paquetes ahora.
-- Evita dependencias y mantiene el proyecto compilable con el mínimo número de capas.
+## Navegación
+- La barra inferior en la vista previa es **solo demostración** de `AppBottomNavigation`.
+- `AppRoutes` mantiene **strings** para un router futuro sin paquetes extra.
 
 ## Datos y dominio
 - No hay capa `data/` ni `domain/` todavía; se introducirán por feature cuando existan flujos reales o mocks con interfaces.
-- Regla: ningún acceso a red, calendario nativo, ni proveedores de correo en v0.22 fase UI.
+- Regla: ningún acceso a red, calendario nativo, ni proveedores de correo en fase UI.
 
 ## Pruebas
-- `test/widget_test.dart`: smoke test del `AppBar` bootstrap.
-- Ampliar tests de widget cuando el shell navegue entre features.
+- `test/widget_test.dart`: smoke test de la vista previa del design system (`Key('design_system_preview')`).
+- Ampliar tests cuando el app shell navegue entre features reales.
 
 ## Evolución prevista
 | Fase roadmap | Cambio arquitectónico esperado |
 |--------------|--------------------------------|
-| 2 Sistema visual | Ampliar `lib/theme/`, posible `design_system/` |
-| 3 App shell | `AppShell` + tabs/stack; cablear rutas a `*FeatureShell` o sucesores |
+| 3 App shell | `AppShell` + tabs/stack; rutas a pantallas por feature |
 | 4 Pantallas simuladas | `data/` mock + modelos de presentación por feature |
-| 6 Integraciones | Implementaciones reales detrás de puertos; iOS permissions |
+| 6 Integraciones | Implementaciones reales detrás de puertos; permisos iOS |
 
 ## Referencias
-- Roles y gobernanza: `docs/arquitectura_agentes.md`
-- Límites de producto: `docs/roadmap_v0_22.md`
-- Notas de versión: `docs/version_0_22_flutter_base.md`
+- Design system: `docs/design_system_v0_23.md`, `docs/version_0_23_design_system.md`
+- Roles: `docs/arquitectura_agentes.md`
+- Roadmap: `docs/roadmap_v0_22.md`
+- Base inicial: `docs/version_0_22_flutter_base.md`

@@ -55,7 +55,7 @@ Producto **mobile-first** orientado a **iOS / App Store**, con identidad **Clara
 
 ## Estado actual
 - [x] Fase 1 completada (2026-05-15) — base Flutter + estructura modular inicial.  
-- [ ] Fase 2 completada  
+- [x] Fase 2 completada (2026-05-15) — design system Clara/Aris (`docs/design_system_v0_23.md`, `docs/version_0_23_design_system.md`).  
 - [ ] Fase 3 completada  
 - [ ] Fase 4 completada  
 - [ ] Fase 5 completada  

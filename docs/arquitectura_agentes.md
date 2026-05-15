@@ -52,4 +52,4 @@ Los procedimientos repetibles están en `.cursor/skills/`. Antes de implementar 
 - Integración nunca rompe la UI sin acuerdo explícito documentado.
 
 ## Siguiente paso inmediato (estado repo)
-La base Flutter existe (`pubspec.yaml`, plataformas generadas, `lib/`). La documentación técnica de capas está en `docs/arquitectura_flutter_v0_22.md` y las notas de versión base en `docs/version_0_22_flutter_base.md`. El orden operativo continúa: **sistema visual (tema/tokens) → app shell → features mock cableadas**.
+La base Flutter existe (`pubspec.yaml`, plataformas generadas, `lib/`). La documentación técnica de capas está en `docs/arquitectura_flutter_v0_22.md` y las notas de versión base en `docs/version_0_22_flutter_base.md`. El orden operativo continúa: **app shell (navegación real y persistencia de tabs) → features mock cableadas**.
