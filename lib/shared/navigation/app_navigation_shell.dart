@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/services/chat_service.dart';
 import '../../features/assistant/presentation/assistant_screen.dart';
 import '../../features/calendar/presentation/calendar_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
@@ -72,12 +73,12 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
   }
 
   void _onChatSend(String text) {
+    ChatService.sendLocalMessage(text);
     _chatController.clear();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Mensaje enviado (simulado): ${text.length} caracteres'),
-      ),
-    );
+  }
+
+  void _onMicTap() {
+    ChatService.sendVoicePendingNotice();
   }
 
   @override
@@ -90,7 +91,11 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (_tabIndex == 0)
-            ChatInputBar(controller: _chatController, onSend: _onChatSend),
+            ChatInputBar(
+              controller: _chatController,
+              onSend: _onChatSend,
+              onMicTap: _onMicTap,
+            ),
           Material(
             color: scheme.surface,
             child: Column(
