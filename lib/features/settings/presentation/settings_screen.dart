@@ -34,7 +34,7 @@ class SettingsScreen extends StatelessWidget {
             onChanged: (_) {},
           ),
           const Divider(height: AppSpacing.xl),
-          Text('Clara / voz', style: text.titleSmall),
+          Text('Aris / voz', style: text.titleSmall),
           const SizedBox(height: AppSpacing.xs),
           SwitchListTile(
             title: const Text('Sugerencias de voz'),

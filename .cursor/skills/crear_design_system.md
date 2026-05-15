@@ -1,10 +1,10 @@
-# Skill: Crear design system (Clara / Aris)
+# Skill: Crear design system (Aris)
 
 ## Cuándo usarlo
 Fase **sistema visual** y antes de construir más de 2–3 pantallas con estilo propio.
 
 ## Objetivo
-Centralizar tokens y componentes para que **Clara** (asistente) y **Aris** (producto) se sientan coherentes en iOS.
+Centralizar tokens y componentes para que **Aris** se sienta coherente en iOS.
 
 ## Contenido mínimo del design system
 1. **Color**: primario, secundario, superficies, texto (alto/bajo énfasis), estados (éxito, aviso, error), “accent asistente” separado del primario de marca si mejora legibilidad.

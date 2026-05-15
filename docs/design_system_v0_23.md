@@ -76,5 +76,5 @@ Superficies `#141210`–`#2E2B27`, texto `#F2EDE6`, primario aclarado para contr
 
 ## Documentación relacionada
 - `docs/version_0_23_design_system.md` — notas de versión y límites.
-- `.cursor/rules/03_estilo_visual_clara.md` — tono Clara/Aris.
+- `.cursor/rules/03_estilo_visual_aris.md` — tono y personalidad de producto **Aris**.
 - `docs/roadmap_v0_22.md` — fases del producto.

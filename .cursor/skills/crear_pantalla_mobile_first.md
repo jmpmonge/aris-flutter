@@ -8,7 +8,7 @@ Layouts legibles en **ancho estrecho primero**; tablet/desktop como mejora opcio
 
 ## Plantilla mental
 1. **Carga inicial**: skeleton o spinner según design system; evitar pantalla en blanco >200 ms percibidos.
-2. **Vacío**: ilustración ligera o icono + copy Clara/Aris (tono cercano, no técnico).
+2. **Vacío**: ilustración ligera o icono + copy Aris (tono cercano, no técnico).
 3. **Error**: mensaje claro + acción de reintento (aunque el reintento sea mock).
 4. **Éxito**: lista/formulario según caso; mantener scroll único por eje cuando sea posible.
 

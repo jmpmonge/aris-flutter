@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_spacing.dart';
 import 'app_card.dart';
 
-/// Estado vacío amable (tono Clara): icono, título, mensaje y CTA opcional.
+/// Estado vacío amable (tono Aris): icono, título, mensaje y CTA opcional.
 class EmptyStateCard extends StatelessWidget {
   const EmptyStateCard({
     super.key,

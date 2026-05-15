@@ -1,7 +1,7 @@
 # Reglas generales (ARIS Flutter App v0.22)
 
 ## Propósito del proyecto
-App Flutter **mobile-first**, con **iOS / App Store** como referencia principal, para el asistente personal **Clara** bajo marca **Aris**. El trabajo se organiza por **fases** definidas en `docs/roadmap_v0_22.md`.
+App Flutter **mobile-first**, con **iOS / App Store** como referencia principal, para el producto **Aris** (asistente personal integrado en la misma marca). El trabajo se organiza por **fases** definidas en `docs/roadmap_v0_22.md`.
 
 ## Idioma y comunicación
 - Documentación de producto y rules en **español**.
@@ -22,6 +22,6 @@ App Flutter **mobile-first**, con **iOS / App Store** como referencia principal,
 - Tras cambios relevantes: actualizar documentación obligatoria (`02_documentacion_obligatoria.md`).
 
 ## Prioridad de decisiones
-1. Coherencia con identidad Clara/Aris (`03_estilo_visual_clara.md`).  
+1. Coherencia con identidad Aris (`03_estilo_visual_aris.md`).  
 2. Experiencia iPhone estrecho.  
 3. Extensibilidad para integraciones futuras sin redesplegar todo el front.

@@ -45,5 +45,5 @@ flutter run -d chrome
 - Tras clonar en otro equipo: instala Flutter según [flutter.dev](https://docs.flutter.dev/get-started/install) y ejecuta los mismos comandos.
 
 ## Próximos hitos (roadmap)
-- Fase 2: design system Clara/Aris sobre `AppTheme`.
+- Fase 2: design system **Aris** sobre `AppTheme`.
 - Fase 3: app shell y navegación real hacia los módulos bajo `lib/features/`.

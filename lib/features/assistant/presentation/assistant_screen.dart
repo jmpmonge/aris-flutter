@@ -4,7 +4,7 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Clara — acciones rápidas **premium** (sin LLM ni audio real).
+/// Acciones rápidas del asistente **Aris** (solo UI, sin LLM ni audio real).
 class AssistantScreen extends StatelessWidget {
   const AssistantScreen({super.key});
 
@@ -14,7 +14,7 @@ class AssistantScreen extends StatelessWidget {
     final text = Theme.of(context).textTheme;
 
     final actions = [
-      (Icons.mic_rounded, 'Hablar con Clara', 'Dictado simulado'),
+      (Icons.mic_rounded, 'Hablar con Aris', 'Dictado simulado'),
       (Icons.add_task_rounded, 'Nueva tarea', 'Añadir a la lista mock'),
       (Icons.event_available_rounded, 'Nuevo evento', 'Sin calendario real'),
       (Icons.note_add_rounded, 'Nueva nota', 'Borrador local ficticio'),
@@ -32,7 +32,7 @@ class AssistantScreen extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Clara',
+          'Aris',
           style: text.titleLarge?.copyWith(color: scheme.onPrimary),
         ),
       ),

@@ -6,7 +6,7 @@ class AssistantFeatureShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(child: Text('Clara · mock (sin voz ni LLM)')),
+      body: Center(child: Text('Asistente Aris · mock (sin voz ni LLM)')),
     );
   }
 }

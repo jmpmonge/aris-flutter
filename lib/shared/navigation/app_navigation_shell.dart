@@ -10,7 +10,7 @@ import '../layout/app_scaffold.dart';
 import '../widgets/app_floating_action_button.dart';
 import 'app_bottom_navigation.dart';
 
-/// Contenedor principal: **5 pestañas** + FAB **centrado** para abrir a Clara.
+/// Contenedor principal: **5 pestañas** + FAB **centrado** para abrir el asistente (**AssistantScreen**).
 class AppNavigationShell extends StatefulWidget {
   const AppNavigationShell({super.key});
 
@@ -79,7 +79,7 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
       ),
       floatingActionButton: AppFloatingActionButton(
         heroTag: 'shell_assistant_fab',
-        tooltip: 'Hablar con Clara',
+        tooltip: 'Hablar con Aris',
         icon: Icons.auto_awesome_rounded,
         onPressed: _openAssistant,
       ),

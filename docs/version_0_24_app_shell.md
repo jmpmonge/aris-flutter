@@ -1,7 +1,7 @@
-# Versión 0.24.0 — App Shell Clara / Aris
+# Versión 0.24.0 — App Shell Aris
 
 ## Resumen
-Se implementó el **contenedor navegable principal**: cinco pestañas fijas (Inicio, Calendario, Notas, Mail, Perfil), **FAB central flotante** que abre la pantalla de Clara y **estado preservado** por pestaña vía `IndexedStack`. Todo el contenido sigue siendo **mock** (sin APIs, calendario o correo reales).
+Se implementó el **contenedor navegable principal**: cinco pestañas fijas (Inicio, Calendario, Notas, Mail, Perfil), **FAB central flotante** que abre **`AssistantScreen`** y **estado preservado** por pestaña vía `IndexedStack`. Todo el contenido sigue siendo **mock** (sin APIs, calendario o correo reales).
 
 ## Qué hay de nuevo
 | Elemento | Ubicación |

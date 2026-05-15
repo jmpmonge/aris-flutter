@@ -8,7 +8,7 @@ Los archivos viven en `.cursor/agents/`:
 | Orden | Agente | Función resumida |
 |------|--------|------------------|
 | 01 | Arquitecto Flutter | Capas, paquetes, navegación, extensibilidad |
-| 02 | UI Designer Flutter | Design system, tema Clara/Aris, accesibilidad |
+| 02 | UI Designer Flutter | Design system, tema Aris, accesibilidad |
 | 03 | Feature Builder | Pantallas y flujos con mocks |
 | 04 | Integration Engineer | Contratos reales, iOS/build, App Store readiness |
 | 05 | QA & Refactor | Pruebas, riesgos, refactor seguro |
@@ -17,7 +17,7 @@ Los archivos viven en `.cursor/agents/`:
 Los procedimientos repetibles están en `.cursor/skills/`. Antes de implementar código Flutter, el agente activo debe abrir el skill que corresponda a la tarea (estructura, tema, shell, pantalla, calendario, notas/mail/perfil, asistente, versiones).
 
 ## Reglas (límites duros)
-`.cursor/rules/` fija lo negociable: documentación mínima, prohibición de backend en fase UI y guía de estilo Clara/Aris.
+`.cursor/rules/` fija lo negociable: documentación mínima, prohibición de backend en fase UI y guía de estilo Aris (`03_estilo_visual_aris.md`).
 
 ## Flujo recomendado por fase
 

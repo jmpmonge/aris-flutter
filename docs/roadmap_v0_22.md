@@ -1,7 +1,7 @@
 # Roadmap ARIS Flutter App v0.22
 
 ## Contexto
-Producto **mobile-first** orientado a **iOS / App Store**, con identidad **Clara** (asistente) y marca **Aris**. Esta versión **v0.22** prioriza demo creíble con **datos simulados** antes de integraciones productivas.
+Producto **mobile-first** orientado a **iOS / App Store**, marca y producto **Aris** (asistente personal integrado bajo la misma marca). Esta versión **v0.22** prioriza demo creíble con **datos simulados** antes de integraciones productivas.
 
 ## Fases (orden obligatorio para minimizar retrabajo)
 
@@ -12,7 +12,7 @@ Producto **mobile-first** orientado a **iOS / App Store**, con identidad **Clara
 **Criterio de salida:** `flutter analyze`, `flutter test` y `flutter run` locales en verde; sin pantallas finales complejas; sin integraciones; mocks solo como texto o shells no cableados.
 
 ### Fase 2 — Sistema visual
-**Objetivo:** Design system alineado con Clara/Aris.  
+**Objetivo:** Design system alineado con **Aris**.  
 **Entregables:** Tokens, tema, componentes primitivos, guía breve de uso.  
 **Agente principal:** UI Designer Flutter (02).  
 **Criterio de salida:** Pantalla “galería interna” o Storybook-like **opcional**; al menos uso en 1 pantalla placeholder.
@@ -55,8 +55,8 @@ Producto **mobile-first** orientado a **iOS / App Store**, con identidad **Clara
 
 ## Estado actual
 - [x] Fase 1 completada (2026-05-15) — base Flutter + estructura modular inicial.  
-- [x] Fase 2 completada (2026-05-15) — design system Clara/Aris (`docs/design_system_v0_23.md`, `docs/version_0_23_design_system.md`).  
-- [x] Fase 3 completada (2026-05-15) — `AppNavigationShell`, 5 pestañas + Clara en FAB (`docs/navigation_shell_v0_24.md`).  
+- [x] Fase 2 completada (2026-05-15) — design system Aris (`docs/design_system_v0_23.md`, `docs/version_0_23_design_system.md`).  
+- [x] Fase 3 completada (2026-05-15) — `AppNavigationShell`, 5 pestañas + FAB asistente (`docs/navigation_shell_v0_24.md`).  
 - [ ] Fase 4 completada  
 - [ ] Fase 5 completada  
 - [ ] Fase 6 completada  
@@ -69,4 +69,4 @@ Producto **mobile-first** orientado a **iOS / App Store**, con identidad **Clara
 - **iOS permissions:** cada permiso debe corresponder a feature real en roadmap de integración.
 
 ## Nota de alcance v0.22
-Objetivo: *demo premium coherente con Clara/Aris*, no paridad con un backend completo. El roadmap puede bifurcar en v0.23+ incrementales según resultados de la fase 5.
+Objetivo: *demo premium coherente con **Aris***, no paridad con un backend completo. El roadmap puede bifurcar en v0.23+ incrementales según resultados de la fase 5.

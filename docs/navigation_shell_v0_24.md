@@ -1,7 +1,7 @@
 # App Shell y navegación — v0.24
 
 ## Objetivo
-Dar a la app una **estructura realista** de producto móvil: barra inferior persistente, secciones claras y acceso rápido a **Clara**, respetando el design system **v0.23** (sin nuevos tokens salvo uso local en pantallas).
+Dar a la app una **estructura realista** de producto móvil: barra inferior persistente, secciones claras y acceso rápido al **asistente Aris** (FAB central), respetando el design system **v0.23** (sin nuevos tokens salvo uso local en pantallas).
 
 ## Arquitectura de navegación
 
@@ -15,7 +15,7 @@ Dar a la app una **estructura realista** de producto móvil: barra inferior pers
   5. `ProfileScreen`
 - **Por qué `IndexedStack`:** mantiene el **estado y el scroll** de cada pestaña al cambiar de tab (mejor UX que recrear el árbol en cada cambio).
 - **Barra inferior:** `AppBottomNavigation` (Material 3 `NavigationBar`) con `AppNavDestination` alineados a los tabs anteriores.
-- **Clara:** `AppFloatingActionButton` + `FloatingActionButtonLocation.centerFloat` (centrado sobre la barra, tónica de “asistente en el medio”).
+- **Asistente (FAB):** `AppFloatingActionButton` + `FloatingActionButtonLocation.centerFloat` (centrado sobre la barra, tónica de “asistente en el medio”).
 - **Ruta modal:** `Navigator.push` → `AssistantScreen` (stack aparte; botón cerrar vuelve al shell).
 
 ### Navegación secundaria
@@ -37,7 +37,7 @@ Dar a la app una **estructura realista** de producto móvil: barra inferior pers
 - `AppScaffold`, `AppBottomNavigation`, `AppFloatingActionButton`, `AppHeader`, `AppCard`, `AppSearchBar`, `SectionTitle`, `SwitchListTile` / `ListTile` según pantalla.
 - **No** se duplicó lógica de tarjeta o tipografía: se apoya en `Theme.of(context)` y widgets de `shared`.
 
-## Clara / estética asistente
+## Asistente / estética premium
 `AssistantScreen` usa gradiente de **primario Aris → violeta token** (`AppColors.violetSoft`) con tarjetas estándar para mantener coherencia con el resto de la app.
 
 ## Límites explícitos (v0.24)

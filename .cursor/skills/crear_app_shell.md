@@ -8,7 +8,7 @@ Un contenedor estable donde encajen pantallas simuladas sin reescribir la raíz 
 
 ## Decisiones a tomar antes de codificar
 1. **Patrón de navegación**: bottom bar + stack (típico móvil), o drawer solo si justificación fuerte en roadmap.
-2. **Presencia de Clara**: burbuja flotante, barra inferior, o pantalla dedicada; impacta en safe areas y gestos.
+2. **Presencia del asistente (Aris)**: burbuja flotante, barra inferior, o pantalla dedicada; impacta en safe areas y gestos.
 3. **Profundidad**: rutas anidadas por tab; evitar stacks duplicados sin necesidad.
 
 ## Piezas típicas del shell

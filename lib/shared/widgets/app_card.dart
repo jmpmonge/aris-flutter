@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_spacing.dart';
 
-/// Tarjeta con borde suave y radio consistente con el tema Clara/Aris.
+/// Tarjeta con borde suave y radio consistente con el tema **Aris**.
 class AppCard extends StatelessWidget {
   const AppCard({
     super.key,

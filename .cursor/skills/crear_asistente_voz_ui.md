@@ -1,7 +1,7 @@
 # Skill: Crear asistente voz / UI del asistente
 
 ## Cuándo usarlo
-Cuando se diseñe la experiencia **Clara** como voz o canal conversacional, aunque en v0.22 sea **solo UI y mocks**.
+Cuando se diseñe la experiencia de **voz o conversación** del asistente Aris, aunque en fases tempranas sea **solo UI y mocks**.
 
 ## Objetivo
 Interfaces que transmitan escucha, procesamiento y respuesta sin depender todavía de STT/TTS reales.

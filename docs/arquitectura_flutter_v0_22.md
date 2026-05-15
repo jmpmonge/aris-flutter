@@ -1,7 +1,7 @@
 # Arquitectura Flutter — ARIS (hasta app shell v0.24)
 
 ## Objetivo
-Base **mobile-first** (iOS/App Store), producto **Aris** y asistente **Clara**, con capas claras y **solo mocks** hasta integración.
+Base **mobile-first** (iOS/App Store), producto **Aris**, con capas claras y **solo mocks** hasta integración.
 
 ## Principios
 - Sin backend en UI; sin dependencias nuevas sin justificar.
@@ -15,7 +15,7 @@ lib/
   app.dart                          # MaterialApp → AppNavigationShell
   shared/
     navigation/
-      app_navigation_shell.dart       # 5 tabs + FAB Clara
+      app_navigation_shell.dart       # 5 tabs + FAB asistente
       app_bottom_navigation.dart
       app_routes.dart
     layout/
@@ -37,7 +37,7 @@ lib/
 
 ## Flujo de arranque
 1. `ArisApp` aplica temas claro/oscuro.
-2. **`AppNavigationShell`** es el `home`: gestiona índice de pestaña y abre **Clara** con `Navigator`.
+2. **`AppNavigationShell`** es el `home`: gestiona índice de pestaña y abre **`AssistantScreen`** con `Navigator`.
 3. **Ajustes** se alcanza desde Perfil (ruta empilada).
 
 ## Pruebas
