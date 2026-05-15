@@ -12,6 +12,10 @@ abstract final class AppSpacing {
   static const double radiusMd = 14;
   static const double radiusLg = 18;
 
+  /// Elevación Material para sombras suaves en tarjetas.
+  static const double cardElevationLight = 2;
+  static const double cardElevationDark = 1;
+
   /// Área mínima recomendada para targets (Human Interface Guidelines).
   static const double minTouchTarget = 44;
 }

@@ -13,7 +13,7 @@ class AppNavDestination {
   final String label;
 }
 
-/// Barra inferior tipo Navigation Bar (Material 3), optimizada para pulgar.
+/// Barra inferior limpia (Material 3), mobile-first.
 class AppBottomNavigation extends StatelessWidget {
   const AppBottomNavigation({
     super.key,

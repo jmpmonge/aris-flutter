@@ -1,75 +1,52 @@
-# Arquitectura Flutter — ARIS (base v0.22 → design v0.23)
+# Arquitectura Flutter — ARIS (base + design system v0.23)
 
 ## Objetivo
 Base **mobile-first** centrada en **iOS/App Store**, producto **Aris** y asistente **Clara**, con fronteras claras entre capas antes de introducir integraciones.
 
 ## Principios (alineados con `.cursor/rules/`)
-- **Sin backend en UI**: datos y servicios falsos hasta la fase de integración.
-- **Sin dependencias añadidas** salvo las del template (`cupertino_icons`, `flutter_lints`) y el SDK.
-- **Features acotadas**: cada dominio de producto vive bajo `lib/features/<nombre>/`.
-- **Compartido mínimo**: utilidades transversales en `lib/shared/` y **tokens + tema** en `lib/theme/`.
+- **Sin backend en UI** hasta fase de integración.
+- **Sin dependencias nuevas** salvo justificación explícita (actualmente: SDK + `cupertino_icons` + `flutter_lints`).
+- **Features** bajo `lib/features/<nombre>/` (presentación mock hasta fase 4).
+- **Tokens y componentes** en `lib/theme/` y `lib/shared/`.
 
 ## Estructura actual
 
 ```
 lib/
-  main.dart                 # Entrada
-  app.dart                  # ArisApp + vista previa mínima del design system (mock)
+  main.dart
+  app.dart                         # MaterialApp: tema claro/oscuro + HomePreviewScreen
   theme/
-    app_colors.dart         # Tokens de color Clara / Aris
-    app_spacing.dart        # Escala, radios, touch target
-    app_typography.dart     # TextTheme claro
-    app_theme.dart          # ThemeData M3 + temas de componentes
+    app_colors.dart
+    app_spacing.dart
+    app_typography.dart
+    app_theme.dart
   shared/
-    widgets/
-      app_card.dart
-      app_header.dart
-      app_search_bar.dart
-      app_floating_action_button.dart
-      app_bottom_navigation.dart
-      section_title.dart
-      empty_state_card.dart
+    widgets/                       # AppCard, AppHeader, AppSearchBar, AppFAB, …
     layout/
       breakpoints.dart
+      app_scaffold.dart
     navigation/
       app_routes.dart
+      app_bottom_navigation.dart
   features/
-    home/              …_feature_shell.dart
-    calendar/          …
-    notes/             …
-    mail/              …
-    profile/           …
-    assistant/         …
-    settings/          …
+    home/presentation/
+      home_preview_screen.dart       # Solo validación visual (no home final)
+    … otros módulos (shells)
 assets/
 ```
 
 ## Flujo de arranque
-1. `main()` arranca `ArisApp`.
-2. `ArisApp` aplica `AppTheme.light()` y muestra `_DesignSystemPreview`: lista scroll con componentes para **validar tokens** (no es shell de producto).
-3. Los `*FeatureShell` siguen sin estar cableados al flujo principal; son anclas de módulo para fases 3–4.
+1. `ArisApp` aplica `AppTheme.light()` / `dark()` y `ThemeMode.system`.
+2. La pantalla inicial es **`HomePreviewScreen`**: muestra el design system con datos simulados.
+3. Los `*FeatureShell` restantes siguen como anclas de carpeta para fases posteriores.
 
 ## Navegación
-- La barra inferior en la vista previa es **solo demostración** de `AppBottomNavigation`.
-- `AppRoutes` mantiene **strings** para un router futuro sin paquetes extra.
-
-## Datos y dominio
-- No hay capa `data/` ni `domain/` todavía; se introducirán por feature cuando existan flujos reales o mocks con interfaces.
-- Regla: ningún acceso a red, calendario nativo, ni proveedores de correo en fase UI.
+- `AppBottomNavigation` modela la barra inferior; la integración con rutas reales es **pendiente del app shell**.
+- `AppRoutes` conserva constantes de ruta sin paquete router.
 
 ## Pruebas
-- `test/widget_test.dart`: smoke test de la vista previa del design system (`Key('design_system_preview')`).
-- Ampliar tests cuando el app shell navegue entre features reales.
-
-## Evolución prevista
-| Fase roadmap | Cambio arquitectónico esperado |
-|--------------|--------------------------------|
-| 3 App shell | `AppShell` + tabs/stack; rutas a pantallas por feature |
-| 4 Pantallas simuladas | `data/` mock + modelos de presentación por feature |
-| 6 Integraciones | Implementaciones reales detrás de puertos; permisos iOS |
+- `test/widget_test.dart` comprueba la preview (`Key('home_preview_screen')`) y textos mock clave.
 
 ## Referencias
-- Design system: `docs/design_system_v0_23.md`, `docs/version_0_23_design_system.md`
-- Roles: `docs/arquitectura_agentes.md`
-- Roadmap: `docs/roadmap_v0_22.md`
-- Base inicial: `docs/version_0_22_flutter_base.md`
+- `docs/design_system_v0_23.md`, `docs/version_0_23_design_system.md`
+- `docs/arquitectura_agentes.md`, `docs/roadmap_v0_22.md`

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_spacing.dart';
-
-/// FAB con tamaño táctil mínimo y forma acorde al tema (acento Clara).
+/// FAB **circular** alineado al tema global (primario Aris).
 class AppFloatingActionButton extends StatelessWidget {
   const AppFloatingActionButton({
     super.key,
@@ -19,15 +17,12 @@ class AppFloatingActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: AppSpacing.minTouchTarget + 8,
-      height: AppSpacing.minTouchTarget + 8,
-      child: FloatingActionButton(
-        heroTag: heroTag ?? 'aris_fab_default',
-        tooltip: tooltip,
-        onPressed: onPressed,
-        child: Icon(icon, size: 26),
-      ),
+    return FloatingActionButton(
+      heroTag: heroTag ?? 'aris_fab_default',
+      tooltip: tooltip,
+      onPressed: onPressed,
+      shape: const CircleBorder(),
+      child: Icon(icon, size: 24),
     );
   }
 }

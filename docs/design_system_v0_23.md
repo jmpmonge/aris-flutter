@@ -1,68 +1,80 @@
-# Design system Clara / Aris — v0.23
+# Design System Aris — v0.23
 
-## Principios
-- **Aris**: producto sobrio y confiable; primario azul-verdoso profundo, sin sensación “fría gris”.
-- **Clara**: cercanía y guía; acento cálido arena/dorado suave en contenedores y FAB, sin competir con el primario en cada vista.
-- **Superficies**: lienzo y tarjetas en **blancos/cremas cálidos**, bordes discretos (línea `outline` suave).
-- **Tipo**: pocas jerarquías fuertes; cuerpo ~17 / 15 pt lógicos, interlineado holgado para lectura móvil.
-- **Motion**: sin animaciones añadidas en v0.23; el tema usa ripple estándar para feedback táctil.
+## Intención visual
+App **mobile-first**, sensación de **asistente personal** (cercana, ordenada), **no panel corporativo frío**:
+- Lienzo **crema / blanco cálido** en claro; superficies oscuras **con matices cálidos** en dark.
+- **Azul profundo** como primario; **violeta suave** como secundario (contenedores, acentos secundarios).
+- **Grises cálidos** para texto y bordes.
+- **Tarjetas muy redondeadas**, **sombras suaves**, barra inferior **limpia** (sin elevación fuerte), **FAB circular** en primario.
 
-## Tokens (`lib/theme/`)
+Todo el color de producto debe fluir desde **`ColorScheme`** y tokens en `app_colors.dart`, no desde hex sueltos en pantallas.
 
-### Color (`AppColors`)
-| Token | Uso |
-|------|-----|
-| `arisDeep` / `arisMid` | Marca, navigation selected, énfasis |
-| `claraAccent` / `claraAccentSoft` | Presencia asistente: FAB, badges suaves, ilustraciones vacías |
-| `canvas` | Fondo de `Scaffold` (no blanco puro) |
-| `surface` | Tarjetas elevadas conceptualmente |
-| `surfaceRaised` / `surfaceTint` | Rellenos de campo, bloques secundarios vía `ColorScheme.surfaceContainer*` |
-| `textPrimary` / `textSecondary` / `textTertiary` | Mapeados a `onSurface` y variantes en el scheme |
+## Modo claro y oscuro
+- `AppColors.lightScheme` / `AppColors.darkScheme`: dos esquemas M3 coherentes (misma familia cromática, distinto contraste).
+- `ArisApp` usa `theme`, `darkTheme` y `themeMode: ThemeMode.system` para respetar el sistema (requisito App Store / UX iOS).
 
-`AppColors.lightScheme` construye el `ColorScheme` M3 usado por `AppTheme.light()`.
+### Paleta resumida (claro)
+| Rol | Uso |
+|-----|-----|
+| `primaryDeep` (#1B3554) | Marca, FAB, ítems seleccionados en nav |
+| `violetSoft` / `violetContainer` | Secundario, indicador de nav, chips suaves |
+| `canvasLight` | Fondo de `Scaffold` (crema) |
+| `surfaceLight` | Tarjetas y bloques elevados |
+| `textPrimaryLight` / secundario / terciario | Jerarquía de texto |
 
-### Espaciado (`AppSpacing`)
-- Base **4 y 8**: `xxs` 4 → `xxl` 48.
-- Radios: `radiusSm` 10, `radiusMd` 14, `radiusLg` 18.
-- `minTouchTarget` 44 (referencia HIG).
+### Oscuro
+Superficies `#141210`–`#2E2B27`, texto `#F2EDE6`, primario aclarado para contraste (`#9BB4DA`), secundario en violeta pastel (`#CDBFE8`).
 
-### Tipografía (`AppTypography`)
-- `TextTheme` derivado del esquema: títulos con **letterSpacing ligeramente negativo** (sensación editorial iOS).
-- Cuerpo y etiquetas respetan `onSurface` / `onSurfaceVariant`.
+## Tokens de layout (`app_spacing.dart`)
+- Escala **4 / 8**: `xxs` … `xxl`.
+- Radios: **10 / 14 / 18** (`radiusSm` … `radiusLg`).
+- `minTouchTarget` **44** (referencia HIG).
+- `cardElevationLight` **2** / `cardElevationDark` **1** para sombra suave sin exceso.
 
-## Componentes (`lib/shared/widgets/`)
+## Tipografía (`app_typography.dart`)
+- `AppTypography.textTheme(ColorScheme)`: escala unificada para claro y oscuro (contraste vía `onSurface` / `onSurfaceVariant`).
+- Títulos con **tracking** ligeramente negativo (sensación editorial / iOS).
 
-### AppCard
-Contenedor con borde sutil y `AppSpacing.radiusLg`. Soporta `onTap` opcional + `semanticLabel`.
+## Componentes
 
-### AppHeader
-Título `headlineMedium` + subtítulo opcional en color variant; `trailing` para iconografía o acciones puntuales.
+### `lib/shared/widgets/`
+| Widget | Función |
+|--------|---------|
+| `AppCard` | Tarjeta con borde tenue + sombra del `CardTheme` |
+| `AppHeader` | Título grande + subtítulo + `trailing` |
+| `AppSearchBar` | Campo de búsqueda relleno coherente con `InputDecorationTheme` |
+| `AppFloatingActionButton` | FAB **circular**, colores del tema |
+| `SectionTitle` | Título de sección + acción texto opcional |
+| `EmptyStateCard` | Estado vacío amable con CTA opcional |
+| `AppIconButton` | `IconButton` con **tooltip** opcional y color adaptable |
 
-### AppSearchBar
-`TextField` relleno que respeta `InputDecorationTheme`; icono de búsqueda con **área táctil mínima**.
+### `lib/shared/navigation/app_bottom_navigation.dart`
+- `AppNavDestination`: modelo icono / icono activo / etiqueta.
+- `AppBottomNavigation`: `NavigationBar` M3 con indicador basado en `secondaryContainer`.
 
-### AppFloatingActionButton
-Envoltorio con tamaño ≥ objetivo táctil; colores desde **`FloatingActionButtonTheme`** (terciario Clara).
+### `lib/shared/layout/app_scaffold.dart`
+- `AppScaffold`: `Scaffold` con fondo del tema y `FloatingActionButtonLocation.endFloat` por defecto.
 
-### AppBottomNavigation
-`NavigationBar` con lista de `AppNavDestination` (icono / icono seleccionado / etiqueta).
+## Tema global (`app_theme.dart`)
+- Compone `CardTheme` (borde + `surfaceTintColor` muy bajo + sombra).
+- `NavigationBarTheme` sin sombra dura (`elevation: 0`).
+- `FloatingActionButtonTheme` con **`CircleBorder`**.
+- `IconButtonTheme` con tamaño mínimo táctil.
 
-### SectionTitle
-`titleMedium` + `TextButton` opcional alineado a la derecha (“Ver todo”, filtros, etc.).
+## Pantalla de prueba
+`HomePreviewScreen` muestra datos **ficticios** (cita, tareas, notas). Sirve para revisar jerarquía, tarjetas, nav y FAB; **no** sustituye al shell de producto ni a flujos finales.
 
-### EmptyStateCard
-Combinación de icono en círculo (`tertiaryContainer`), título, mensaje alineado con tono Clara y **CTA opcional** (`FilledButton`).
+## Límites de la versión
+- Sin integración de datos reales ni permisos nativos extra.
+- Sin nuevas dependencias; fuentes = **sistema** (SF en iOS).
+- Preview puede duplicar patrones que luego vivirán en el app shell (refactor esperado en fase 3).
 
-## Uso recomendado
-1. **No** usar hexadecimales sueltos en features: tomar color del `Theme.of(context).colorScheme` o ampliar `AppColors` si falta un token.
-2. **No** mezclar escalas de espacio arbitrarias: preferir múltiplos de `AppSpacing`.
-3. Para nuevos componentes, seguir el patrón *theme-first* (leer colores y textos del tema).
+## Siguiente paso recomendado
+1. **App shell** con router interno y estado de pestañas persistente.  
+2. Sustituir progresivamente textos mock de `HomePreviewScreen` por view-models por feature.  
+3. Galería opcional de componentes en debug si el equipo necesita QA visual rápida.
 
-## Evolución
-- **v0.24+**: posible `ThemeExtension` para tokens de producto extra (elevación Clara, gradientes muy suaves) sin romper M3.
-- **Oscuro**: no incluido en v0.23; añadir `AppColors.darkScheme` + `AppTheme.dark()` cuando roadmap lo pida.
-
-## Referencias
-- `docs/version_0_23_design_system.md` — notas de entrega
-- `.cursor/rules/03_estilo_visual_clara.md` — personalidad y límites
-- `docs/roadmap_v0_22.md` — fase 2 sistema visual
+## Documentación relacionada
+- `docs/version_0_23_design_system.md` — notas de versión y límites.
+- `.cursor/rules/03_estilo_visual_clara.md` — tono Clara/Aris.
+- `docs/roadmap_v0_22.md` — fases del producto.

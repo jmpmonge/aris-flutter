@@ -4,26 +4,48 @@ import 'app_colors.dart';
 import 'app_spacing.dart';
 import 'app_typography.dart';
 
-/// Tema Clara / Aris: Material 3 + tokens de producto (cálido, sobrio).
+/// Tema global Aris: **claro y oscuro**, tarjetas con sombra suave, FAB circular.
 abstract final class AppTheme {
-  static ThemeData light() {
-    final scheme = AppColors.lightScheme;
-    final text = AppTypography.lightTextTheme(scheme);
+  static ThemeData light() => _build(
+        scheme: AppColors.lightScheme,
+        scaffoldMuted: AppColors.canvasLight,
+        cardElevation: AppSpacing.cardElevationLight,
+      );
+
+  static ThemeData dark() => _build(
+        scheme: AppColors.darkScheme,
+        scaffoldMuted: AppColors.canvasDark,
+        cardElevation: AppSpacing.cardElevationDark,
+      );
+
+  static ThemeData _build({
+    required ColorScheme scheme,
+    required Color scaffoldMuted,
+    required double cardElevation,
+  }) {
+    final text = AppTypography.textTheme(scheme);
+    final isLight = scheme.brightness == Brightness.light;
+    final borderAlpha = isLight ? 0.22 : 0.4;
 
     return ThemeData(
       useMaterial3: true,
+      brightness: scheme.brightness,
       colorScheme: scheme,
-      scaffoldBackgroundColor: AppColors.canvas,
+      scaffoldBackgroundColor: scaffoldMuted,
       textTheme: text,
       dividerColor: scheme.outlineVariant,
       splashFactory: InkRipple.splashFactory,
       cardTheme: CardThemeData(
         color: scheme.surface,
-        elevation: 0,
+        surfaceTintColor: scheme.primary.withValues(alpha: isLight ? 0.04 : 0.08),
+        elevation: cardElevation,
+        shadowColor: scheme.shadow,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          side: BorderSide(color: scheme.outline.withValues(alpha: 0.35)),
+          side: BorderSide(
+            color: scheme.outline.withValues(alpha: borderAlpha),
+          ),
         ),
         clipBehavior: Clip.antiAlias,
       ),
@@ -31,9 +53,10 @@ abstract final class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        backgroundColor: AppColors.canvas,
+        backgroundColor: scaffoldMuted,
         foregroundColor: scheme.onSurface,
         titleTextStyle: text.titleLarge,
+        iconTheme: IconThemeData(color: scheme.onSurface, size: 22),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -53,13 +76,14 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          borderSide: BorderSide(color: scheme.primary.withValues(alpha: 0.45), width: 1.5),
+          borderSide: BorderSide(color: scheme.primary.withValues(alpha: 0.55), width: 1.5),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        height: 64,
+        height: 62,
+        elevation: 0,
         backgroundColor: scheme.surface,
-        indicatorColor: scheme.secondaryContainer.withValues(alpha: 0.65),
+        indicatorColor: scheme.secondaryContainer.withValues(alpha: isLight ? 0.85 : 0.55),
         surfaceTintColor: Colors.transparent,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
@@ -78,12 +102,26 @@ abstract final class AppTheme {
         }),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: scheme.tertiary,
-        foregroundColor: scheme.onTertiary,
-        elevation: 2,
-        highlightElevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd + 4),
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
+        elevation: 4,
+        focusElevation: 4,
+        hoverElevation: 6,
+        highlightElevation: 6,
+        shape: const CircleBorder(),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: ButtonStyle(
+          minimumSize: WidgetStateProperty.all(
+            const Size(AppSpacing.minTouchTarget, AppSpacing.minTouchTarget),
+          ),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          iconColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return scheme.onSurface.withValues(alpha: 0.38);
+            }
+            return scheme.onSurfaceVariant;
+          }),
         ),
       ),
     );
