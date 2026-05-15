@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'intent_model.dart';
+
 /// Autor del mensaje en el hilo simulado.
 enum ChatMessageSender { aris, user }
 
@@ -15,6 +17,7 @@ class ChatMessageModel {
     required this.text,
     this.createdAt,
     this.kind = ChatMessageKind.text,
+    this.detectedIntent,
   });
 
   final String id;
@@ -23,15 +26,19 @@ class ChatMessageModel {
   final DateTime? createdAt;
   final ChatMessageKind kind;
 
+  /// Intención asociada (típicamente en respuestas de Aris tras clasificar el mensaje del usuario).
+  final IntentModel? detectedIntent;
+
   bool get isAris => sender == ChatMessageSender.aris;
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'sender': sender.name,
-    'text': text,
-    'kind': kind.name,
-    if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
-  };
+        'id': id,
+        'sender': sender.name,
+        'text': text,
+        'kind': kind.name,
+        if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+        if (detectedIntent != null) 'detectedIntent': detectedIntent!.toJson(),
+      };
 
   factory ChatMessageModel.fromJson(Map<String, dynamic> json) {
     return ChatMessageModel(
@@ -44,6 +51,11 @@ class ChatMessageModel {
       kind: json['kind'] != null
           ? ChatMessageKind.values.byName(json['kind'] as String)
           : ChatMessageKind.text,
+      detectedIntent: json['detectedIntent'] != null
+          ? IntentModel.fromJson(
+              json['detectedIntent'] as Map<String, dynamic>,
+            )
+          : null,
     );
   }
 }

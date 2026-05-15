@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/models/chat_message_model.dart';
+import '../../core/models/intent_model.dart';
 import '../../theme/app_spacing.dart';
 
 /// Bloque **RECIENTE** con burbujas tipo chat (mock).
@@ -48,6 +49,7 @@ class RecentConversationCard extends StatelessWidget {
                   alignLeft: messages[i].isAris,
                   label: messages[i].isAris ? 'ARIS' : 'TÚ',
                   text: messages[i].text,
+                  intent: messages[i].detectedIntent,
                   scheme: scheme,
                   textTheme: text,
                 ),
@@ -65,6 +67,7 @@ class _Bubble extends StatelessWidget {
     required this.alignLeft,
     required this.label,
     required this.text,
+    this.intent,
     required this.scheme,
     required this.textTheme,
   });
@@ -72,6 +75,7 @@ class _Bubble extends StatelessWidget {
   final bool alignLeft;
   final String label;
   final String text;
+  final IntentModel? intent;
   final ColorScheme scheme;
   final TextTheme textTheme;
 
@@ -113,15 +117,31 @@ class _Bubble extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: textTheme.labelSmall?.copyWith(
-              letterSpacing: 0.8,
-              color: alignLeft
-                  ? scheme.secondary
-                  : scheme.onPrimary.withValues(alpha: 0.85),
-              fontWeight: FontWeight.w700,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: textTheme.labelSmall?.copyWith(
+                    letterSpacing: 0.8,
+                    color: alignLeft
+                        ? scheme.secondary
+                        : scheme.onPrimary.withValues(alpha: 0.85),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (alignLeft &&
+                  intent != null &&
+                  intent!.type != IntentType.unknown) ...[
+                const SizedBox(width: AppSpacing.xs),
+                _IntentChip(
+                  label: intent!.chipLabel,
+                  scheme: scheme,
+                  textTheme: textTheme,
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
@@ -138,6 +158,46 @@ class _Bubble extends StatelessWidget {
     return Align(
       alignment: alignLeft ? Alignment.centerLeft : Alignment.centerRight,
       child: bubble,
+    );
+  }
+}
+
+class _IntentChip extends StatelessWidget {
+  const _IntentChip({
+    required this.label,
+    required this.scheme,
+    required this.textTheme,
+  });
+
+  final String label;
+  final ColorScheme scheme;
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: scheme.secondaryContainer.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        border: Border.all(
+          color: scheme.outline.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs,
+          vertical: 2,
+        ),
+        child: Text(
+          label,
+          style: textTheme.labelSmall?.copyWith(
+            letterSpacing: 0.6,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: scheme.onSecondaryContainer.withValues(alpha: 0.92),
+          ),
+        ),
+      ),
     );
   }
 }
