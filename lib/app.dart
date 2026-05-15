@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'features/home/presentation/home_preview_screen.dart';
+import 'shared/navigation/app_navigation_shell.dart';
 import 'theme/app_theme.dart';
 
 /// Raíz de la aplicación con tema claro / oscuro según sistema.
@@ -14,7 +14,7 @@ class ArisApp extends StatelessWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
-      home: const HomePreviewScreen(),
+      home: const AppNavigationShell(),
     );
   }
 }

@@ -1,52 +1,49 @@
-# Arquitectura Flutter — ARIS (base + design system v0.23)
+# Arquitectura Flutter — ARIS (hasta app shell v0.24)
 
 ## Objetivo
-Base **mobile-first** centrada en **iOS/App Store**, producto **Aris** y asistente **Clara**, con fronteras claras entre capas antes de introducir integraciones.
+Base **mobile-first** (iOS/App Store), producto **Aris** y asistente **Clara**, con capas claras y **solo mocks** hasta integración.
 
-## Principios (alineados con `.cursor/rules/`)
-- **Sin backend en UI** hasta fase de integración.
-- **Sin dependencias nuevas** salvo justificación explícita (actualmente: SDK + `cupertino_icons` + `flutter_lints`).
-- **Features** bajo `lib/features/<nombre>/` (presentación mock hasta fase 4).
-- **Tokens y componentes** en `lib/theme/` y `lib/shared/`.
+## Principios
+- Sin backend en UI; sin dependencias nuevas sin justificar.
+- Features en `lib/features/<módulo>/presentation/` (+ futuro `data` / `domain`).
+- Tema y piezas comunes en `lib/theme/` y `lib/shared/`.
 
-## Estructura actual
+## Estructura relevante
 
 ```
 lib/
-  main.dart
-  app.dart                         # MaterialApp: tema claro/oscuro + HomePreviewScreen
-  theme/
-    app_colors.dart
-    app_spacing.dart
-    app_typography.dart
-    app_theme.dart
+  app.dart                          # MaterialApp → AppNavigationShell
   shared/
-    widgets/                       # AppCard, AppHeader, AppSearchBar, AppFAB, …
-    layout/
-      breakpoints.dart
-      app_scaffold.dart
     navigation/
-      app_routes.dart
+      app_navigation_shell.dart       # 5 tabs + FAB Clara
       app_bottom_navigation.dart
+      app_routes.dart
+    layout/
+      app_scaffold.dart
+      breakpoints.dart
+    widgets/                          # Design system v0.23
   features/
     home/presentation/
-      home_preview_screen.dart       # Solo validación visual (no home final)
-    … otros módulos (shells)
-assets/
+      home_screen.dart
+      home_preview_screen.dart        # Legado v0.23, no usado como home
+    calendar/presentation/calendar_screen.dart
+    notes/presentation/notes_screen.dart
+    mail/presentation/mail_screen.dart
+    profile/presentation/profile_screen.dart
+    assistant/presentation/assistant_screen.dart
+    settings/presentation/settings_screen.dart
+  theme/
 ```
 
 ## Flujo de arranque
-1. `ArisApp` aplica `AppTheme.light()` / `dark()` y `ThemeMode.system`.
-2. La pantalla inicial es **`HomePreviewScreen`**: muestra el design system con datos simulados.
-3. Los `*FeatureShell` restantes siguen como anclas de carpeta para fases posteriores.
-
-## Navegación
-- `AppBottomNavigation` modela la barra inferior; la integración con rutas reales es **pendiente del app shell**.
-- `AppRoutes` conserva constantes de ruta sin paquete router.
+1. `ArisApp` aplica temas claro/oscuro.
+2. **`AppNavigationShell`** es el `home`: gestiona índice de pestaña y abre **Clara** con `Navigator`.
+3. **Ajustes** se alcanza desde Perfil (ruta empilada).
 
 ## Pruebas
-- `test/widget_test.dart` comprueba la preview (`Key('home_preview_screen')`) y textos mock clave.
+- `test/widget_test.dart`: recorre pestañas mediante labels y comprueba `Key('tab_*')`.
 
 ## Referencias
-- `docs/design_system_v0_23.md`, `docs/version_0_23_design_system.md`
-- `docs/arquitectura_agentes.md`, `docs/roadmap_v0_22.md`
+- `docs/navigation_shell_v0_24.md`, `docs/version_0_24_app_shell.md`
+- `docs/design_system_v0_23.md`
+- `docs/roadmap_v0_22.md`
