@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../../core/services/calendar_service.dart';
 import '../../../core/services/chat_service.dart';
+import '../../../core/services/local_action_service.dart';
 import '../../../core/services/note_service.dart';
 import '../../../core/services/task_service.dart';
 import '../../../core/services/user_service.dart';
 import '../../assistant/presentation/assistant_screen.dart';
 import '../../../shared/widgets/home_brand_header.dart';
 import '../../../shared/widgets/home_greeting_card.dart';
+import '../../../shared/widgets/latest_aris_action_section.dart';
 import '../../../shared/widgets/recent_conversation_card.dart';
 import '../../../shared/widgets/suggestion_card.dart';
 import '../../../shared/widgets/today_summary_card.dart';
@@ -28,13 +30,20 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     ChatService.revision.addListener(_onChatRevision);
+    LocalActionService.revision.addListener(_onLocalActions);
   }
 
   @override
   void dispose() {
     ChatService.revision.removeListener(_onChatRevision);
+    LocalActionService.revision.removeListener(_onLocalActions);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onLocalActions() {
+    if (!mounted) return;
+    setState(() {});
   }
 
   void _onChatRevision() {
@@ -75,6 +84,8 @@ class _HomeScreenState extends State<HomeScreen> {
             tasks: TaskService.getHomeHighlightTasks(),
             notes: NoteService.getHomeHighlightNotes(),
           ),
+          const SizedBox(height: AppSpacing.homeSectionSpacing),
+          const LatestArisActionSection(),
           const SizedBox(height: AppSpacing.homeSectionSpacing),
           RecentConversationCard(messages: ChatService.getRecentConversation()),
         ],

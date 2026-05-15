@@ -1,15 +1,39 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/models/local_action_model.dart';
+import '../../../core/services/local_action_service.dart';
 import '../../../core/services/note_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/app_search_bar.dart';
+import '../../../shared/widgets/local_action_card.dart';
 import '../../../shared/widgets/section_title.dart';
 import '../../../theme/app_spacing.dart';
 
 /// Notas — buscador, notas rápidas y lista **mock**.
-class NotesScreen extends StatelessWidget {
+class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key});
+
+  @override
+  State<NotesScreen> createState() => _NotesScreenState();
+}
+
+class _NotesScreenState extends State<NotesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    LocalActionService.revision.addListener(_onArisActions);
+  }
+
+  @override
+  void dispose() {
+    LocalActionService.revision.removeListener(_onArisActions);
+    super.dispose();
+  }
+
+  void _onArisActions() {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +41,8 @@ class NotesScreen extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final quick = NoteService.getQuickLabels();
     final recent = NoteService.getRecentNotes();
+    final arisNotes =
+        LocalActionService.getActionsByType(LocalActionType.note);
 
     return SafeArea(
       child: Column(
@@ -55,6 +81,43 @@ class NotesScreen extends StatelessWidget {
               },
             ),
           ),
+          if (arisNotes.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.sm,
+              ),
+              child: Text(
+                'Notas creadas por Aris',
+                style: text.labelSmall?.copyWith(
+                  letterSpacing: 1.1,
+                  color: scheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 132,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                scrollDirection: Axis.horizontal,
+                itemCount: arisNotes.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(width: AppSpacing.sm),
+                itemBuilder: (context, i) {
+                  return SizedBox(
+                    width: 280,
+                    child: LocalActionCard(
+                      action: arisNotes[i],
+                      compact: true,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
           Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.md,

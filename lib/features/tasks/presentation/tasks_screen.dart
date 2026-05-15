@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/models/local_action_model.dart';
+import '../../../core/services/local_action_service.dart';
 import '../../../core/services/task_service.dart';
 import '../../../shared/widgets/app_header.dart';
+import '../../../shared/widgets/local_action_card.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../core/models/task_model.dart';
 
@@ -22,6 +25,17 @@ class _TasksScreenState extends State<TasksScreen> {
     super.initState();
     _today = List<TaskModel>.from(TaskService.getTodayTasks());
     _upcoming = List<TaskModel>.from(TaskService.getUpcomingTasks());
+    LocalActionService.revision.addListener(_onLocalActions);
+  }
+
+  @override
+  void dispose() {
+    LocalActionService.revision.removeListener(_onLocalActions);
+    super.dispose();
+  }
+
+  void _onLocalActions() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -118,11 +132,55 @@ class _TasksScreenState extends State<TasksScreen> {
           ),
           SliverToBoxAdapter(child: section('HOY', _today)),
           SliverToBoxAdapter(child: section('PRÓXIMAS', _upcoming)),
+          SliverToBoxAdapter(
+            child: _arisTasksSection(context),
+          ),
           const SliverToBoxAdapter(
             child: SizedBox(height: AppSpacing.fabStackClearance),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _arisTasksSection(BuildContext context) {
+    final arisTasks = LocalActionService.getActionsByType(LocalActionType.task);
+    if (arisTasks.isEmpty) return const SizedBox.shrink();
+
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.sm,
+          ),
+          child: Text(
+            'Creadas por Aris',
+            style: text.labelSmall?.copyWith(
+              letterSpacing: 1.1,
+              color: scheme.primary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        ...List.generate(arisTasks.length, (i) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              0,
+              AppSpacing.md,
+              AppSpacing.sm,
+            ),
+            child: LocalActionCard(action: arisTasks[i]),
+          );
+        }),
+      ],
     );
   }
 }

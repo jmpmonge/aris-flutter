@@ -5,10 +5,48 @@ import '../../core/models/intent_model.dart';
 import '../../theme/app_spacing.dart';
 
 /// Bloque **RECIENTE** con burbujas tipo chat (mock).
-class RecentConversationCard extends StatelessWidget {
+///
+/// La lista de mensajes tiene [AppSpacing.recentConversationBodyMaxHeight] como
+/// altura máxima y hace scroll interno para no desbordar la pantalla de Inicio.
+class RecentConversationCard extends StatefulWidget {
   const RecentConversationCard({super.key, required this.messages});
 
   final List<ChatMessageModel> messages;
+
+  @override
+  State<RecentConversationCard> createState() => _RecentConversationCardState();
+}
+
+class _RecentConversationCardState extends State<RecentConversationCard> {
+  final ScrollController _listController = ScrollController();
+
+  @override
+  void didUpdateWidget(covariant RecentConversationCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.messages.length != oldWidget.messages.length) {
+      _scrollMessagesToEnd();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollMessagesToEnd());
+  }
+
+  @override
+  void dispose() {
+    _listController.dispose();
+    super.dispose();
+  }
+
+  void _scrollMessagesToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_listController.hasClients) return;
+      final pos = _listController.position;
+      _listController.jumpTo(pos.maxScrollExtent);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +71,7 @@ class RecentConversationCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -43,17 +82,30 @@ class RecentConversationCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              for (var i = 0; i < messages.length; i++) ...[
-                if (i > 0) const SizedBox(height: AppSpacing.sm),
-                _Bubble(
-                  alignLeft: messages[i].isAris,
-                  label: messages[i].isAris ? 'ARIS' : 'TÚ',
-                  text: messages[i].text,
-                  intent: messages[i].detectedIntent,
-                  scheme: scheme,
-                  textTheme: text,
+              SizedBox(
+                height: AppSpacing.recentConversationBodyMaxHeight,
+                child: ListView.separated(
+                  controller: _listController,
+                  padding: EdgeInsets.zero,
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  itemCount: widget.messages.length,
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: AppSpacing.sm),
+                  itemBuilder: (context, i) {
+                    final m = widget.messages[i];
+                    return _Bubble(
+                      alignLeft: m.isAris,
+                      label: m.isAris ? 'ARIS' : 'TÚ',
+                      text: m.text,
+                      intent: m.detectedIntent,
+                      scheme: scheme,
+                      textTheme: text,
+                    );
+                  },
                 ),
-              ],
+              ),
             ],
           ),
         ),

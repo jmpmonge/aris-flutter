@@ -4,6 +4,7 @@ import '../mock/mock_chat_messages.dart';
 import '../models/chat_message_model.dart';
 import '../models/intent_model.dart';
 import 'intent_classifier_service.dart';
+import 'local_action_service.dart';
 
 /// Servicio mock de chat con **memoria local** en la sesión (sin red).
 abstract final class ChatService {
@@ -46,6 +47,7 @@ abstract final class ChatService {
     );
 
     final intent = IntentClassifierService.classify(text);
+    LocalActionService.createFromIntent(intent);
     final reply = _replyForIntent(intent);
 
     _messages.add(
@@ -70,15 +72,14 @@ abstract final class ChatService {
   static String _replyForIntent(IntentModel intent) {
     return switch (intent.type) {
       IntentType.task =>
-        'Parece una tarea. De momento la dejo detectada como tarea simulada.',
-      IntentType.note =>
-        'Parece una nota. La he identificado como nota local simulada.',
+        'He creado una tarea simulada a partir de tu mensaje.',
+      IntentType.note => 'He creado una nota simulada.',
       IntentType.event =>
-        'Parece un evento. Más adelante podré llevarlo al calendario.',
+        'He creado un evento simulado para revisar después.',
       IntentType.mail =>
-        'Parece relacionado con correo. Cuando activemos integración, podré ayudarte a responder o resumir.',
+        'He preparado una acción simulada relacionada con correo.',
       IntentType.general =>
-        'He recibido tu mensaje. Puedo ayudarte a convertirlo en tarea, nota o evento.',
+        'He recibido tu mensaje. No he creado ninguna acción específica.',
       IntentType.unknown => 'He registrado tu mensaje.',
     };
   }

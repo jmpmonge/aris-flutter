@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/models/local_action_model.dart';
 import '../../../core/services/calendar_service.dart';
+import '../../../core/services/local_action_service.dart';
 import 'calendar_body_views.dart';
 import '../../../shared/widgets/app_header.dart';
+import '../../../shared/widgets/local_action_card.dart';
 import '../../../theme/app_spacing.dart';
 
 /// Calendario — vistas **Día / Semana / Mes** simuladas (sin calendario real).
@@ -17,9 +20,28 @@ class _CalendarScreenState extends State<CalendarScreen> {
   int _view = 0;
 
   @override
+  void initState() {
+    super.initState();
+    LocalActionService.revision.addListener(_onArisActions);
+  }
+
+  @override
+  void dispose() {
+    LocalActionService.revision.removeListener(_onArisActions);
+    super.dispose();
+  }
+
+  void _onArisActions() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+
+    final arisEvents =
+        LocalActionService.getActionsByType(LocalActionType.event);
 
     final calendarBody = switch (_view) {
       0 => CalendarDayView(events: CalendarService.getTodayEvents()),
@@ -62,6 +84,32 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
           const SizedBox(height: AppSpacing.sm),
           calendarBody,
+          if (arisEvents.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.lg),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Text(
+                'Eventos creados por Aris',
+                style: text.labelSmall?.copyWith(
+                  letterSpacing: 0.8,
+                  color: scheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            ...List.generate(arisEvents.length, (i) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  0,
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                ),
+                child: LocalActionCard(action: arisEvents[i]),
+              );
+            }),
+          ],
         ],
       ),
     );

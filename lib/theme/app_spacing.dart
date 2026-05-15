@@ -43,6 +43,10 @@ abstract final class AppSpacing {
   /// Ancho máximo de burbuja de chat en bloque Reciente.
   static const double chatBubbleMaxWidth = 320;
 
+  /// Altura máxima del área de mensajes dentro de la tarjeta **RECIENTE** (Inicio);
+  /// el exceso hace scroll interno. Valor intermedio del rango 180–240 px lógicos.
+  static const double recentConversationBodyMaxHeight = 220;
+
   /// Separación inferior en listas cuando hay FAB flotante centrado.
   static const double fabStackClearance = 100;
 
