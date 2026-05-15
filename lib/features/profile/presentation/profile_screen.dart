@@ -5,7 +5,7 @@ import '../../../shared/widgets/app_header.dart';
 import '../../../theme/app_spacing.dart';
 import '../../settings/presentation/settings_screen.dart';
 
-/// Perfil — tarjeta de usuario + accesos **mock** (Ajustes navega de verdad).
+/// Perfil — usuario, opciones y **versión** (mock).
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -107,6 +107,32 @@ class ProfileScreen extends StatelessWidget {
                     Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
                   ],
                 ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Versión',
+                    style: text.labelSmall?.copyWith(
+                      color: scheme.secondary,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Aris · v0.25.0 (build de demostración)',
+                    style: text.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

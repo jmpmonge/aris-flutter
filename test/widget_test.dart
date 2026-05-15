@@ -7,8 +7,8 @@ void main() {
   testWidgets('Shell: inicio muestra saludo y pestañas navegables', (WidgetTester tester) async {
     await tester.pumpWidget(const ArisApp());
 
-    expect(find.text('Hola, José'), findsOneWidget);
-    expect(find.text('Calendario'), findsWidgets);
+    expect(find.text('Buenas tardes, José'), findsWidgets);
+    expect(find.text('Aris'), findsWidgets);
     expect(find.byKey(const Key('tab_home')), findsOneWidget);
 
     await tester.tap(find.text('Calendario'));
@@ -19,9 +19,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('tab_notes')), findsOneWidget);
 
-    await tester.tap(find.text('Mail'));
+    await tester.tap(find.text('Tareas'));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('tab_mail')), findsOneWidget);
+    expect(find.byKey(const Key('tab_tasks')), findsOneWidget);
 
     await tester.tap(find.text('Perfil'));
     await tester.pumpAndSettle();

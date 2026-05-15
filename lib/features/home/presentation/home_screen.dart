@@ -1,93 +1,68 @@
 import 'package:flutter/material.dart';
 
-import '../../../shared/widgets/app_card.dart';
-import '../../../shared/widgets/app_header.dart';
-import '../../../shared/widgets/section_title.dart';
+import '../../../shared/widgets/home_brand_header.dart';
+import '../../../shared/widgets/home_greeting_card.dart';
+import '../../../shared/widgets/recent_conversation_card.dart';
+import '../../../shared/widgets/suggestion_card.dart';
+import '../../../shared/widgets/today_summary_card.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Inicio — datos **simulados** (sin backend).
+/// Inicio — estructura vertical según prototipo funcional + estética premium Aris.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  static String _greetingForNow() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Buenos días, José';
+    if (h < 20) return 'Buenas tardes, José';
+    return 'Buenas noches, José';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
+    const events = [
+      '15:30 · Revisión médica anual (Centro Norte, mock)',
+      '18:00 · Recoger paquete en locker',
+    ];
+    const tasks = [
+      'Responder al equipo de diseño',
+      'Llamar a papá antes de cenar',
+      'Enviar borrador del informe',
+    ];
+    const notes = [
+      'Idea: playlist “concentración suave”',
+      'Nota: regalo cumple Ana (libro)',
+    ];
+
+    /// Espacio extra: la barra de chat y la nav los añade el shell.
+    const bottomInset = 168.0;
 
     return SafeArea(
+      bottom: false,
       child: ListView(
         key: const Key('tab_home'),
-        padding: const EdgeInsets.only(bottom: 100),
+        padding: const EdgeInsets.only(bottom: bottomInset),
         children: [
-          const AppHeader(
-            title: 'Hola, José',
-            subtitle: 'Aquí va un resumen tranquilo de tu día · mock',
-          ),
+          const HomeBrandHeader(),
           const SizedBox(height: AppSpacing.sm),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: Text(
-              'Hoy, viernes — pocos compromisos, espacio para lo importante.',
-              style: text.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
-            ),
+          HomeGreetingCard(
+            greeting: _greetingForNow(),
+            summary:
+                'Tienes 12 tareas pendientes y 2 eventos esta tarde. Respira: es un resumen simulado para diseño.',
           ),
-          const SectionTitle(title: 'Próxima cita'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.event_rounded, color: scheme.primary, size: 22),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text('Revisión médica anual', style: text.titleSmall),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    '15:30 · Centro de salud Norte (simulado)',
-                    style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
+          const SizedBox(height: AppSpacing.md),
+          const SuggestionCard(
+            message: 'Revisa tus tareas pendientes antes del fin de semana.',
           ),
-          const SectionTitle(title: 'Tareas de hoy'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('3 pendientes', style: text.titleSmall),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    '• Llamar a mamá\n' '• Pagar parking\n' '• Enviar borrador (mock)',
-                    style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
+          const SizedBox(height: AppSpacing.lg),
+          const TodaySummaryCard(
+            events: events,
+            tasks: tasks,
+            notes: notes,
           ),
-          const SectionTitle(title: 'Notas recientes'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Ideas sueltas', style: text.titleSmall),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    '“Regalo cumple Ana” · “Playlist viaje” (mock)',
-                    style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          const SizedBox(height: AppSpacing.lg),
+          const RecentConversationCard(),
+          const SizedBox(height: AppSpacing.lg),
         ],
       ),
     );

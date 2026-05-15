@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import '../../features/assistant/presentation/assistant_screen.dart';
 import '../../features/calendar/presentation/calendar_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
-import '../../features/mail/presentation/mail_screen.dart';
 import '../../features/notes/presentation/notes_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/tasks/presentation/tasks_screen.dart';
 import '../layout/app_scaffold.dart';
-import '../widgets/app_floating_action_button.dart';
 import 'app_bottom_navigation.dart';
+import '../widgets/app_floating_action_button.dart';
+import '../widgets/chat_input_bar.dart';
 
-/// Contenedor principal: **5 pestañas** + FAB **centrado** para abrir el asistente (**AssistantScreen**).
+/// Shell: **Inicio · Calendario · Notas · Tareas · Perfil** + barra de chat fija en Inicio.
 class AppNavigationShell extends StatefulWidget {
   const AppNavigationShell({super.key});
 
@@ -20,12 +21,13 @@ class AppNavigationShell extends StatefulWidget {
 
 class _AppNavigationShellState extends State<AppNavigationShell> {
   int _tabIndex = 0;
+  final _chatController = TextEditingController();
 
   static const List<Widget> _pages = [
     HomeScreen(),
     CalendarScreen(),
     NotesScreen(),
-    MailScreen(),
+    TasksScreen(),
     ProfileScreen(),
   ];
 
@@ -46,9 +48,9 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
       label: 'Notas',
     ),
     AppNavDestination(
-      icon: Icons.mail_outlined,
-      selectedIcon: Icons.mail_rounded,
-      label: 'Mail',
+      icon: Icons.task_alt_outlined,
+      selectedIcon: Icons.task_alt_rounded,
+      label: 'Tareas',
     ),
     AppNavDestination(
       icon: Icons.person_outline_rounded,
@@ -56,6 +58,12 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
       label: 'Perfil',
     ),
   ];
+
+  @override
+  void dispose() {
+    _chatController.dispose();
+    super.dispose();
+  }
 
   void _openAssistant() {
     Navigator.of(context).push<void>(
@@ -65,24 +73,57 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
     );
   }
 
+  void _onChatSend(String text) {
+    _chatController.clear();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Mensaje enviado (simulado): ${text.length} caracteres')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return AppScaffold(
       body: IndexedStack(
         index: _tabIndex,
         children: _pages,
       ),
-      bottomNavigationBar: AppBottomNavigation(
-        currentIndex: _tabIndex,
-        onDestinationSelected: (i) => setState(() => _tabIndex = i),
-        destinations: _destinations,
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_tabIndex == 0)
+            ChatInputBar(
+              controller: _chatController,
+              onSend: _onChatSend,
+            ),
+          Material(
+            color: scheme.surface,
+            child: Column(
+              children: [
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: scheme.outline.withValues(alpha: 0.12),
+                ),
+                AppBottomNavigation(
+                  currentIndex: _tabIndex,
+                  onDestinationSelected: (i) => setState(() => _tabIndex = i),
+                  destinations: _destinations,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: AppFloatingActionButton(
-        heroTag: 'shell_assistant_fab',
-        tooltip: 'Hablar con Aris',
-        icon: Icons.auto_awesome_rounded,
-        onPressed: _openAssistant,
-      ),
+      floatingActionButton: _tabIndex == 0
+          ? null
+          : AppFloatingActionButton(
+              heroTag: 'shell_assistant_fab',
+              tooltip: 'Hablar con Aris',
+              icon: Icons.auto_awesome_rounded,
+              onPressed: _openAssistant,
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }

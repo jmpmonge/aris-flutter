@@ -12,6 +12,9 @@ abstract final class AppSpacing {
   static const double radiusMd = 14;
   static const double radiusLg = 18;
 
+  /// Tarjetas premium tipo home (muy redondeadas).
+  static const double radiusXl = 24;
+
   /// Elevación Material para sombras suaves en tarjetas.
   static const double cardElevationLight = 2;
   static const double cardElevationDark = 1;

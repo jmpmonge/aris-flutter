@@ -4,7 +4,7 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Calendario — selector Día / Semana / Mes **solo visual** + eventos mock.
+/// Calendario — vista Día / Semana / Mes + eventos **mock**.
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
 
@@ -13,7 +13,7 @@ class CalendarScreen extends StatefulWidget {
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
-  int _view = 0; // 0 día, 1 semana, 2 mes
+  int _view = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         children: [
           const AppHeader(
             title: 'Calendario',
-            subtitle: 'Vista simulada · sin sincronización real',
+            subtitle: 'Planifica con calma · sin sincronización real',
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -52,10 +52,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: Text(
               _view == 0
-                  ? 'Vista día — 12 de mayo (ejemplo)'
+                  ? 'Vista día — ejemplo visual'
                   : _view == 1
-                      ? 'Vista semana — semana actual (ejemplo)'
-                      : 'Vista mes — mayo (ejemplo)',
+                      ? 'Vista semana — ejemplo visual'
+                      : 'Vista mes — ejemplo visual',
               style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ),
