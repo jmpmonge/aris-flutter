@@ -5,6 +5,7 @@ import '../../../core/services/local_action_service.dart';
 import '../../../core/services/task_service.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/local_action_card.dart';
+import '../../../shared/widgets/local_action_empty_state.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../core/models/task_model.dart';
 
@@ -145,7 +146,6 @@ class _TasksScreenState extends State<TasksScreen> {
 
   Widget _arisTasksSection(BuildContext context) {
     final arisTasks = LocalActionService.getActionsByType(LocalActionType.task);
-    if (arisTasks.isEmpty) return const SizedBox.shrink();
 
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
@@ -169,17 +169,23 @@ class _TasksScreenState extends State<TasksScreen> {
             ),
           ),
         ),
-        ...List.generate(arisTasks.length, (i) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              0,
-              AppSpacing.md,
-              AppSpacing.sm,
-            ),
-            child: LocalActionCard(action: arisTasks[i]),
-          );
-        }),
+        if (arisTasks.isEmpty)
+          const LocalActionEmptyState(
+            message:
+                'Nada aquí todavía. En Inicio, escribe algo tipo «recuérdame…» y vuelve: Aris creará una tarea simulada.',
+          )
+        else
+          ...List.generate(arisTasks.length, (i) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                0,
+                AppSpacing.md,
+                AppSpacing.sm,
+              ),
+              child: LocalActionCard(action: arisTasks[i]),
+            );
+          }),
       ],
     );
   }

@@ -7,6 +7,7 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/app_search_bar.dart';
 import '../../../shared/widgets/local_action_card.dart';
+import '../../../shared/widgets/local_action_empty_state.dart';
 import '../../../shared/widgets/section_title.dart';
 import '../../../theme/app_spacing.dart';
 
@@ -81,27 +82,33 @@ class _NotesScreenState extends State<NotesScreen> {
               },
             ),
           ),
-          if (arisNotes.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.sm,
-              ),
-              child: Text(
-                'Notas creadas por Aris',
-                style: text.labelSmall?.copyWith(
-                  letterSpacing: 1.1,
-                  color: scheme.primary,
-                  fontWeight: FontWeight.w700,
-                ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.sm,
+            ),
+            child: Text(
+              'Notas creadas por Aris',
+              style: text.labelSmall?.copyWith(
+                letterSpacing: 1.1,
+                color: scheme.primary,
+                fontWeight: FontWeight.w700,
               ),
             ),
+          ),
+          if (arisNotes.isEmpty)
+            const LocalActionEmptyState(
+              message:
+                  'Sin notas desde el chat. Prueba «apunta esta idea…» en Inicio.',
+            )
+          else
             SizedBox(
               height: 132,
               child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 scrollDirection: Axis.horizontal,
                 itemCount: arisNotes.length,
                 separatorBuilder: (_, _) =>
@@ -117,7 +124,6 @@ class _NotesScreenState extends State<NotesScreen> {
                 },
               ),
             ),
-          ],
           Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.md,

@@ -6,6 +6,7 @@ import '../../../core/services/local_action_service.dart';
 import 'calendar_body_views.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/local_action_card.dart';
+import '../../../shared/widgets/local_action_empty_state.dart';
 import '../../../theme/app_spacing.dart';
 
 /// Calendario — vistas **Día / Semana / Mes** simuladas (sin calendario real).
@@ -84,20 +85,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
           const SizedBox(height: AppSpacing.sm),
           calendarBody,
-          if (arisEvents.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.lg),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: Text(
-                'Eventos creados por Aris',
-                style: text.labelSmall?.copyWith(
-                  letterSpacing: 0.8,
-                  color: scheme.primary,
-                  fontWeight: FontWeight.w700,
-                ),
+          const SizedBox(height: AppSpacing.lg),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: Text(
+              'Eventos creados por Aris',
+              style: text.labelSmall?.copyWith(
+                letterSpacing: 0.8,
+                color: scheme.primary,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          if (arisEvents.isEmpty)
+            const LocalActionEmptyState(
+              message:
+                  'Nada programado aquí desde el chat. Escribe algo con «reunión» o «mañana…» en Inicio.',
+            )
+          else
             ...List.generate(arisEvents.length, (i) {
               return Padding(
                 padding: const EdgeInsets.fromLTRB(
@@ -109,7 +115,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 child: LocalActionCard(action: arisEvents[i]),
               );
             }),
-          ],
         ],
       ),
     );

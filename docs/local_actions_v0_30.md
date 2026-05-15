@@ -15,7 +15,7 @@
 - `createFromIntent(IntentModel)` → crea acción solo para `task`, `note`, `event`, `mail`
 - `getRecentActions()`, `getActionsByType(LocalActionType)`
 - `getMostRecentAction()` para Inicio
-- `clearAll()` para pruebas
+- `clearLocalActions()` para pruebas (y borrado persistido)
 - `revision` (`ValueNotifier<int>`) para refrescar UI sin Provider/Bloc
 
 ## Conexión con la intención

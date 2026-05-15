@@ -6,6 +6,7 @@ import '../../../core/services/mail_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/local_action_card.dart';
+import '../../../shared/widgets/local_action_empty_state.dart';
 import '../../../theme/app_spacing.dart';
 
 /// Mail — pestañas **visuales** + hilos simulados.
@@ -74,33 +75,37 @@ class _MailScreenState extends State<MailScreen> {
                 AppSpacing.fabStackClearance,
               ),
               children: [
-                if (mailActions.isNotEmpty) ...[
-                  Text(
-                    'Acciones de correo sugeridas',
-                    style: text.labelSmall?.copyWith(
-                      letterSpacing: 1.05,
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
+                Text(
+                  'Acciones de correo sugeridas',
+                  style: text.labelSmall?.copyWith(
+                    letterSpacing: 1.05,
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w700,
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                if (mailActions.isEmpty)
+                  const LocalActionEmptyState(
+                    message:
+                        'Sin sugerencias todavía. En Inicio prueba «responder correo…».',
+                  )
+                else
                   ...List.generate(mailActions.length, (i) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                       child: LocalActionCard(action: mailActions[i]),
                     );
                   }),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    'Bandeja (${tabs[_folder]})',
-                    style: text.labelSmall?.copyWith(
-                      letterSpacing: 1.05,
-                      color: scheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Bandeja (${tabs[_folder]})',
+                  style: text.labelSmall?.copyWith(
+                    letterSpacing: 1.05,
+                    color: scheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-                ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
                 ...List.generate(mails.length, (i) {
                   final m = mails[i];
                   return Padding(

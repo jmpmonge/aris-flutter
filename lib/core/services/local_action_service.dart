@@ -1,14 +1,48 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/intent_model.dart';
 import '../models/local_action_model.dart';
 
-/// Acciones locales **solo en memoria** (demo). Sin base de datos ni API.
+/// Fuente única de acciones locales simuladas — memoria + persistencia opcional
+/// vía [SharedPreferences] (JSON). Sin backend.
 abstract final class LocalActionService {
+  static const String _prefsKey = 'aris_local_actions_v1';
+
   static final List<LocalActionModel> _actions = [];
 
-  /// Notifica creación o limpieza de acciones (p. ej. para refrescar pantallas).
+  /// Notifica creación, hidratación o borrado (refresco de pantallas).
   static final ValueNotifier<int> revision = ValueNotifier<int>(0);
+
+  /// Carga acciones guardadas. Llamar una vez al arranque (`main`), antes de `runApp`.
+  static Future<void> initialize() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_prefsKey);
+    if (raw == null || raw.isEmpty) {
+      return;
+    }
+    try {
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      final items = map['items'] as List<dynamic>? ?? [];
+      _actions
+        ..clear()
+        ..addAll(
+          items.map(
+            (e) => LocalActionModel.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          ),
+        );
+      revision.value++;
+    } catch (_) {
+      _actions.clear();
+      await prefs.remove(_prefsKey);
+      revision.value++;
+    }
+  }
 
   /// Última acción creada (más reciente primero en la lista interna).
   static LocalActionModel? getMostRecentAction() =>
@@ -39,13 +73,43 @@ abstract final class LocalActionService {
     );
     _actions.insert(0, action);
     revision.value++;
+    _schedulePersist();
     return action;
   }
 
-  /// Reinicio para pruebas o demos; no borra chat ni otros servicios.
-  static void clearAll() {
+  /// Borra todas las acciones locales (demo / pruebas) y el almacenamiento.
+  static Future<void> clearLocalActions() async {
     _actions.clear();
     revision.value++;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_prefsKey);
+    } catch (_) {
+      // Ignorado en demo.
+    }
+  }
+
+  /// Alias obsoleto; preferir [clearLocalActions].
+  @Deprecated('Usar clearLocalActions')
+  static void clearAll() {
+    unawaited(clearLocalActions());
+  }
+
+  static void _schedulePersist() {
+    unawaited(_persist());
+  }
+
+  static Future<void> _persist() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final encoded = jsonEncode({
+        'v': 1,
+        'items': _actions.map((e) => e.toJson()).toList(),
+      });
+      await prefs.setString(_prefsKey, encoded);
+    } catch (_) {
+      // Sin registro; fallo de E/S no bloquea la demo.
+    }
   }
 
   static LocalActionType? _typeFromIntent(IntentType t) {
