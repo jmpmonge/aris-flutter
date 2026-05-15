@@ -73,7 +73,7 @@ abstract final class AppSpacing {
   static const Offset shadowOffsetBar = Offset(0, -2);
 
   /// Elevación Material para sombras suaves en tarjetas.
-  static const double cardElevationLight = 2;
+  static const double cardElevationLight = 3;
   static const double cardElevationDark = 1;
 
   /// Área mínima recomendada para targets (Human Interface Guidelines).

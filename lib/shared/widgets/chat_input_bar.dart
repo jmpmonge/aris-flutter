@@ -61,7 +61,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
           ),
           boxShadow: [
             BoxShadow(
-              color: scheme.shadow.withValues(alpha: 0.05),
+              color: scheme.shadow.withValues(alpha: isDark ? 0.05 : 0.1),
               blurRadius: AppSpacing.shadowBlurBar,
               offset: AppSpacing.shadowOffsetBar,
             ),

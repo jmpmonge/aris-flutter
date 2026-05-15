@@ -43,7 +43,7 @@ class HomeGreetingCard extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: scheme.shadow.withValues(alpha: isDark ? 0.35 : 0.12),
+              color: scheme.shadow.withValues(alpha: isDark ? 0.35 : 0.2),
               blurRadius: AppSpacing.shadowBlurHero,
               offset: AppSpacing.shadowOffsetHero,
             ),

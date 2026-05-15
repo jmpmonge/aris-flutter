@@ -23,7 +23,7 @@ class QuickActionCard extends StatelessWidget {
     final text = Theme.of(context).textTheme;
 
     return Material(
-      color: Colors.transparent,
+      color: scheme.surface.withValues(alpha: 0),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),

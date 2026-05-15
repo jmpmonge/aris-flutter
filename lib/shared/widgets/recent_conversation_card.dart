@@ -52,6 +52,7 @@ class _RecentConversationCardState extends State<RecentConversationCard> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -62,7 +63,7 @@ class _RecentConversationCardState extends State<RecentConversationCard> {
           border: Border.all(color: scheme.outline.withValues(alpha: 0.2)),
           boxShadow: [
             BoxShadow(
-              color: scheme.shadow.withValues(alpha: 0.07),
+              color: scheme.shadow.withValues(alpha: isDark ? 0.07 : 0.12),
               blurRadius: AppSpacing.shadowBlurChat,
               offset: AppSpacing.shadowOffsetChat,
             ),

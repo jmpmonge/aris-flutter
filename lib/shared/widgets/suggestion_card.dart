@@ -17,6 +17,7 @@ class SuggestionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -27,7 +28,7 @@ class SuggestionCard extends StatelessWidget {
           border: Border.all(color: scheme.outline.withValues(alpha: 0.25)),
           boxShadow: [
             BoxShadow(
-              color: scheme.shadow.withValues(alpha: 0.06),
+              color: scheme.shadow.withValues(alpha: isDark ? 0.06 : 0.12),
               blurRadius: AppSpacing.shadowBlurSoft,
               offset: AppSpacing.shadowOffsetSoft,
             ),

@@ -6,6 +6,11 @@ import 'app_typography.dart';
 
 /// Tema global Aris: **claro y oscuro**, tarjetas con sombra suave, FAB circular.
 abstract final class AppTheme {
+  /// Alias explícitos para [MaterialApp.theme] / [MaterialApp.darkTheme].
+  static ThemeData get lightTheme => light();
+
+  static ThemeData get darkTheme => dark();
+
   static ThemeData light() => _build(
     scheme: AppColors.lightScheme,
     scaffoldMuted: AppColors.canvasLight,
@@ -25,7 +30,7 @@ abstract final class AppTheme {
   }) {
     final text = AppTypography.textTheme(scheme);
     final isLight = scheme.brightness == Brightness.light;
-    final borderAlpha = isLight ? 0.22 : 0.4;
+    final borderAlpha = isLight ? 0.28 : 0.4;
 
     return ThemeData(
       useMaterial3: true,
@@ -38,7 +43,7 @@ abstract final class AppTheme {
       cardTheme: CardThemeData(
         color: scheme.surface,
         surfaceTintColor: scheme.primary.withValues(
-          alpha: isLight ? 0.04 : 0.08,
+          alpha: isLight ? 0.06 : 0.08,
         ),
         elevation: cardElevation,
         shadowColor: scheme.shadow,

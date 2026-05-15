@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/models/app_theme_mode.dart';
+import '../../../core/services/theme_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Ajustes — interruptores y enlaces **sin efecto real**.
+/// Ajustes — apariencia real + opciones **sin efecto backend**.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -17,14 +19,75 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
-          Text('Apariencia', style: text.titleSmall),
-          const SizedBox(height: AppSpacing.xs),
-          SwitchListTile(
-            title: const Text('Seguir tema del sistema'),
-            subtitle: const Text('Recomendado en iOS (mock, siempre activo)'),
-            value: true,
-            onChanged: (_) {},
+          Text(
+            'Apariencia',
+            style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            'Elige cómo se ve Aris en este dispositivo.',
+            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: ThemeService.themeMode,
+            builder: (context, mode, _) {
+              return AppCard(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SegmentedButton<ThemeMode>(
+                      showSelectedIcon: false,
+                      segments: [
+                        ButtonSegment(
+                          value: ThemeMode.light,
+                          icon: const Icon(Icons.light_mode_outlined, size: 18),
+                          label: Text(AppThemePreference.light.labelEs),
+                        ),
+                        ButtonSegment(
+                          value: ThemeMode.dark,
+                          icon: const Icon(Icons.dark_mode_outlined, size: 18),
+                          label: Text(AppThemePreference.dark.labelEs),
+                        ),
+                        ButtonSegment(
+                          value: ThemeMode.system,
+                          icon: const Icon(
+                            Icons.brightness_auto_outlined,
+                            size: 18,
+                          ),
+                          label: Text(AppThemePreference.system.labelEs),
+                        ),
+                      ],
+                      selected: {mode},
+                      onSelectionChanged: (Set<ThemeMode> next) {
+                        if (next.isEmpty) return;
+                        ThemeService.setThemeMode(next.first);
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      mode == ThemeMode.system
+                          ? 'Aris seguirá el tema claro u oscuro del sistema.'
+                          : mode == ThemeMode.dark
+                              ? 'Modo oscuro con azules profundos y buen contraste.'
+                              : 'Modo claro con fondos crema y acentos azul‑violeta.',
+                      style: text.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const Divider(height: AppSpacing.xl),
+          Text(
+            'Animación (demo)',
+            style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: AppSpacing.xs),
           SwitchListTile(
             title: const Text('Reducir movimiento'),
             subtitle: const Text('Menos animaciones (no conectado)'),
@@ -32,7 +95,10 @@ class SettingsScreen extends StatelessWidget {
             onChanged: (_) {},
           ),
           const Divider(height: AppSpacing.xl),
-          Text('Aris / voz', style: text.titleSmall),
+          Text(
+            'Aris / voz',
+            style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: AppSpacing.xs),
           SwitchListTile(
             title: const Text('Sugerencias de voz'),
@@ -51,7 +117,10 @@ class SettingsScreen extends StatelessWidget {
             onTap: () {},
           ),
           const Divider(height: AppSpacing.xl),
-          Text('Privacidad y cuenta', style: text.titleSmall),
+          Text(
+            'Privacidad y cuenta',
+            style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: AppSpacing.xs),
           AppCard(
             child: Column(

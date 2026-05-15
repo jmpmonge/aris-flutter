@@ -22,6 +22,7 @@ class TodaySummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     Widget blockTitle(String t) => Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -64,7 +65,7 @@ class TodaySummaryCard extends StatelessWidget {
           border: Border.all(color: scheme.outline.withValues(alpha: 0.22)),
           boxShadow: [
             BoxShadow(
-              color: scheme.shadow.withValues(alpha: 0.08),
+              color: scheme.shadow.withValues(alpha: isDark ? 0.08 : 0.14),
               blurRadius: AppSpacing.shadowBlurCard,
               offset: AppSpacing.shadowOffsetCard,
             ),

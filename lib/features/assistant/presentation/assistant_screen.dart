@@ -37,7 +37,7 @@ class AssistantScreen extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: scheme.surface.withValues(alpha: 0),
         foregroundColor: scheme.onPrimary,
         iconTheme: IconThemeData(color: scheme.onPrimary),
         elevation: 0,
@@ -55,7 +55,17 @@ class AssistantScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [scheme.primary, AppColors.violetSoft, scheme.secondary],
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? [
+                    scheme.primary,
+                    scheme.primaryContainer,
+                    scheme.secondary,
+                  ]
+                : [
+                    scheme.primary,
+                    AppColors.violetSoft,
+                    scheme.secondary,
+                  ],
           ),
         ),
         child: SafeArea(
