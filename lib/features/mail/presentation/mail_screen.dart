@@ -5,6 +5,7 @@ import '../../../core/services/local_action_service.dart';
 import '../../../core/services/mail_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
+import '../../../shared/widgets/local_action_form_sheet.dart';
 import '../../../shared/widgets/local_action_card.dart';
 import '../../../shared/widgets/local_action_empty_state.dart';
 import '../../../theme/app_spacing.dart';
@@ -50,9 +51,14 @@ class _MailScreenState extends State<MailScreen> {
         key: const Key('tab_mail'),
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AppHeader(
+          AppHeader(
             title: 'Mail',
             subtitle: 'Bandejas simuladas · sin IMAP',
+            trailing: IconButton.filledTonal(
+              onPressed: () => LocalActionFormSheet.showMailForm(context),
+              icon: const Icon(Icons.add_rounded),
+              tooltip: 'Nueva acción de correo',
+            ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -87,7 +93,7 @@ class _MailScreenState extends State<MailScreen> {
                 if (mailActions.isEmpty)
                   const LocalActionEmptyState(
                     message:
-                        'Sin sugerencias todavía. En Inicio prueba «responder correo…».',
+                        'Sin sugerencias todavía. Usa + arriba, Perfil → Mail, o «responder correo» en Inicio.',
                   )
                 else
                   ...List.generate(mailActions.length, (i) {

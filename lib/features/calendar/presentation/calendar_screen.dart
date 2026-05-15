@@ -7,6 +7,7 @@ import 'calendar_body_views.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/local_action_card.dart';
 import '../../../shared/widgets/local_action_empty_state.dart';
+import '../../../shared/widgets/local_action_form_sheet.dart';
 import '../../../theme/app_spacing.dart';
 
 /// Calendario — vistas **Día / Semana / Mes** simuladas (sin calendario real).
@@ -55,9 +56,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
         key: const Key('tab_calendar'),
         padding: const EdgeInsets.only(bottom: AppSpacing.fabStackClearance),
         children: [
-          const AppHeader(
+          AppHeader(
             title: 'Calendario',
             subtitle: 'Planifica con calma · sin sincronización real',
+            trailing: IconButton.filledTonal(
+              onPressed: () => LocalActionFormSheet.showEventForm(context),
+              icon: const Icon(Icons.add_rounded),
+              tooltip: 'Nuevo evento',
+            ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -101,7 +107,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           if (arisEvents.isEmpty)
             const LocalActionEmptyState(
               message:
-                  'Nada programado aquí desde el chat. Escribe algo con «reunión» o «mañana…» en Inicio.',
+                  'Nada aquí. Usa + arriba o escribe en Inicio con «reunión» o «mañana…».',
             )
           else
             ...List.generate(arisEvents.length, (i) {

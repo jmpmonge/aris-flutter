@@ -6,6 +6,17 @@ enum LocalActionType { task, note, event, mail, general }
 /// Estado de la acción en la demo (sin persistencia real).
 enum LocalActionStatus { simulated, pending, completed }
 
+/// Prioridad visual opcional para tareas creadas desde formulario.
+enum LocalTaskPriority { low, medium, high }
+
+extension LocalTaskPriorityLabels on LocalTaskPriority {
+  String get displayLabel => switch (this) {
+        LocalTaskPriority.low => 'Baja',
+        LocalTaskPriority.medium => 'Media',
+        LocalTaskPriority.high => 'Alta',
+      };
+}
+
 @immutable
 class LocalActionModel {
   const LocalActionModel({
@@ -17,6 +28,9 @@ class LocalActionModel {
     required this.createdAt,
     this.status = LocalActionStatus.simulated,
     this.optionalIntentConfidence,
+    this.taskPriority,
+    this.noteCategory,
+    this.eventWhenText,
   });
 
   final String id;
@@ -28,6 +42,15 @@ class LocalActionModel {
   final LocalActionStatus status;
   final double? optionalIntentConfidence;
 
+  /// Solo tareas desde formulario / UI extendida.
+  final LocalTaskPriority? taskPriority;
+
+  /// Etiqueta libre (p. ej. Trabajo, Personal, Ideas).
+  final String? noteCategory;
+
+  /// Referencia temporal en texto (sin date picker real).
+  final String? eventWhenText;
+
   String get typeShortLabel => switch (type) {
         LocalActionType.task => 'TAREA',
         LocalActionType.note => 'NOTA',
@@ -35,6 +58,41 @@ class LocalActionModel {
         LocalActionType.mail => 'MAIL',
         LocalActionType.general => 'GENERAL',
       };
+
+  String get statusChipLabel => switch (status) {
+        LocalActionStatus.simulated => 'SIMULADO',
+        LocalActionStatus.pending => 'PENDIENTE',
+        LocalActionStatus.completed => 'LISTO',
+      };
+
+  LocalActionModel copyWith({
+    String? id,
+    LocalActionType? type,
+    String? title,
+    String? description,
+    String? sourceText,
+    DateTime? createdAt,
+    LocalActionStatus? status,
+    double? optionalIntentConfidence,
+    LocalTaskPriority? taskPriority,
+    String? noteCategory,
+    String? eventWhenText,
+  }) {
+    return LocalActionModel(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      sourceText: sourceText ?? this.sourceText,
+      createdAt: createdAt ?? this.createdAt,
+      status: status ?? this.status,
+      optionalIntentConfidence:
+          optionalIntentConfidence ?? this.optionalIntentConfidence,
+      taskPriority: taskPriority ?? this.taskPriority,
+      noteCategory: noteCategory ?? this.noteCategory,
+      eventWhenText: eventWhenText ?? this.eventWhenText,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -46,6 +104,9 @@ class LocalActionModel {
         'status': status.name,
         if (optionalIntentConfidence != null)
           'optionalIntentConfidence': optionalIntentConfidence,
+        if (taskPriority != null) 'taskPriority': taskPriority!.name,
+        if (noteCategory != null) 'noteCategory': noteCategory,
+        if (eventWhenText != null) 'eventWhenText': eventWhenText,
       };
 
   factory LocalActionModel.fromJson(Map<String, dynamic> json) {
@@ -61,6 +122,11 @@ class LocalActionModel {
       ),
       optionalIntentConfidence:
           (json['optionalIntentConfidence'] as num?)?.toDouble(),
+      taskPriority: json['taskPriority'] != null
+          ? LocalTaskPriority.values.byName(json['taskPriority'] as String)
+          : null,
+      noteCategory: json['noteCategory'] as String?,
+      eventWhenText: json['eventWhenText'] as String?,
     );
   }
 }

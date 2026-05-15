@@ -71,10 +71,152 @@ abstract final class LocalActionService {
       status: LocalActionStatus.simulated,
       optionalIntentConfidence: intent.confidence,
     );
-    _actions.insert(0, action);
+    _insert(action);
+    return action;
+  }
+
+  /// Tarea desde formulario (estado [LocalActionStatus.pending]).
+  static LocalActionModel createTask({
+    required String title,
+    String? description,
+    LocalTaskPriority? priority,
+  }) {
+    final t = title.trim();
+    if (t.isEmpty) {
+      throw ArgumentError.value(title, 'title', 'No puede estar vacío');
+    }
+    final now = DateTime.now();
+    final desc = description?.trim();
+    final body = (desc == null || desc.isEmpty)
+        ? 'Tarea creada desde el formulario local.'
+        : desc;
+    final action = LocalActionModel(
+      id: 'aris_local_${now.microsecondsSinceEpoch}',
+      type: LocalActionType.task,
+      title: t,
+      description: body,
+      sourceText: 'formulario:tarea',
+      createdAt: now,
+      status: LocalActionStatus.pending,
+      taskPriority: priority ?? LocalTaskPriority.medium,
+    );
+    _insert(action);
+    return action;
+  }
+
+  /// Nota desde formulario.
+  static LocalActionModel createNote({
+    required String title,
+    required String content,
+    String? category,
+  }) {
+    final t = title.trim();
+    if (t.isEmpty) {
+      throw ArgumentError.value(title, 'title', 'No puede estar vacío');
+    }
+    final now = DateTime.now();
+    final body = content.trim();
+    final desc = body.isEmpty
+        ? 'Nota creada desde el formulario local.'
+        : body;
+    final cat = category?.trim();
+    final action = LocalActionModel(
+      id: 'aris_local_${now.microsecondsSinceEpoch}',
+      type: LocalActionType.note,
+      title: t,
+      description: desc,
+      sourceText: 'formulario:nota',
+      createdAt: now,
+      status: LocalActionStatus.pending,
+      noteCategory: (cat == null || cat.isEmpty) ? null : cat,
+    );
+    _insert(action);
+    return action;
+  }
+
+  /// Evento desde formulario (fecha solo texto).
+  static LocalActionModel createEvent({
+    required String title,
+    String? description,
+    String? dateText,
+  }) {
+    final t = title.trim();
+    if (t.isEmpty) {
+      throw ArgumentError.value(title, 'title', 'No puede estar vacío');
+    }
+    final now = DateTime.now();
+    final desc = description?.trim();
+    final when = dateText?.trim();
+    final parts = <String>[];
+    if (desc != null && desc.isNotEmpty) parts.add(desc);
+    if (when != null && when.isNotEmpty) {
+      parts.add('Cuándo (simulado): $when');
+    }
+    if (parts.isEmpty) {
+      parts.add('Evento creado desde el formulario local.');
+    }
+    final action = LocalActionModel(
+      id: 'aris_local_${now.microsecondsSinceEpoch}',
+      type: LocalActionType.event,
+      title: t,
+      description: parts.join('\n\n'),
+      sourceText: 'formulario:evento',
+      createdAt: now,
+      status: LocalActionStatus.pending,
+      eventWhenText: when,
+    );
+    _insert(action);
+    return action;
+  }
+
+  /// Acción de correo simulada desde formulario.
+  static LocalActionModel createMailAction({
+    required String title,
+    String? description,
+  }) {
+    final t = title.trim();
+    if (t.isEmpty) {
+      throw ArgumentError.value(title, 'asunto', 'No puede estar vacío');
+    }
+    final now = DateTime.now();
+    final desc = description?.trim();
+    final body = (desc == null || desc.isEmpty)
+        ? 'Acción de correo simulada (sin envío real).'
+        : desc;
+    final action = LocalActionModel(
+      id: 'aris_local_${now.microsecondsSinceEpoch}',
+      type: LocalActionType.mail,
+      title: t,
+      description: body,
+      sourceText: 'formulario:correo',
+      createdAt: now,
+      status: LocalActionStatus.pending,
+    );
+    _insert(action);
+    return action;
+  }
+
+  /// Elimina una acción por identificador.
+  static void removeAction(String id) {
+    _actions.removeWhere((a) => a.id == id);
     revision.value++;
     _schedulePersist();
-    return action;
+  }
+
+  /// Completa o reabre tarea / acción mail.
+  static void toggleActionCompleted(String id) {
+    final i = _actions.indexWhere((a) => a.id == id);
+    if (i < 0) return;
+    final a = _actions[i];
+    if (a.type != LocalActionType.task && a.type != LocalActionType.mail) {
+      return;
+    }
+    final next = a.status == LocalActionStatus.completed
+        ? LocalActionStatus.pending
+        : LocalActionStatus.completed;
+    _actions[i] = a.copyWith(status: next);
+    revision.value++;
+    _schedulePersist();
   }
 
   /// Borra todas las acciones locales (demo / pruebas) y el almacenamiento.
@@ -93,6 +235,12 @@ abstract final class LocalActionService {
   @Deprecated('Usar clearLocalActions')
   static void clearAll() {
     unawaited(clearLocalActions());
+  }
+
+  static void _insert(LocalActionModel action) {
+    _actions.insert(0, action);
+    revision.value++;
+    _schedulePersist();
   }
 
   static void _schedulePersist() {

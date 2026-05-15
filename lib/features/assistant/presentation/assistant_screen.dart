@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/icon_from_key.dart';
 import '../../../core/services/assistant_service.dart';
+import '../../../shared/widgets/local_action_form_sheet.dart';
 import '../../../shared/widgets/quick_action_card.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
@@ -9,6 +10,23 @@ import '../../../theme/app_spacing.dart';
 /// Pantalla de acciones del asistente **Aris** (solo demostración).
 class AssistantScreen extends StatelessWidget {
   const AssistantScreen({super.key});
+
+  void _onQuickActionTap(BuildContext context, String id) {
+    switch (id) {
+      case 'mock_act_task':
+        LocalActionFormSheet.showTaskForm(context);
+      case 'mock_act_event':
+        LocalActionFormSheet.showEventForm(context);
+      case 'mock_act_note':
+        LocalActionFormSheet.showNoteForm(context);
+      case 'mock_act_mail':
+        LocalActionFormSheet.showMailForm(context);
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Acción simulada · sin servicio real')),
+        );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,11 +99,7 @@ class AssistantScreen extends StatelessWidget {
                     icon: iconFromKey(a.iconKey),
                     title: a.title,
                     subtitle: a.subtitle,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${a.title} · mock')),
-                      );
-                    },
+                    onTap: () => _onQuickActionTap(context, a.id),
                   ),
                 ),
               ),

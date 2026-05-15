@@ -6,6 +6,7 @@ import '../../../core/services/user_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../theme/app_spacing.dart';
+import '../../mail/presentation/mail_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
 
 /// Perfil — usuario, opciones y **versión** (mock).
@@ -66,6 +67,14 @@ class ProfileScreen extends StatelessWidget {
                   if (o.title == 'Cuenta') {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Cuenta · solo mock')),
+                    );
+                    return;
+                  }
+                  if (o.title == 'Mail') {
+                    Navigator.of(context).push<void>(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const MailScreen(),
+                      ),
                     );
                     return;
                   }

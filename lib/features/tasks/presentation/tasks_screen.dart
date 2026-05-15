@@ -6,6 +6,7 @@ import '../../../core/services/task_service.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/local_action_card.dart';
 import '../../../shared/widgets/local_action_empty_state.dart';
+import '../../../shared/widgets/local_action_form_sheet.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../core/models/task_model.dart';
 
@@ -125,10 +126,15 @@ class _TasksScreenState extends State<TasksScreen> {
       child: CustomScrollView(
         key: const Key('tab_tasks'),
         slivers: [
-          const SliverToBoxAdapter(
+          SliverToBoxAdapter(
             child: AppHeader(
               title: 'Tareas',
               subtitle: 'Prioridades suaves · datos de ejemplo',
+              trailing: IconButton.filledTonal(
+                onPressed: () => LocalActionFormSheet.showTaskForm(context),
+                icon: const Icon(Icons.add_rounded),
+                tooltip: 'Nueva tarea',
+              ),
             ),
           ),
           SliverToBoxAdapter(child: section('HOY', _today)),
@@ -172,7 +178,7 @@ class _TasksScreenState extends State<TasksScreen> {
         if (arisTasks.isEmpty)
           const LocalActionEmptyState(
             message:
-                'Nada aquí todavía. En Inicio, escribe algo tipo «recuérdame…» y vuelve: Aris creará una tarea simulada.',
+                'Nada aquí todavía. Usa el botón + arriba o escribe en Inicio (p. ej. «recuérdame…»).',
           )
         else
           ...List.generate(arisTasks.length, (i) {

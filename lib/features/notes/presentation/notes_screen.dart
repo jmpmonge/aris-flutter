@@ -8,6 +8,7 @@ import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/app_search_bar.dart';
 import '../../../shared/widgets/local_action_card.dart';
 import '../../../shared/widgets/local_action_empty_state.dart';
+import '../../../shared/widgets/local_action_form_sheet.dart';
 import '../../../shared/widgets/section_title.dart';
 import '../../../theme/app_spacing.dart';
 
@@ -59,9 +60,7 @@ class _NotesScreenState extends State<NotesScreen> {
             title: 'Notas rápidas',
             actionLabel: 'Nueva nota',
             onAction: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Nueva nota · solo demo')),
-              );
+              LocalActionFormSheet.showNoteForm(context);
             },
           ),
           SizedBox(
@@ -101,7 +100,7 @@ class _NotesScreenState extends State<NotesScreen> {
           if (arisNotes.isEmpty)
             const LocalActionEmptyState(
               message:
-                  'Sin notas desde el chat. Prueba «apunta esta idea…» en Inicio.',
+                  'Sin notas desde el chat ni desde el formulario. Pulsa «Nueva nota» arriba.',
             )
           else
             SizedBox(

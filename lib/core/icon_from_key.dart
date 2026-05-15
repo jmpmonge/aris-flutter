@@ -13,6 +13,7 @@ IconData iconFromKey(String key) {
     'event_available_rounded' => Icons.event_available_rounded,
     'note_add_rounded' => Icons.note_add_rounded,
     'mark_email_read_outlined' => Icons.mark_email_read_outlined,
+    'mail_outline_rounded' => Icons.mail_outline_rounded,
     _ => Icons.smart_button_outlined,
   };
 }

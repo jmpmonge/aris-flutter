@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/models/local_action_model.dart';
+import '../../core/services/local_action_service.dart';
 import '../../theme/app_spacing.dart';
 
 /// Tarjeta premium para acciones locales simuladas creadas por Aris.
@@ -25,6 +26,7 @@ class LocalActionCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final pad = compact ? AppSpacing.sm : AppSpacing.md;
     final vGap = compact ? AppSpacing.xxs : AppSpacing.xs;
+    final completed = action.status == LocalActionStatus.completed;
 
     Widget chip(String label, {bool primary = false}) {
       return DecoratedBox(
@@ -55,6 +57,15 @@ class LocalActionCard extends StatelessWidget {
       );
     }
 
+    final metaChips = <Widget>[
+      if (action.taskPriority != null)
+        chip(action.taskPriority!.displayLabel, primary: false),
+      if (action.noteCategory != null && action.noteCategory!.isNotEmpty)
+        chip(action.noteCategory!, primary: false),
+      if (action.eventWhenText != null && action.eventWhenText!.isNotEmpty)
+        chip(action.eventWhenText!, primary: false),
+    ];
+
     return DecoratedBox(
       decoration: BoxDecoration(
         color: scheme.surface,
@@ -79,7 +90,8 @@ class LocalActionCard extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 chip(action.typeShortLabel, primary: true),
-                chip('SIMULADO'),
+                chip(action.statusChipLabel),
+                ...metaChips,
               ],
             ),
             SizedBox(height: vGap),
@@ -88,6 +100,9 @@ class LocalActionCard extends StatelessWidget {
               style: (compact ? text.titleSmall : text.titleMedium)?.copyWith(
                 fontWeight: FontWeight.w600,
                 height: 1.25,
+                decoration:
+                    completed ? TextDecoration.lineThrough : TextDecoration.none,
+                color: completed ? scheme.onSurfaceVariant : null,
               ),
             ),
             SizedBox(height: compact ? AppSpacing.xxs : AppSpacing.xs),
@@ -108,6 +123,32 @@ class LocalActionCard extends StatelessWidget {
                 letterSpacing: 0.4,
               ),
             ),
+            if (!compact) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (action.type == LocalActionType.task ||
+                      action.type == LocalActionType.mail)
+                    IconButton.filledTonal(
+                      tooltip: completed ? 'Marcar pendiente' : 'Completar',
+                      icon: Icon(
+                        completed
+                            ? Icons.undo_rounded
+                            : Icons.check_rounded,
+                      ),
+                      onPressed: () =>
+                          LocalActionService.toggleActionCompleted(action.id),
+                    ),
+                  IconButton(
+                    tooltip: 'Eliminar',
+                    icon: const Icon(Icons.delete_outline_rounded),
+                    onPressed: () =>
+                        LocalActionService.removeAction(action.id),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

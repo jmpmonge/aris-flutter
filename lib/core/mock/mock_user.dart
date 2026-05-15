@@ -16,6 +16,11 @@ abstract final class MockUser {
 
   static const profileMenu = [
     ProfileMenuEntryModel(
+      iconKey: 'mail_outline_rounded',
+      title: 'Mail',
+      subtitle: 'Bandeja simulada local',
+    ),
+    ProfileMenuEntryModel(
       iconKey: 'person_rounded',
       title: 'Cuenta',
       subtitle: 'Datos de perfil simulados',
