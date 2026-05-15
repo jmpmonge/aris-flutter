@@ -43,6 +43,12 @@ class AssistantScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
+          style: IconButton.styleFrom(
+            minimumSize: const Size(
+              AppSpacing.minTouchTarget,
+              AppSpacing.minTouchTarget,
+            ),
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -70,11 +76,11 @@ class AssistantScreen extends StatelessWidget {
         ),
         child: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
               AppSpacing.md,
               AppSpacing.sm,
               AppSpacing.md,
-              AppSpacing.xl,
+              AppSpacing.xl + MediaQuery.paddingOf(context).bottom,
             ),
             children: [
               Text(

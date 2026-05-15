@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/services/theme_service.dart';
+import 'shared/layout/responsive_app_frame.dart';
 import 'shared/navigation/app_navigation_shell.dart';
 import 'theme/app_theme.dart';
 
@@ -36,6 +37,9 @@ class _ArisAppState extends State<ArisApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeService.themeMode.value,
+      builder: (context, child) {
+        return ResponsiveAppFrame(child: child ?? const SizedBox.shrink());
+      },
       home: const AppNavigationShell(),
     );
   }

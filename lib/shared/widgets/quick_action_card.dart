@@ -34,39 +34,48 @@ class QuickActionCard extends StatelessWidget {
             border: Border.all(color: scheme.outline.withValues(alpha: 0.25)),
           ),
           padding: const EdgeInsets.all(AppSpacing.md),
-          child: Row(
-            children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: scheme.primaryContainer.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  child: Icon(
-                    icon,
-                    color: scheme.primary,
-                    size: AppSpacing.iconMd,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: AppSpacing.minTouchTarget,
+            ),
+            child: Row(
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    child: Icon(
+                      icon,
+                      color: scheme.primary,
+                      size: AppSpacing.iconMd,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: text.titleSmall),
-                    Text(
-                      subtitle,
-                      style: text.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(title, style: text.titleSmall),
+                      Text(
+                        subtitle,
+                        style: text.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
-            ],
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: scheme.onSurfaceVariant,
+                ),
+              ],
+            ),
           ),
         ),
       ),

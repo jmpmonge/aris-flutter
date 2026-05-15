@@ -21,6 +21,8 @@ class ProfileScreen extends StatelessWidget {
     final options = UserService.getProfileMenuEntries();
 
     return SafeArea(
+      top: true,
+      bottom: false,
       child: ListView(
         key: const Key('tab_profile'),
         padding: const EdgeInsets.only(bottom: AppSpacing.fabStackClearance),

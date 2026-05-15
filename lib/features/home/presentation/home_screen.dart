@@ -64,6 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
+      top: true,
       bottom: false,
       child: ListView(
         key: const Key('tab_home'),

@@ -52,6 +52,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
     };
 
     return SafeArea(
+      top: true,
+      bottom: false,
       child: ListView(
         key: const Key('tab_calendar'),
         padding: const EdgeInsets.only(bottom: AppSpacing.fabStackClearance),

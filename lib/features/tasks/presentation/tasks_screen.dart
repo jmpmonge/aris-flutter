@@ -113,7 +113,9 @@ class _TasksScreenState extends State<TasksScreen> {
                   controlAffinity: ListTileControlAffinity.leading,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
                   ),
+                  minVerticalPadding: AppSpacing.sm,
                 ),
               ),
             );
@@ -123,6 +125,8 @@ class _TasksScreenState extends State<TasksScreen> {
     }
 
     return SafeArea(
+      top: true,
+      bottom: false,
       child: CustomScrollView(
         key: const Key('tab_tasks'),
         slivers: [

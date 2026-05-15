@@ -47,6 +47,8 @@ class _MailScreenState extends State<MailScreen> {
         LocalActionService.getActionsByType(LocalActionType.mail);
 
     return SafeArea(
+      top: true,
+      bottom: false,
       child: Column(
         key: const Key('tab_mail'),
         crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -47,6 +47,8 @@ class _NotesScreenState extends State<NotesScreen> {
         LocalActionService.getActionsByType(LocalActionType.note);
 
     return SafeArea(
+      top: true,
+      bottom: false,
       child: Column(
         key: const Key('tab_notes'),
         crossAxisAlignment: CrossAxisAlignment.stretch,

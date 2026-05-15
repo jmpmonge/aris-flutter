@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/models/local_action_model.dart';
 import '../../core/services/local_action_service.dart';
 import '../../theme/app_spacing.dart';
+import '../layout/breakpoints.dart';
 import 'app_form_button.dart';
 import 'app_text_field.dart';
 import 'form_section_title.dart';
@@ -27,6 +28,13 @@ abstract final class LocalActionFormSheet {
 
   static Future<void> _open(BuildContext context, Widget body) {
     final scheme = Theme.of(context).colorScheme;
+    final width = MediaQuery.sizeOf(context).width;
+    final sheetConstraints = width > LayoutBreakpoints.webMobileFrameMaxWidth
+        ? BoxConstraints(
+            maxWidth: LayoutBreakpoints.webMobileFrameMaxWidth,
+          )
+        : null;
+
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -34,6 +42,7 @@ abstract final class LocalActionFormSheet {
       showDragHandle: true,
       backgroundColor: scheme.surface,
       barrierColor: scheme.scrim.withValues(alpha: 0.45),
+      constraints: sheetConstraints,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusXl),

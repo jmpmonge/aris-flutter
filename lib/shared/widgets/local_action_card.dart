@@ -152,6 +152,12 @@ class LocalActionCard extends StatelessWidget {
                   IconButton(
                     tooltip: 'Eliminar',
                     icon: const Icon(Icons.delete_outline_rounded),
+                    style: IconButton.styleFrom(
+                      minimumSize: const Size(
+                        AppSpacing.minTouchTarget,
+                        AppSpacing.minTouchTarget,
+                      ),
+                    ),
                     onPressed: () =>
                         LocalActionService.removeAction(action.id),
                   ),
