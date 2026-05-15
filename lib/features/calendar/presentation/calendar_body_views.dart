@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 
-import '../data/calendar_mock_content.dart';
+import '../../../core/models/event_model.dart';
+import '../../../core/services/calendar_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../theme/app_spacing.dart';
 
 /// Franja horaria vertical (vista día) — eventos mock por hora.
 class CalendarDayView extends StatelessWidget {
-  const CalendarDayView({super.key});
+  const CalendarDayView({super.key, required this.events});
+
+  final List<EventModel> events;
 
   static const int _firstHour = 7;
   static const int _lastHour = 21;
 
-  static CalendarEventMock? _eventStartingAtHour(int h) {
-    for (final e in CalendarMockContent.dayEvents) {
-      if (e.hour == h) return e;
+  EventModel? _eventStartingAtHour(int h) {
+    for (final e in events) {
+      if (e.start.hour == h) return e;
     }
     return null;
   }
@@ -56,7 +59,7 @@ class CalendarDayView extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${CalendarMockContent.formatTime(match)} · ${match.title}',
+                              '${match.timeHm} · ${match.title}',
                               style: text.titleSmall,
                             ),
                             Text(
@@ -101,7 +104,6 @@ class CalendarDayView extends StatelessWidget {
 class CalendarWeekView extends StatelessWidget {
   const CalendarWeekView({super.key, required this.weekStart});
 
-  /// Lunes de la semana mostrada.
   final DateTime weekStart;
 
   static const weekdayShortLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
@@ -129,7 +131,7 @@ class CalendarWeekView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: List.generate(7, (i) {
               final d = weekStart.add(Duration(days: i));
-              final events = CalendarMockContent.eventsForWeekday(d.weekday);
+              final events = CalendarService.getWeekEvents(d);
               final isToday =
                   d.year == DateTime.now().year &&
                   d.month == DateTime.now().month &&
@@ -233,10 +235,7 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
     final leading = first.weekday - DateTime.monday;
     final totalCells = ((leading + daysInMonth + 6) ~/ 7) * 7;
 
-    final selectedEvents = CalendarMockContent.eventsForMonthDay(
-      _month,
-      _selectedDay,
-    );
+    final selectedEvents = CalendarService.getMonthEvents(_month, _selectedDay);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -285,7 +284,10 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
               if (dayNum < 1 || dayNum > daysInMonth) {
                 return const SizedBox.shrink();
               }
-              final hasDot = CalendarMockContent.monthDayHasMarker(dayNum);
+              final hasDot = CalendarService.getMonthDayHasEvent(
+                _month,
+                dayNum,
+              );
               final selected = dayNum == _selectedDay;
               final isToday =
                   _month.year == DateTime.now().year &&
@@ -361,10 +363,7 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
                     children: [
                       SizedBox(
                         width: AppSpacing.calendarTimeColumnWidth,
-                        child: Text(
-                          CalendarMockContent.formatTime(e),
-                          style: text.labelLarge,
-                        ),
+                        child: Text(e.timeHm, style: text.labelLarge),
                       ),
                       Expanded(
                         child: Column(

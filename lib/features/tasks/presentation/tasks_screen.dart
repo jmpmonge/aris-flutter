@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/services/task_service.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../core/models/task_model.dart';
 
 /// Tareas — hoy y próximas, estados mock (sin persistencia).
 class TasksScreen extends StatefulWidget {
@@ -12,23 +14,22 @@ class TasksScreen extends StatefulWidget {
 }
 
 class _TasksScreenState extends State<TasksScreen> {
-  final _today = [
-    _TaskItem('Preparar reunión lunes', false),
-    _TaskItem('Pagar suscripción cloud', true),
-    _TaskItem('Revisar borrador de correo', false),
-  ];
+  late List<TaskModel> _today;
+  late List<TaskModel> _upcoming;
 
-  final _upcoming = [
-    _TaskItem('Reservar restaurante (mock)', false),
-    _TaskItem('Actualizar documentación', false),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _today = List<TaskModel>.from(TaskService.getTodayTasks());
+    _upcoming = List<TaskModel>.from(TaskService.getUpcomingTasks());
+  }
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
 
-    Widget section(String title, List<_TaskItem> items) {
+    Widget section(String title, List<TaskModel> items) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -63,26 +64,35 @@ class _TasksScreenState extends State<TasksScreen> {
                 shape: Theme.of(context).cardTheme.shape,
                 clipBehavior: Clip.antiAlias,
                 child: CheckboxListTile(
-                  value: t.done,
+                  value: t.completed,
                   onChanged: (_) {
-                    setState(() => t.done = !t.done);
+                    setState(() {
+                      final toggle = !t.completed;
+                      if (items == _today) {
+                        _today[i] = t.copyWith(completed: toggle);
+                      } else {
+                        _upcoming[i] = t.copyWith(completed: toggle);
+                      }
+                    });
                   },
                   title: Text(
                     t.title,
                     style: text.bodyLarge?.copyWith(
-                      decoration: t.done
+                      decoration: t.completed
                           ? TextDecoration.lineThrough
                           : TextDecoration.none,
-                      color: t.done
+                      color: t.completed
                           ? scheme.onSurfaceVariant
                           : scheme.onSurface,
                     ),
                   ),
                   secondary: Icon(
-                    t.done
+                    t.completed
                         ? Icons.check_circle_rounded
                         : Icons.radio_button_unchecked_rounded,
-                    color: t.done ? scheme.secondary : scheme.onSurfaceVariant,
+                    color: t.completed
+                        ? scheme.secondary
+                        : scheme.onSurfaceVariant,
                   ),
                   controlAffinity: ListTileControlAffinity.leading,
                   contentPadding: const EdgeInsets.symmetric(
@@ -115,11 +125,4 @@ class _TasksScreenState extends State<TasksScreen> {
       ),
     );
   }
-}
-
-class _TaskItem {
-  _TaskItem(this.title, this.done);
-
-  final String title;
-  bool done;
 }

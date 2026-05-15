@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../core/models/event_model.dart';
+import '../../core/models/note_model.dart';
+import '../../core/models/task_model.dart';
 import '../../theme/app_spacing.dart';
 
 /// Bloque **HOY**: eventos, tareas y notas compactas (mock).
@@ -11,9 +14,9 @@ class TodaySummaryCard extends StatelessWidget {
     this.notes = const [],
   });
 
-  final List<String> events;
-  final List<String> tasks;
-  final List<String> notes;
+  final List<EventModel> events;
+  final List<TaskModel> tasks;
+  final List<NoteModel> notes;
 
   @override
   Widget build(BuildContext context) {
@@ -83,17 +86,25 @@ class TodaySummaryCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               blockTitle('EVENTOS'),
               ...events.map(
-                (e) => bulletRow(Icons.event_available_outlined, e),
+                (e) => bulletRow(
+                  Icons.event_available_outlined,
+                  e.homePreviewLine,
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
               blockTitle('TAREAS'),
               ...tasks.map(
-                (t) => bulletRow(Icons.radio_button_unchecked_rounded, t),
+                (t) => bulletRow(Icons.radio_button_unchecked_rounded, t.title),
               ),
               if (notes.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.sm),
                 blockTitle('NOTAS'),
-                ...notes.map((n) => bulletRow(Icons.sticky_note_2_outlined, n)),
+                ...notes.map(
+                  (n) => bulletRow(
+                    Icons.sticky_note_2_outlined,
+                    n.homePreviewLine,
+                  ),
+                ),
               ],
             ],
           ),

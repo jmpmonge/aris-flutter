@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/services/calendar_service.dart';
+import '../../../core/services/chat_service.dart';
+import '../../../core/services/task_service.dart';
+import '../../../core/services/note_service.dart';
+import '../../../core/services/user_service.dart';
 import '../../assistant/presentation/assistant_screen.dart';
-import '../data/home_mock_content.dart';
 import '../../../shared/widgets/home_brand_header.dart';
 import '../../../shared/widgets/home_greeting_card.dart';
 import '../../../shared/widgets/recent_conversation_card.dart';
@@ -30,19 +34,19 @@ class HomeScreen extends StatelessWidget {
           HomeBrandHeader(onAssistantTap: () => _openAssistant(context)),
           const SizedBox(height: AppSpacing.homeSectionSpacing),
           HomeGreetingCard(
-            greeting: HomeMockContent.greetingForNow(),
-            summary: HomeMockContent.summary,
+            greeting: UserService.getGreetingForNow(),
+            summary: UserService.getHomeSummaryLine(),
           ),
           const SizedBox(height: AppSpacing.homeSectionSpacing),
-          const SuggestionCard(message: HomeMockContent.suggestion),
+          SuggestionCard(message: UserService.getHomeSuggestionLine()),
           const SizedBox(height: AppSpacing.homeSectionSpacing),
-          const TodaySummaryCard(
-            events: HomeMockContent.events,
-            tasks: HomeMockContent.tasks,
-            notes: HomeMockContent.notes,
+          TodaySummaryCard(
+            events: CalendarService.getHomeHighlightEvents(),
+            tasks: TaskService.getHomeHighlightTasks(),
+            notes: NoteService.getHomeHighlightNotes(),
           ),
           const SizedBox(height: AppSpacing.homeSectionSpacing),
-          const RecentConversationCard(),
+          RecentConversationCard(messages: ChatService.getRecentConversation()),
         ],
       ),
     );

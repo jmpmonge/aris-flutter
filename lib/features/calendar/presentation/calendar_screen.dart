@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/services/calendar_service.dart';
 import 'calendar_body_views.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../theme/app_spacing.dart';
@@ -21,7 +22,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final text = Theme.of(context).textTheme;
 
     final calendarBody = switch (_view) {
-      0 => const CalendarDayView(),
+      0 => CalendarDayView(events: CalendarService.getTodayEvents()),
       1 => CalendarWeekView(weekStart: mondayOfWeek(DateTime.now())),
       _ => const CalendarMonthView(),
     };

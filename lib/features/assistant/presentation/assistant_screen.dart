@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../data/assistant_mock_content.dart';
+import '../../../core/icon_from_key.dart';
+import '../../../core/services/assistant_service.dart';
 import '../../../shared/widgets/quick_action_card.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
@@ -13,6 +14,7 @@ class AssistantScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final actions = AssistantService.getQuickActions();
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -72,17 +74,17 @@ class AssistantScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              ...AssistantMockContent.actions.map(
+              ...actions.map(
                 (a) => Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: QuickActionCard(
-                    icon: a.$1,
-                    title: a.$2,
-                    subtitle: a.$3,
+                    icon: iconFromKey(a.iconKey),
+                    title: a.title,
+                    subtitle: a.subtitle,
                     onTap: () {
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text('${a.$2} · mock')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${a.title} · mock')),
+                      );
                     },
                   ),
                 ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../data/notes_mock_content.dart';
+import '../../../core/services/note_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/app_search_bar.dart';
@@ -15,6 +15,8 @@ class NotesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final quick = NoteService.getQuickLabels();
+    final recent = NoteService.getRecentNotes();
 
     return SafeArea(
       child: Column(
@@ -40,11 +42,11 @@ class NotesScreen extends StatelessWidget {
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               scrollDirection: Axis.horizontal,
-              itemCount: NotesMockContent.quickLabels.length,
+              itemCount: quick.length,
               separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.xs),
               itemBuilder: (context, i) {
                 return ActionChip(
-                  label: Text(NotesMockContent.quickLabels[i]),
+                  label: Text(quick[i]),
                   side: BorderSide(
                     color: scheme.outline.withValues(alpha: 0.35),
                   ),
@@ -77,19 +79,19 @@ class NotesScreen extends StatelessWidget {
                 AppSpacing.md,
                 AppSpacing.fabStackClearance,
               ),
-              itemCount: NotesMockContent.recentNotes.length,
+              itemCount: recent.length,
               itemBuilder: (context, i) {
-                final n = NotesMockContent.recentNotes[i];
+                final n = recent[i];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: AppCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(n.$1, style: text.titleSmall),
+                        Text(n.title, style: text.titleSmall),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
-                          n.$2,
+                          n.body,
                           style: text.bodyMedium?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),

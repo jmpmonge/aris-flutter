@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../data/profile_mock_content.dart';
 import '../../../core/app_meta.dart';
+import '../../../core/icon_from_key.dart';
+import '../../../core/services/user_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../theme/app_spacing.dart';
@@ -15,8 +16,8 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-
-    final options = ProfileMockContent.options;
+    final user = UserService.getCurrentUser();
+    final options = UserService.getProfileMenuEntries();
 
     return SafeArea(
       child: ListView(
@@ -33,7 +34,7 @@ class ProfileScreen extends StatelessWidget {
                     radius: AppSpacing.profileAvatarRadius,
                     backgroundColor: scheme.primaryContainer,
                     child: Text(
-                      'J',
+                      user.primaryInitial,
                       style: text.headlineSmall?.copyWith(
                         color: scheme.onPrimaryContainer,
                       ),
@@ -44,11 +45,8 @@ class ProfileScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('José', style: text.titleMedium),
-                        Text(
-                          'jose@ejemplo.aris (simulado)',
-                          style: text.bodySmall,
-                        ),
+                        Text(user.displayName, style: text.titleMedium),
+                        Text(user.emailSimulated, style: text.bodySmall),
                       ],
                     ),
                   ),
@@ -65,13 +63,13 @@ class ProfileScreen extends StatelessWidget {
               ),
               child: AppCard(
                 onTap: () {
-                  if (o.$2 == 'Cuenta') {
+                  if (o.title == 'Cuenta') {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Cuenta · solo mock')),
                     );
                     return;
                   }
-                  if (o.$2 == 'Preferencias') {
+                  if (o.title == 'Preferencias') {
                     Navigator.of(context).push<void>(
                       MaterialPageRoute<void>(
                         builder: (_) => const SettingsScreen(),
@@ -80,20 +78,20 @@ class ProfileScreen extends StatelessWidget {
                     return;
                   }
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${o.$2} · solo mock')),
+                    SnackBar(content: Text('${o.title} · solo mock')),
                   );
                 },
                 child: Row(
                   children: [
-                    Icon(o.$1, color: scheme.primary),
+                    Icon(iconFromKey(o.iconKey), color: scheme.primary),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(o.$2, style: text.titleSmall),
+                          Text(o.title, style: text.titleSmall),
                           Text(
-                            o.$3,
+                            o.subtitle,
                             style: text.bodySmall?.copyWith(
                               color: scheme.onSurfaceVariant,
                             ),

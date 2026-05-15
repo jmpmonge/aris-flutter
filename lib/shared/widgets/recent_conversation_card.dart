@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../core/models/chat_message_model.dart';
 import '../../theme/app_spacing.dart';
 
 /// Bloque **RECIENTE** con burbujas tipo chat (mock).
 class RecentConversationCard extends StatelessWidget {
-  const RecentConversationCard({super.key});
+  const RecentConversationCard({super.key, required this.messages});
+
+  final List<ChatMessageModel> messages;
 
   @override
   Widget build(BuildContext context) {
@@ -39,31 +42,16 @@ class RecentConversationCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              _Bubble(
-                alignLeft: true,
-                label: 'ARIS',
-                text:
-                    'He agrupado tus reuniones de la tarde. ¿Quieres que te avise 15 min antes?',
-                scheme: scheme,
-                textTheme: text,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _Bubble(
-                alignLeft: false,
-                label: 'TÚ',
-                text: 'Sí, avísame para las 15:15.',
-                scheme: scheme,
-                textTheme: text,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _Bubble(
-                alignLeft: true,
-                label: 'ARIS',
-                text:
-                    'Listo. Es solo una demostración — sin notificaciones reales.',
-                scheme: scheme,
-                textTheme: text,
-              ),
+              for (var i = 0; i < messages.length; i++) ...[
+                if (i > 0) const SizedBox(height: AppSpacing.sm),
+                _Bubble(
+                  alignLeft: messages[i].isAris,
+                  label: messages[i].isAris ? 'ARIS' : 'TÚ',
+                  text: messages[i].text,
+                  scheme: scheme,
+                  textTheme: text,
+                ),
+              ],
             ],
           ),
         ),

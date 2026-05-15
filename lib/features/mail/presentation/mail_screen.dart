@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/services/mail_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../theme/app_spacing.dart';
@@ -13,41 +14,14 @@ class MailScreen extends StatefulWidget {
 }
 
 class _MailScreenState extends State<MailScreen> {
-  int _folder = 0; // 0 Principal, 1 Social, 2 Promociones
-
-  static const _tabs = ['Principal', 'Social', 'Promociones'];
-
-  static final List<List<(String, String, String)>> _mockMail = [
-    [
-      (
-        'Laura M.',
-        '¿Nos vemos el martes?',
-        'Hola José, avísame si te viene bien…',
-      ),
-      ('Banco Demo', 'Resumen de tu cuenta', 'No es un correo real.'),
-    ],
-    [
-      (
-        'Equipo fútbol',
-        'Partido el domingo',
-        'Llevamos camisetas nuevas (mock).',
-      ),
-    ],
-    [
-      (
-        'Newsletter UX',
-        '5 tips de accesibilidad',
-        'Promo simulada · sin enlaces.',
-      ),
-      ('Tienda muebles', '-20% esta semana', 'Oferta ficticia.'),
-    ],
-  ];
+  int _folder = 0;
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    final mails = _mockMail[_folder];
+    final tabs = MailService.getFolderLabels();
+    final mails = MailService.getInboxPreview(folderIndex: _folder);
 
     return SafeArea(
       child: Column(
@@ -62,8 +36,8 @@ class _MailScreenState extends State<MailScreen> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: SegmentedButton<int>(
               segments: [
-                for (var i = 0; i < _tabs.length; i++)
-                  ButtonSegment<int>(value: i, label: Text(_tabs[i])),
+                for (var i = 0; i < tabs.length; i++)
+                  ButtonSegment<int>(value: i, label: Text(tabs[i])),
               ],
               selected: {_folder},
               onSelectionChanged: (s) => setState(() => _folder = s.first),
@@ -76,7 +50,7 @@ class _MailScreenState extends State<MailScreen> {
                 AppSpacing.md,
                 0,
                 AppSpacing.md,
-                100,
+                AppSpacing.fabStackClearance,
               ),
               itemCount: mails.length,
               itemBuilder: (context, i) {
@@ -93,26 +67,30 @@ class _MailScreenState extends State<MailScreen> {
                               radius: 18,
                               backgroundColor: scheme.secondaryContainer,
                               child: Text(
-                                m.$1.isNotEmpty ? m.$1[0] : '?',
+                                m.senderName.isNotEmpty
+                                    ? m.senderName.substring(0, 1)
+                                    : '?',
                                 style: text.labelLarge?.copyWith(
                                   color: scheme.onSecondaryContainer,
                                 ),
                               ),
                             ),
                             const SizedBox(width: AppSpacing.sm),
-                            Expanded(child: Text(m.$1, style: text.titleSmall)),
+                            Expanded(
+                              child: Text(m.senderName, style: text.titleSmall),
+                            ),
                           ],
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
-                          m.$2,
+                          m.subject,
                           style: text.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: AppSpacing.xxs),
                         Text(
-                          m.$3,
+                          m.preview,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: text.bodySmall,
