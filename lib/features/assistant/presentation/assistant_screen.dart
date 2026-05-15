@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/icon_from_key.dart';
-import '../../../core/services/assistant_service.dart';
+import '../../../core/repositories/repositories.dart';
 import '../../../shared/widgets/local_action_form_sheet.dart';
 import '../../../shared/widgets/quick_action_card.dart';
 import '../../../theme/app_colors.dart';
@@ -32,7 +32,7 @@ class AssistantScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final actions = AssistantService.getQuickActions();
+    final actions = Repositories.assistant.getQuickActions();
 
     return Scaffold(
       extendBodyBehindAppBar: true,

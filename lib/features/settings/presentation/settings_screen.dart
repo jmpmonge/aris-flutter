@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/models/app_theme_mode.dart';
-import '../../../core/services/theme_service.dart';
+import '../../../core/repositories/repositories.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../theme/app_spacing.dart';
 
@@ -35,7 +35,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           ValueListenableBuilder<ThemeMode>(
-            valueListenable: ThemeService.themeMode,
+            valueListenable: Repositories.settings.themeListenable,
             builder: (context, mode, _) {
               return AppCard(
                 padding: const EdgeInsets.all(AppSpacing.md),
@@ -67,7 +67,7 @@ class SettingsScreen extends StatelessWidget {
                       selected: {mode},
                       onSelectionChanged: (Set<ThemeMode> next) {
                         if (next.isEmpty) return;
-                        ThemeService.setThemeMode(next.first);
+                        Repositories.settings.setThemeMode(next.first);
                       },
                     ),
                     const SizedBox(height: AppSpacing.sm),

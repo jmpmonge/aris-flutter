@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'core/services/theme_service.dart';
+import 'core/repositories/repositories.dart';
 import 'shared/layout/responsive_app_frame.dart';
 import 'shared/navigation/app_navigation_shell.dart';
 import 'theme/app_theme.dart';
 
-/// Raíz de la aplicación: tema claro / oscuro / sistema según [ThemeService].
+/// Raíz de la aplicación: tema claro / oscuro / sistema según [Repositories.settings].
 class ArisApp extends StatefulWidget {
   const ArisApp({super.key});
 
@@ -17,12 +17,12 @@ class _ArisAppState extends State<ArisApp> {
   @override
   void initState() {
     super.initState();
-    ThemeService.themeMode.addListener(_onThemeMode);
+    Repositories.settings.themeListenable.addListener(_onThemeMode);
   }
 
   @override
   void dispose() {
-    ThemeService.themeMode.removeListener(_onThemeMode);
+    Repositories.settings.themeListenable.removeListener(_onThemeMode);
     super.dispose();
   }
 
@@ -36,7 +36,7 @@ class _ArisAppState extends State<ArisApp> {
       title: 'Aris',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeService.themeMode.value,
+      themeMode: Repositories.settings.themeListenable.value,
       builder: (context, child) {
         return ResponsiveAppFrame(child: child ?? const SizedBox.shrink());
       },

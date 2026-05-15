@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/services/chat_service.dart';
+import '../../core/repositories/repositories.dart';
 import '../../features/assistant/presentation/assistant_screen.dart';
 import '../../features/calendar/presentation/calendar_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
@@ -73,12 +73,12 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
   }
 
   void _onChatSend(String text) {
-    ChatService.sendLocalMessage(text);
+    Repositories.assistant.sendUserMessage(text);
     _chatController.clear();
   }
 
   void _onMicTap() {
-    ChatService.sendVoicePendingNotice();
+    Repositories.assistant.sendVoicePendingNotice();
   }
 
   @override
