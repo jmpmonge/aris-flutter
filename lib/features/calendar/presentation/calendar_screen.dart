@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../shared/widgets/app_card.dart';
+import 'calendar_body_views.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Calendario — vista Día / Semana / Mes + eventos **mock**.
+/// Calendario — vistas **Día / Semana / Mes** simuladas (sin calendario real).
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
 
@@ -17,19 +17,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
 
-    const events = [
-      ('09:00', 'Café con Laura', 'Café Central (mock)'),
-      ('12:30', 'Almuerzo equipo', 'Online'),
-      ('18:00', 'Gimnasio', 'Plan suave'),
-    ];
+    final calendarBody = switch (_view) {
+      0 => const CalendarDayView(),
+      1 => CalendarWeekView(weekStart: mondayOfWeek(DateTime.now())),
+      _ => const CalendarMonthView(),
+    };
 
     return SafeArea(
       child: ListView(
         key: const Key('tab_calendar'),
-        padding: const EdgeInsets.only(bottom: 100),
+        padding: const EdgeInsets.only(bottom: AppSpacing.fabStackClearance),
         children: [
           const AppHeader(
             title: 'Calendario',
@@ -51,49 +51,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: Text(
-              _view == 0
-                  ? 'Vista día — ejemplo visual'
-                  : _view == 1
-                      ? 'Vista semana — ejemplo visual'
-                      : 'Vista mes — ejemplo visual',
+              switch (_view) {
+                0 => 'Vista día · franjas horarias mock',
+                1 => 'Vista semana · columnas por día mock',
+                _ => 'Vista mes · cuadrícula y día seleccionado mock',
+              },
               style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          ...events.map(
-            (e) => Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                0,
-                AppSpacing.md,
-                AppSpacing.sm,
-              ),
-              child: AppCard(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 52,
-                      child: Text(e.$1, style: text.labelLarge),
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(e.$2, style: text.titleSmall),
-                          const SizedBox(height: AppSpacing.xxs),
-                          Text(
-                            e.$3,
-                            style: text.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          calendarBody,
         ],
       ),
     );

@@ -44,13 +44,11 @@ class HomeGreetingCard extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: scheme.shadow.withValues(alpha: isDark ? 0.35 : 0.12),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+              blurRadius: AppSpacing.shadowBlurHero,
+              offset: AppSpacing.shadowOffsetHero,
             ),
           ],
-          border: Border.all(
-            color: scheme.outline.withValues(alpha: 0.2),
-          ),
+          border: Border.all(color: scheme.outline.withValues(alpha: 0.2)),
         ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -60,7 +58,11 @@ class HomeGreetingCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(leadingIcon, color: scheme.primary, size: 28),
+                  Icon(
+                    leadingIcon,
+                    color: scheme.primary,
+                    size: AppSpacing.iconLg,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(

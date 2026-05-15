@@ -5,8 +5,6 @@ class NotesFeatureShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Notas · mock')),
-    );
+    return const Scaffold(body: Center(child: Text('Notas · mock')));
   }
 }

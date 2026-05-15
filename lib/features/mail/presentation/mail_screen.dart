@@ -19,14 +19,26 @@ class _MailScreenState extends State<MailScreen> {
 
   static final List<List<(String, String, String)>> _mockMail = [
     [
-      ('Laura M.', '¿Nos vemos el martes?', 'Hola José, avísame si te viene bien…'),
+      (
+        'Laura M.',
+        '¿Nos vemos el martes?',
+        'Hola José, avísame si te viene bien…',
+      ),
       ('Banco Demo', 'Resumen de tu cuenta', 'No es un correo real.'),
     ],
     [
-      ('Equipo fútbol', 'Partido el domingo', 'Llevamos camisetas nuevas (mock).'),
+      (
+        'Equipo fútbol',
+        'Partido el domingo',
+        'Llevamos camisetas nuevas (mock).',
+      ),
     ],
     [
-      ('Newsletter UX', '5 tips de accesibilidad', 'Promo simulada · sin enlaces.'),
+      (
+        'Newsletter UX',
+        '5 tips de accesibilidad',
+        'Promo simulada · sin enlaces.',
+      ),
       ('Tienda muebles', '-20% esta semana', 'Oferta ficticia.'),
     ],
   ];
@@ -88,13 +100,16 @@ class _MailScreenState extends State<MailScreen> {
                               ),
                             ),
                             const SizedBox(width: AppSpacing.sm),
-                            Expanded(
-                              child: Text(m.$1, style: text.titleSmall),
-                            ),
+                            Expanded(child: Text(m.$1, style: text.titleSmall)),
                           ],
                         ),
                         const SizedBox(height: AppSpacing.xs),
-                        Text(m.$2, style: text.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                        Text(
+                          m.$2,
+                          style: text.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         const SizedBox(height: AppSpacing.xxs),
                         Text(
                           m.$3,

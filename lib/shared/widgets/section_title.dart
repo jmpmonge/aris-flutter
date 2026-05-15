@@ -27,14 +27,9 @@ class SectionTitle extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(
-            child: Text(title, style: theme.textTheme.titleMedium),
-          ),
+          Expanded(child: Text(title, style: theme.textTheme.titleMedium)),
           if (actionLabel != null && onAction != null)
-            TextButton(
-              onPressed: onAction,
-              child: Text(actionLabel!),
-            ),
+            TextButton(onPressed: onAction, child: Text(actionLabel!)),
         ],
       ),
     );

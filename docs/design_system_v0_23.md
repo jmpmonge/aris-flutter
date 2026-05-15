@@ -28,6 +28,7 @@ Superficies `#141210`–`#2E2B27`, texto `#F2EDE6`, primario aclarado para contr
 ## Tokens de layout (`app_spacing.dart`)
 - Escala **4 / 8**: `xxs` … `xxl`.
 - Radios: **10 / 14 / 18** (`radiusSm` … `radiusLg`).
+- **`homeSectionSpacing` (20)**: separación **única** entre bloques de la pantalla Inicio (cabecera, tarjetas, reciente) y respiro final antes de la barra de chat.
 - `minTouchTarget` **44** (referencia HIG).
 - `cardElevationLight` **2** / `cardElevationDark` **1** para sombra suave sin exceso.
 

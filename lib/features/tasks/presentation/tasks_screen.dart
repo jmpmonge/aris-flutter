@@ -108,7 +108,9 @@ class _TasksScreenState extends State<TasksScreen> {
           ),
           SliverToBoxAdapter(child: section('HOY', _today)),
           SliverToBoxAdapter(child: section('PRÓXIMAS', _upcoming)),
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: AppSpacing.fabStackClearance),
+          ),
         ],
       ),
     );

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../data/profile_mock_content.dart';
+import '../../../core/app_meta.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../theme/app_spacing.dart';
@@ -14,34 +16,27 @@ class ProfileScreen extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
 
-    final options = [
-      (Icons.person_rounded, 'Cuenta', 'Datos de perfil simulados'),
-      (Icons.tune_rounded, 'Preferencias', 'Notificaciones, idioma…'),
-      (Icons.hub_outlined, 'Integraciones', 'Próximamente · sin APIs'),
-      (Icons.shield_outlined, 'Privacidad', 'Políticas de ejemplo'),
-      (Icons.help_outline_rounded, 'Ayuda', 'Centro de ayuda mock'),
-    ];
+    final options = ProfileMockContent.options;
 
     return SafeArea(
       child: ListView(
         key: const Key('tab_profile'),
-        padding: const EdgeInsets.only(bottom: 100),
+        padding: const EdgeInsets.only(bottom: AppSpacing.fabStackClearance),
         children: [
-          const AppHeader(
-            title: 'Perfil',
-            subtitle: 'Tu espacio en Aris',
-          ),
+          const AppHeader(title: 'Perfil', subtitle: 'Tu espacio en Aris'),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: AppCard(
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 28,
+                    radius: AppSpacing.profileAvatarRadius,
                     backgroundColor: scheme.primaryContainer,
                     child: Text(
                       'J',
-                      style: text.headlineSmall?.copyWith(color: scheme.onPrimaryContainer),
+                      style: text.headlineSmall?.copyWith(
+                        color: scheme.onPrimaryContainer,
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
@@ -99,12 +94,17 @@ class ProfileScreen extends StatelessWidget {
                           Text(o.$2, style: text.titleSmall),
                           Text(
                             o.$3,
-                            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                            style: text.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ],
                 ),
               ),
@@ -127,7 +127,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Aris · v0.25.0 (build de demostración)',
+                    AppMeta.userVisibleVersionLine,
                     style: text.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),

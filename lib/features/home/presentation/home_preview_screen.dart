@@ -83,7 +83,8 @@ class _HomePreviewScreenState extends State<HomePreviewScreen> {
                   iconColor: scheme.secondary,
                   title: 'Tareas',
                   headline: '3 pendientes',
-                  detail: 'Llamar a papá · factura luz · preparar maleta (mock)',
+                  detail:
+                      'Llamar a papá · factura luz · preparar maleta (mock)',
                 ),
               ),
             ),
@@ -96,7 +97,8 @@ class _HomePreviewScreenState extends State<HomePreviewScreen> {
                   iconColor: scheme.tertiary,
                   title: 'Notas',
                   headline: 'Ideas recientes',
-                  detail: '“Propuesta reunión martes” · “Recordar regalo” (mock)',
+                  detail:
+                      '“Propuesta reunión martes” · “Recordar regalo” (mock)',
                 ),
               ),
             ),

@@ -7,16 +7,16 @@ import 'app_typography.dart';
 /// Tema global Aris: **claro y oscuro**, tarjetas con sombra suave, FAB circular.
 abstract final class AppTheme {
   static ThemeData light() => _build(
-        scheme: AppColors.lightScheme,
-        scaffoldMuted: AppColors.canvasLight,
-        cardElevation: AppSpacing.cardElevationLight,
-      );
+    scheme: AppColors.lightScheme,
+    scaffoldMuted: AppColors.canvasLight,
+    cardElevation: AppSpacing.cardElevationLight,
+  );
 
   static ThemeData dark() => _build(
-        scheme: AppColors.darkScheme,
-        scaffoldMuted: AppColors.canvasDark,
-        cardElevation: AppSpacing.cardElevationDark,
-      );
+    scheme: AppColors.darkScheme,
+    scaffoldMuted: AppColors.canvasDark,
+    cardElevation: AppSpacing.cardElevationDark,
+  );
 
   static ThemeData _build({
     required ColorScheme scheme,
@@ -37,7 +37,9 @@ abstract final class AppTheme {
       splashFactory: InkRipple.splashFactory,
       cardTheme: CardThemeData(
         color: scheme.surface,
-        surfaceTintColor: scheme.primary.withValues(alpha: isLight ? 0.04 : 0.08),
+        surfaceTintColor: scheme.primary.withValues(
+          alpha: isLight ? 0.04 : 0.08,
+        ),
         elevation: cardElevation,
         shadowColor: scheme.shadow,
         margin: EdgeInsets.zero,
@@ -76,14 +78,19 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          borderSide: BorderSide(color: scheme.primary.withValues(alpha: 0.55), width: 1.5),
+          borderSide: BorderSide(
+            color: scheme.primary.withValues(alpha: 0.55),
+            width: 1.5,
+          ),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         height: 62,
         elevation: 0,
         backgroundColor: scheme.surface,
-        indicatorColor: scheme.secondaryContainer.withValues(alpha: isLight ? 0.85 : 0.55),
+        indicatorColor: scheme.secondaryContainer.withValues(
+          alpha: isLight ? 0.85 : 0.55,
+        ),
         surfaceTintColor: Colors.transparent,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);

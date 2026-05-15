@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/assistant_mock_content.dart';
 import '../../../shared/widgets/quick_action_card.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
@@ -12,34 +13,6 @@ class AssistantScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-
-    final actions = [
-      (
-        Icons.mic_rounded,
-        'Hablar con Aris',
-        'Dictado simulado · sin grabación',
-      ),
-      (
-        Icons.add_task_rounded,
-        'Crear tarea',
-        'Añadir a la lista mock',
-      ),
-      (
-        Icons.event_available_rounded,
-        'Crear evento',
-        'Sin calendario real',
-      ),
-      (
-        Icons.note_add_rounded,
-        'Crear nota',
-        'Borrador local ficticio',
-      ),
-      (
-        Icons.mark_email_read_outlined,
-        'Resumir correo',
-        'Sin buzón conectado',
-      ),
-    ];
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -62,11 +35,7 @@ class AssistantScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              scheme.primary,
-              AppColors.violetSoft,
-              scheme.secondary,
-            ],
+            colors: [scheme.primary, AppColors.violetSoft, scheme.secondary],
           ),
         ),
         child: SafeArea(
@@ -103,7 +72,7 @@ class AssistantScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              ...actions.map(
+              ...AssistantMockContent.actions.map(
                 (a) => Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: QuickActionCard(
@@ -111,9 +80,9 @@ class AssistantScreen extends StatelessWidget {
                     title: a.$2,
                     subtitle: a.$3,
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${a.$2} · mock')),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text('${a.$2} · mock')));
                     },
                   ),
                 ),

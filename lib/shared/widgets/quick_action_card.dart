@@ -43,7 +43,11 @@ class QuickActionCard extends StatelessWidget {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.sm),
-                  child: Icon(icon, color: scheme.primary, size: 24),
+                  child: Icon(
+                    icon,
+                    color: scheme.primary,
+                    size: AppSpacing.iconMd,
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.md),

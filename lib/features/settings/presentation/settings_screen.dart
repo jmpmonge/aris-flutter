@@ -13,9 +13,7 @@ class SettingsScreen extends StatelessWidget {
     final text = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ajustes'),
-      ),
+      appBar: AppBar(title: const Text('Ajustes')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
@@ -43,7 +41,10 @@ class SettingsScreen extends StatelessWidget {
             onChanged: (_) {},
           ),
           ListTile(
-            leading: Icon(Icons.record_voice_over_outlined, color: scheme.primary),
+            leading: Icon(
+              Icons.record_voice_over_outlined,
+              color: scheme.primary,
+            ),
             title: const Text('Tonos de respuesta'),
             subtitle: const Text('Amable · Directa · Profesional (mock)'),
             trailing: const Icon(Icons.chevron_right_rounded),
@@ -63,7 +64,10 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  title: Text('Cerrar sesión', style: TextStyle(color: scheme.error)),
+                  title: Text(
+                    'Cerrar sesión',
+                    style: TextStyle(color: scheme.error),
+                  ),
                   subtitle: const Text('Sin sesión real aún'),
                   onTap: () {},
                 ),

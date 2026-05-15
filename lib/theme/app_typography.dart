@@ -34,8 +34,20 @@ abstract final class AppTypography {
       bodyMedium: base(15, FontWeight.w400, height: 1.38),
       bodySmall: base(13, FontWeight.w400, height: 1.35, color: muted),
       labelLarge: base(15, FontWeight.w600, height: 1.2, ls: 0.15),
-      labelMedium: base(13, FontWeight.w600, height: 1.2, ls: 0.2, color: muted),
-      labelSmall: base(11, FontWeight.w600, height: 1.2, ls: 0.35, color: muted),
+      labelMedium: base(
+        13,
+        FontWeight.w600,
+        height: 1.2,
+        ls: 0.2,
+        color: muted,
+      ),
+      labelSmall: base(
+        11,
+        FontWeight.w600,
+        height: 1.2,
+        ls: 0.35,
+        color: muted,
+      ),
     );
   }
 

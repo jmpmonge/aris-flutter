@@ -21,8 +21,8 @@ class RecentConversationCard extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: scheme.shadow.withValues(alpha: 0.07),
-              blurRadius: 14,
-              offset: const Offset(0, 5),
+              blurRadius: AppSpacing.shadowBlurChat,
+              offset: AppSpacing.shadowOffsetChat,
             ),
           ],
         ),
@@ -59,7 +59,8 @@ class RecentConversationCard extends StatelessWidget {
               _Bubble(
                 alignLeft: true,
                 label: 'ARIS',
-                text: 'Listo. Es solo una demostración — sin notificaciones reales.',
+                text:
+                    'Listo. Es solo una demostración — sin notificaciones reales.',
                 scheme: scheme,
                 textTheme: text,
               ),
@@ -89,7 +90,9 @@ class _Bubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bubble = Container(
-      constraints: const BoxConstraints(maxWidth: 320),
+      constraints: const BoxConstraints(
+        maxWidth: AppSpacing.chatBubbleMaxWidth,
+      ),
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.sm,
@@ -99,8 +102,12 @@ class _Bubble extends StatelessWidget {
         borderRadius: BorderRadius.only(
           topLeft: const Radius.circular(AppSpacing.radiusMd),
           topRight: const Radius.circular(AppSpacing.radiusMd),
-          bottomLeft: Radius.circular(alignLeft ? 4 : AppSpacing.radiusMd),
-          bottomRight: Radius.circular(alignLeft ? AppSpacing.radiusMd : 4),
+          bottomLeft: Radius.circular(
+            alignLeft ? AppSpacing.radiusTail : AppSpacing.radiusMd,
+          ),
+          bottomRight: Radius.circular(
+            alignLeft ? AppSpacing.radiusMd : AppSpacing.radiusTail,
+          ),
         ),
         border: alignLeft
             ? Border.all(color: scheme.outline.withValues(alpha: 0.2))
@@ -110,8 +117,8 @@ class _Bubble extends StatelessWidget {
             : [
                 BoxShadow(
                   color: scheme.primary.withValues(alpha: 0.22),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
+                  blurRadius: AppSpacing.shadowBlurLift,
+                  offset: AppSpacing.shadowOffsetLift,
                 ),
               ],
       ),

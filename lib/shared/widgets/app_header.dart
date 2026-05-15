@@ -39,7 +39,9 @@ class AppHeader extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     subtitle!,
-                    style: text.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    style: text.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ],

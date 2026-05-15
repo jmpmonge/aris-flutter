@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../assistant/presentation/assistant_screen.dart';
+import '../data/home_mock_content.dart';
 import '../../../shared/widgets/home_brand_header.dart';
 import '../../../shared/widgets/home_greeting_card.dart';
 import '../../../shared/widgets/recent_conversation_card.dart';
@@ -11,58 +13,36 @@ import '../../../theme/app_spacing.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  static String _greetingForNow() {
-    final h = DateTime.now().hour;
-    if (h < 12) return 'Buenos días, José';
-    if (h < 20) return 'Buenas tardes, José';
-    return 'Buenas noches, José';
+  void _openAssistant(BuildContext context) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(builder: (_) => const AssistantScreen()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    const events = [
-      '15:30 · Revisión médica anual (Centro Norte, mock)',
-      '18:00 · Recoger paquete en locker',
-    ];
-    const tasks = [
-      'Responder al equipo de diseño',
-      'Llamar a papá antes de cenar',
-      'Enviar borrador del informe',
-    ];
-    const notes = [
-      'Idea: playlist “concentración suave”',
-      'Nota: regalo cumple Ana (libro)',
-    ];
-
-    /// Espacio extra: la barra de chat y la nav los añade el shell.
-    const bottomInset = 168.0;
-
     return SafeArea(
       bottom: false,
       child: ListView(
         key: const Key('tab_home'),
-        padding: const EdgeInsets.only(bottom: bottomInset),
+        padding: const EdgeInsets.only(bottom: AppSpacing.homeSectionSpacing),
         children: [
-          const HomeBrandHeader(),
-          const SizedBox(height: AppSpacing.sm),
+          HomeBrandHeader(onAssistantTap: () => _openAssistant(context)),
+          const SizedBox(height: AppSpacing.homeSectionSpacing),
           HomeGreetingCard(
-            greeting: _greetingForNow(),
-            summary:
-                'Tienes 12 tareas pendientes y 2 eventos esta tarde. Respira: es un resumen simulado para diseño.',
+            greeting: HomeMockContent.greetingForNow(),
+            summary: HomeMockContent.summary,
           ),
-          const SizedBox(height: AppSpacing.md),
-          const SuggestionCard(
-            message: 'Revisa tus tareas pendientes antes del fin de semana.',
-          ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.homeSectionSpacing),
+          const SuggestionCard(message: HomeMockContent.suggestion),
+          const SizedBox(height: AppSpacing.homeSectionSpacing),
           const TodaySummaryCard(
-            events: events,
-            tasks: tasks,
-            notes: notes,
+            events: HomeMockContent.events,
+            tasks: HomeMockContent.tasks,
+            notes: HomeMockContent.notes,
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.homeSectionSpacing),
           const RecentConversationCard(),
-          const SizedBox(height: AppSpacing.lg),
         ],
       ),
     );

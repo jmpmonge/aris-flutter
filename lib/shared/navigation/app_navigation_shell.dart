@@ -67,16 +67,16 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
 
   void _openAssistant() {
     Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (_) => const AssistantScreen(),
-      ),
+      MaterialPageRoute<void>(builder: (_) => const AssistantScreen()),
     );
   }
 
   void _onChatSend(String text) {
     _chatController.clear();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Mensaje enviado (simulado): ${text.length} caracteres')),
+      SnackBar(
+        content: Text('Mensaje enviado (simulado): ${text.length} caracteres'),
+      ),
     );
   }
 
@@ -85,18 +85,12 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
     final scheme = Theme.of(context).colorScheme;
 
     return AppScaffold(
-      body: IndexedStack(
-        index: _tabIndex,
-        children: _pages,
-      ),
+      body: IndexedStack(index: _tabIndex, children: _pages),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (_tabIndex == 0)
-            ChatInputBar(
-              controller: _chatController,
-              onSend: _onChatSend,
-            ),
+            ChatInputBar(controller: _chatController, onSend: _onChatSend),
           Material(
             color: scheme.surface,
             child: Column(

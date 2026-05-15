@@ -4,11 +4,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:aris_flutter_v0_22/app.dart';
 
 void main() {
-  testWidgets('Shell: inicio muestra saludo y pestañas navegables', (WidgetTester tester) async {
+  testWidgets('Shell: saludo dinámico, asistente desde Inicio y pestañas', (WidgetTester tester) async {
     await tester.pumpWidget(const ArisApp());
 
-    expect(find.text('Buenas tardes, José'), findsWidgets);
+    expect(find.textContaining('José'), findsWidgets);
     expect(find.text('Aris'), findsWidgets);
+    expect(find.byKey(const Key('tab_home')), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Hablar con Aris'));
+    await tester.pumpAndSettle();
+    expect(find.text('Acciones rápidas'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.close_rounded));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('tab_home')), findsOneWidget);
 
     await tester.tap(find.text('Calendario'));

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/notes_mock_content.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/app_search_bar.dart';
@@ -9,13 +10,6 @@ import '../../../theme/app_spacing.dart';
 /// Notas — buscador, notas rápidas y lista **mock**.
 class NotesScreen extends StatelessWidget {
   const NotesScreen({super.key});
-
-  static const _quick = ['Compra', 'Ideas viaje', 'Libros'];
-  static const _notes = [
-    ('Ideas reunión', 'Bullet: timing, presupuesto, follow-up…'),
-    ('Libros 2026', 'Ficción · ensayo · cómic (lista simulada)'),
-    ('Lista compras', 'Pan, leche, fruta…'),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +25,7 @@ class NotesScreen extends StatelessWidget {
             title: 'Notas',
             subtitle: 'Captura rápida · sin sincronización real',
           ),
-          const AppSearchBar(
-            hintText: 'Buscar en notas…',
-            readOnly: true,
-          ),
+          const AppSearchBar(hintText: 'Buscar en notas…', readOnly: true),
           SectionTitle(
             title: 'Notas rápidas',
             actionLabel: 'Nueva nota',
@@ -45,16 +36,18 @@ class NotesScreen extends StatelessWidget {
             },
           ),
           SizedBox(
-            height: 40,
+            height: AppSpacing.quickChipsStripHeight,
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               scrollDirection: Axis.horizontal,
-              itemCount: _quick.length,
+              itemCount: NotesMockContent.quickLabels.length,
               separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.xs),
               itemBuilder: (context, i) {
                 return ActionChip(
-                  label: Text(_quick[i]),
-                  side: BorderSide(color: scheme.outline.withValues(alpha: 0.35)),
+                  label: Text(NotesMockContent.quickLabels[i]),
+                  side: BorderSide(
+                    color: scheme.outline.withValues(alpha: 0.35),
+                  ),
                   onPressed: () {},
                 );
               },
@@ -82,11 +75,11 @@ class NotesScreen extends StatelessWidget {
                 AppSpacing.md,
                 0,
                 AppSpacing.md,
-                100,
+                AppSpacing.fabStackClearance,
               ),
-              itemCount: _notes.length,
+              itemCount: NotesMockContent.recentNotes.length,
               itemBuilder: (context, i) {
-                final n = _notes[i];
+                final n = NotesMockContent.recentNotes[i];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: AppCard(

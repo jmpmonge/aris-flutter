@@ -40,7 +40,10 @@ class AppSearchBar extends StatelessWidget {
         decoration: InputDecoration(
           hintText: hintText,
           isDense: true,
-          prefixIcon: Icon(Icons.search_rounded, color: scheme.onSurfaceVariant),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: scheme.onSurfaceVariant,
+          ),
           prefixIconConstraints: const BoxConstraints(
             minWidth: AppSpacing.minTouchTarget,
             minHeight: AppSpacing.minTouchTarget,

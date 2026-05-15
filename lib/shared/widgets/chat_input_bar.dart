@@ -50,7 +50,9 @@ class _ChatInputBarState extends State<ChatInputBar> {
           AppSpacing.md,
           AppSpacing.sm,
           AppSpacing.md,
-          MediaQuery.paddingOf(context).bottom > 0 ? AppSpacing.xs : AppSpacing.sm,
+          MediaQuery.paddingOf(context).bottom > 0
+              ? AppSpacing.xs
+              : AppSpacing.sm,
         ),
         decoration: BoxDecoration(
           color: scheme.surface.withValues(alpha: isDark ? 0.92 : 0.97),
@@ -60,8 +62,8 @@ class _ChatInputBarState extends State<ChatInputBar> {
           boxShadow: [
             BoxShadow(
               color: scheme.shadow.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
+              blurRadius: AppSpacing.shadowBlurBar,
+              offset: AppSpacing.shadowOffsetBar,
             ),
           ],
         ),
@@ -115,14 +117,20 @@ class _ChatInputBarState extends State<ChatInputBar> {
                       AppSpacing.minTouchTarget,
                     ),
                   ),
-                  child: const Icon(Icons.send_rounded, size: 22),
+                  child: const Icon(
+                    Icons.send_rounded,
+                    size: AppSpacing.iconFab,
+                  ),
                 )
               else
                 IconButton.filledTonal(
-                  onPressed: widget.onMicTap ??
+                  onPressed:
+                      widget.onMicTap ??
                       () {
                         ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                          const SnackBar(content: Text('Micrófono · solo demo')),
+                          const SnackBar(
+                            content: Text('Micrófono · solo demo'),
+                          ),
                         );
                       },
                   icon: const Icon(Icons.mic_none_rounded),

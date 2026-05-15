@@ -28,8 +28,8 @@ class SuggestionCard extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: scheme.shadow.withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              blurRadius: AppSpacing.shadowBlurSoft,
+              offset: AppSpacing.shadowOffsetSoft,
             ),
           ],
         ),
