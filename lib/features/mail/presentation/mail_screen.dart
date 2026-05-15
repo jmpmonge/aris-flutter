@@ -82,7 +82,7 @@ class _MailScreenState extends State<MailScreen> {
               ),
               children: [
                 Text(
-                  'Acciones de correo sugeridas',
+                  'Correo con Aris (sugerencias)',
                   style: text.labelSmall?.copyWith(
                     letterSpacing: 1.05,
                     color: scheme.primary,

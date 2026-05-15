@@ -65,6 +65,13 @@ class LocalActionModel {
         LocalActionStatus.completed => 'LISTO',
       };
 
+  /// Etiqueta humana del flujo (chat vs formulario vs hecho).
+  String get operationalStatusLabel => switch (status) {
+        LocalActionStatus.simulated => 'Desde chat',
+        LocalActionStatus.pending => 'Pendiente',
+        LocalActionStatus.completed => 'Listo',
+      };
+
   LocalActionModel copyWith({
     String? id,
     LocalActionType? type,

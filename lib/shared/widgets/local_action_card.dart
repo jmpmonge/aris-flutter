@@ -28,12 +28,20 @@ class LocalActionCard extends StatelessWidget {
     final vGap = compact ? AppSpacing.xxs : AppSpacing.xs;
     final completed = action.status == LocalActionStatus.completed;
 
-    Widget chip(String label, {bool primary = false}) {
+    Widget chip(String label, {bool primary = false, bool accent = false}) {
+      final bg = accent
+          ? scheme.tertiaryContainer.withValues(alpha: 0.45)
+          : primary
+              ? scheme.primaryContainer.withValues(alpha: 0.55)
+              : scheme.surfaceContainerHighest.withValues(alpha: 0.65);
+      final fg = accent
+          ? scheme.onTertiaryContainer
+          : primary
+              ? scheme.onPrimaryContainer
+              : scheme.onSurfaceVariant;
       return DecoratedBox(
         decoration: BoxDecoration(
-          color: primary
-              ? scheme.primaryContainer.withValues(alpha: 0.55)
-              : scheme.surfaceContainerHighest.withValues(alpha: 0.65),
+          color: bg,
           borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
           border: Border.all(color: scheme.outline.withValues(alpha: 0.16)),
         ),
@@ -48,9 +56,7 @@ class LocalActionCard extends StatelessWidget {
               letterSpacing: 0.55,
               fontSize: 10,
               fontWeight: FontWeight.w700,
-              color: primary
-                  ? scheme.onPrimaryContainer
-                  : scheme.onSurfaceVariant,
+              color: fg,
             ),
           ),
         ),
@@ -90,7 +96,8 @@ class LocalActionCard extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 chip(action.typeShortLabel, primary: true),
-                chip(action.statusChipLabel),
+                chip('SIMULADO', accent: true),
+                chip(action.operationalStatusLabel),
                 ...metaChips,
               ],
             ),
@@ -100,8 +107,9 @@ class LocalActionCard extends StatelessWidget {
               style: (compact ? text.titleSmall : text.titleMedium)?.copyWith(
                 fontWeight: FontWeight.w600,
                 height: 1.25,
-                decoration:
-                    completed ? TextDecoration.lineThrough : TextDecoration.none,
+                decoration: completed
+                    ? TextDecoration.lineThrough
+                    : TextDecoration.none,
                 color: completed ? scheme.onSurfaceVariant : null,
               ),
             ),

@@ -68,7 +68,9 @@ class _HomeScreenState extends State<HomeScreen> {
       child: ListView(
         key: const Key('tab_home'),
         controller: _scrollController,
-        padding: const EdgeInsets.only(bottom: AppSpacing.homeSectionSpacing),
+        padding: const EdgeInsets.only(
+          bottom: AppSpacing.homeSectionSpacing + AppSpacing.sm,
+        ),
         children: [
           HomeBrandHeader(onAssistantTap: () => _openAssistant(context)),
           const SizedBox(height: AppSpacing.homeSectionSpacing),

@@ -93,6 +93,7 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
           if (_tabIndex == 0)
             ChatInputBar(
               controller: _chatController,
+              hintText: 'Escribe a Aris…',
               onSend: _onChatSend,
               onMicTap: _onMicTap,
             ),

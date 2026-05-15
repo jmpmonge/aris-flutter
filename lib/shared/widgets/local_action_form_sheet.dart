@@ -10,66 +10,36 @@ import 'form_section_title.dart';
 /// Formularios modales (bottom sheet) para crear acciones locales sin backend.
 abstract final class LocalActionFormSheet {
   static Future<void> showTaskForm(BuildContext context) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppSpacing.radiusXl),
-        ),
-      ),
-      builder: (ctx) => const _TaskFormBody(),
-    );
+    return _open(context, const _TaskFormBody());
   }
 
   static Future<void> showNoteForm(BuildContext context) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppSpacing.radiusXl),
-        ),
-      ),
-      builder: (ctx) => const _NoteFormBody(),
-    );
+    return _open(context, const _NoteFormBody());
   }
 
   static Future<void> showEventForm(BuildContext context) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppSpacing.radiusXl),
-        ),
-      ),
-      builder: (ctx) => const _EventFormBody(),
-    );
+    return _open(context, const _EventFormBody());
   }
 
   static Future<void> showMailForm(BuildContext context) {
+    return _open(context, const _MailFormBody());
+  }
+
+  static Future<void> _open(BuildContext context, Widget body) {
+    final scheme = Theme.of(context).colorScheme;
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: scheme.surface,
+      barrierColor: scheme.scrim.withValues(alpha: 0.45),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusXl),
         ),
       ),
-      builder: (ctx) => const _MailFormBody(),
+      builder: (ctx) => body,
     );
   }
 
@@ -83,13 +53,27 @@ abstract final class LocalActionFormSheet {
     );
   }
 
-  static Widget _sheetTitle(BuildContext context, String text) {
+  static Widget _sheetHeader(BuildContext context, String title) {
     final theme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Text(
-        text,
-        style: theme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            'Aris · contenido solo en este dispositivo (simulado)',
+            style: theme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -141,7 +125,7 @@ class _TaskFormBodyState extends State<_TaskFormBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          LocalActionFormSheet._sheetTitle(context, 'Nueva tarea'),
+          LocalActionFormSheet._sheetHeader(context, 'Nueva tarea con Aris'),
           const FormSectionTitle('Título'),
           AppTextField(
             controller: _title,
@@ -176,9 +160,14 @@ class _TaskFormBodyState extends State<_TaskFormBody> {
             selected: {_priority},
             onSelectionChanged: (s) =>
                 setState(() => _priority = s.first),
+            style: SegmentedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+            ),
           ),
-          const SizedBox(height: AppSpacing.xl),
-          AppFormButton(label: 'Crear tarea', onPressed: _submit),
+          AppFormButton(
+            label: 'Crear tarea',
+            onPressed: _submit,
+          ),
           const SizedBox(height: AppSpacing.sm),
           AppFormButton(
             label: 'Cancelar',
@@ -238,7 +227,7 @@ class _NoteFormBodyState extends State<_NoteFormBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          LocalActionFormSheet._sheetTitle(context, 'Nueva nota'),
+          LocalActionFormSheet._sheetHeader(context, 'Nueva nota con Aris'),
           const FormSectionTitle('Título'),
           AppTextField(
             controller: _title,
@@ -336,7 +325,7 @@ class _EventFormBodyState extends State<_EventFormBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          LocalActionFormSheet._sheetTitle(context, 'Nuevo evento'),
+          LocalActionFormSheet._sheetHeader(context, 'Nuevo evento con Aris'),
           const FormSectionTitle('Título'),
           AppTextField(
             controller: _title,
@@ -414,7 +403,10 @@ class _MailFormBodyState extends State<_MailFormBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          LocalActionFormSheet._sheetTitle(context, 'Acción de correo'),
+          LocalActionFormSheet._sheetHeader(
+            context,
+            'Acción de correo con Aris',
+          ),
           const FormSectionTitle('Asunto'),
           AppTextField(
             controller: _subject,
@@ -430,7 +422,7 @@ class _MailFormBodyState extends State<_MailFormBody> {
             hint: 'Resumen o borrador simulado',
           ),
           const SizedBox(height: AppSpacing.xl),
-          AppFormButton(label: 'Crear acción', onPressed: _submit),
+          AppFormButton(label: 'Crear acción simulada', onPressed: _submit),
           const SizedBox(height: AppSpacing.sm),
           AppFormButton(
             label: 'Cancelar',
