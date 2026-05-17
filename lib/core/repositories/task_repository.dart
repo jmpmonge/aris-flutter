@@ -40,10 +40,8 @@ abstract interface class TaskRepository {
   /// Igual que [setTaskCompleted] con **`completed: true`**.
   Future<bool> completeTask(String taskId);
 
-  /// `PATCH /tasks/{id}` con cuerpo **`{"title": ...}`** (único campo del contrato FastAPI).
-  ///
-  /// [description] solo se usa en cliente como respaldo cuando [title] va vacío
-  /// (ambos se concatenan en un solo campo `title` en JSON).
+  /// Renombrar tarea en servidor — **no** implementado contra backend minimal v0.47.31
+  /// (`PATCH /tasks/{id}` sólo acepta `completed`; ver [setTaskCompleted]).
   Future<bool> updateTask(
     String taskId, {
     String? title,

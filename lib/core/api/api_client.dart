@@ -101,14 +101,15 @@ final class ApiClient {
   Future<ApiResult<Map<String, dynamic>?>> completeTask(String taskId) =>
       patchTaskCompletion(taskId, true);
 
-  /// PATCH **`/tasks/{id}`** con **`TaskPatchBody`**: campo **`title`** únicamente (FastAPI).
+  /// Edición de título por REST — **no** soportada en backend minimal **v0.47.31**
+  /// (`PATCH /tasks/{id}` sólo admite **`completed`** para el checkbox).
   Future<ApiResult<Map<String, dynamic>?>> updateTask(
     String taskId, {
     String? title,
     String? description,
   }) {
     const tag = '[ApiClient.updateTask]';
-    debugPrint('$tag delegando (baseUrl: $_baseUrl)');
+    debugPrint('$tag no disponible en backend v0.47.31 (sin PATCH de título)');
     final id = taskId.trim();
     if (id.isEmpty) {
       return Future.value(
@@ -117,20 +118,13 @@ final class ApiClient {
         ),
       );
     }
-    final wireTitle = _wireTaskPatchTitle(title: title, description: description);
-    if (wireTitle.isEmpty) {
-      debugPrint('$tag título combinado vacío');
-      return Future.value(
-        ApiResult.failure(
-          ApiException('El título de la tarea no puede estar vacío.', code: 'validation'),
+    return Future.value(
+      ApiResult.failure(
+        ApiException(
+          'Edición de título no disponible en esta versión del backend.',
+          code: 'unsupported',
         ),
-      );
-    }
-    return backendPatchTasksNotes(
-      baseUri: _baseUrl,
-      path: ApiEndpoints.taskPath(id),
-      jsonBody: <String, dynamic>{'title': wireTitle},
-      debugLabel: tag,
+      ),
     );
   }
 
@@ -356,15 +350,6 @@ final class ApiClient {
   static String get assistantMessagePath => ApiEndpoints.assistantMessage;
 }
 
-String _wireTaskPatchTitle({String? title, String? description}) {
-  final t = (title ?? '').trim();
-  final d = (description ?? '').trim();
-  if (t.isNotEmpty) return t;
-  if (d.isNotEmpty) return d;
-  return '';
-}
-
-String _wireNotePatchContent({String? title, String? content}) {
   final t = (title ?? '').trim();
   final c = (content ?? '').trim();
   if (t.isEmpty && c.isEmpty) return '';
