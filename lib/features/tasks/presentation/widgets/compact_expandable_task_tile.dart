@@ -133,7 +133,6 @@ class _CompactExpandableTaskTileState extends State<CompactExpandableTaskTile> {
                                   tooltip: 'Más opciones',
                                   enabled: !widget.busy,
                                   padding: EdgeInsets.zero,
-                                  iconSize: 20,
                                   onSelected: (v) {
                                     if (v == 'delete') widget.onDelete?.call();
                                   },
@@ -143,6 +142,17 @@ class _CompactExpandableTaskTileState extends State<CompactExpandableTaskTile> {
                                       child: Text('Eliminar'),
                                     ),
                                   ],
+                                  // child en lugar del IconButton por defecto
+                                  // para evitar la restricción mínima de 48 px.
+                                  child: Padding(
+                                    padding: EdgeInsets.only(left: AppSpacing.xs),
+                                    child: Icon(
+                                      Icons.more_vert_rounded,
+                                      size: 18,
+                                      color: scheme.onSurfaceVariant
+                                          .withValues(alpha: 0.6),
+                                    ),
+                                  ),
                                 ),
                             ],
                           ),
