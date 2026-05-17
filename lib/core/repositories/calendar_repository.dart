@@ -156,22 +156,20 @@ final class HybridCalendarRepository implements CalendarRepository {
   @override
   List<EventModel> getTodayEvents([DateTime? day]) {
     final d = day ?? DateTime.now();
+    if (!_readsOk) return CalendarService.getTodayEvents(day);
+    // Cuando el backend está conectado, mostrar solo datos reales (sin fallback mock).
     final civil = _civilCalendarDay(d);
     final textual = _textualOnlyDateBackendSorted();
-    if (!_readsOk) return CalendarService.getTodayEvents(day);
-    final merged = [...civil, ...textual];
-    if (merged.isEmpty) return CalendarService.getTodayEvents(day);
-    return merged;
+    return [...civil, ...textual];
   }
 
   @override
   List<EventModel> getWeekEvents(DateTime dayInWeek) {
+    if (!_readsOk) return CalendarService.getWeekEvents(dayInWeek);
+    // Cuando el backend está conectado, mostrar solo eventos reales para ese día.
     final anchored =
         DateTime(dayInWeek.year, dayInWeek.month, dayInWeek.day);
-    final fromNet = _civilCalendarDay(anchored);
-    if (!_readsOk) return CalendarService.getWeekEvents(dayInWeek);
-    if (fromNet.isEmpty) return CalendarService.getWeekEvents(dayInWeek);
-    return fromNet;
+    return _civilCalendarDay(anchored);
   }
 
   @override
@@ -181,29 +179,22 @@ final class HybridCalendarRepository implements CalendarRepository {
     if (!_readsOk) {
       return CalendarService.getMonthDayHasEvent(monthAnchor, dayOfMonth);
     }
-    final fromNet =
-        _backendEvents.any(
-          (e) =>
-              e.hasCivilCalendarDate &&
-              _sameCalendarDay(e.start, candidate),
-        );
-    if (fromNet) return true;
-    return CalendarService.getMonthDayHasEvent(monthAnchor, dayOfMonth);
+    return _backendEvents.any(
+      (e) =>
+          e.hasCivilCalendarDate &&
+          _sameCalendarDay(e.start, candidate),
+    );
   }
 
   @override
   List<EventModel> getMonthEvents(DateTime monthAnchor, int dayOfMonth) {
-    final fromNet =
-        _civilCalendarDay(
-          DateTime(monthAnchor.year, monthAnchor.month, dayOfMonth),
-        );
     if (!_readsOk) {
       return CalendarService.getMonthEvents(monthAnchor, dayOfMonth);
     }
-    if (fromNet.isEmpty) {
-      return CalendarService.getMonthEvents(monthAnchor, dayOfMonth);
-    }
-    return fromNet;
+    // Cuando el backend está conectado, solo mostrar eventos reales para ese día.
+    return _civilCalendarDay(
+      DateTime(monthAnchor.year, monthAnchor.month, dayOfMonth),
+    );
   }
 
   @override
