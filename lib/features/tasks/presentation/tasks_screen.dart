@@ -48,6 +48,46 @@ class _TasksScreenState extends State<TasksScreen> {
     );
   }
 
+  Future<void> _deleteBackendTask(TaskModel t) async {
+    final scheme = Theme.of(context).colorScheme;
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar tarea'),
+        content: const Text('¿Quieres eliminar esta tarea?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: scheme.error,
+              foregroundColor: scheme.onError,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (yes != true || !mounted) return;
+
+    setState(() => _busyTaskIds.add(t.id));
+    try {
+      final ok = await Repositories.task.deleteTask(t.id);
+      if (!mounted) return;
+      if (ok) {
+        _briefSnack(context, message: 'Tarea eliminada.');
+      } else {
+        _briefSnack(context, message: 'No he podido eliminar la tarea.', error: true);
+      }
+    } finally {
+      if (mounted) setState(() => _busyTaskIds.remove(t.id));
+    }
+  }
+
   TaskGroupedLists _effectiveGrouped() {
     final now = DateTime.now();
     final base = Repositories.task.groupedForUi(now);
@@ -164,6 +204,9 @@ class _TasksScreenState extends State<TasksScreen> {
               section: bucket,
               busy: _busyTaskIds.contains(t.id),
               onCheckboxChanged: (v) => _onTaskCheckbox(t, v),
+              onDelete: Repositories.task.readsFromBackend
+                  ? () => _deleteBackendTask(t)
+                  : null,
             ),
           ),
         ),

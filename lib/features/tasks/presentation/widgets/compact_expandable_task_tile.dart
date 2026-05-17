@@ -11,12 +11,16 @@ class CompactExpandableTaskTile extends StatefulWidget {
     required this.section,
     required this.busy,
     required this.onCheckboxChanged,
+    this.onDelete,
   });
 
   final TaskModel task;
   final TaskBucketSection section;
   final bool busy;
   final ValueChanged<bool?> onCheckboxChanged;
+
+  /// Si no es null, se muestra un menú con «Eliminar».
+  final VoidCallback? onDelete;
 
   @override
   State<CompactExpandableTaskTile> createState() =>
@@ -124,6 +128,22 @@ class _CompactExpandableTaskTileState extends State<CompactExpandableTaskTile> {
                                   semanticsLabel: 'Prioridad alta',
                                 ),
                               ],
+                              if (widget.onDelete != null)
+                                PopupMenuButton<String>(
+                                  tooltip: 'Más opciones',
+                                  enabled: !widget.busy,
+                                  padding: EdgeInsets.zero,
+                                  iconSize: 20,
+                                  onSelected: (v) {
+                                    if (v == 'delete') widget.onDelete?.call();
+                                  },
+                                  itemBuilder: (_) => const [
+                                    PopupMenuItem(
+                                      value: 'delete',
+                                      child: Text('Eliminar'),
+                                    ),
+                                  ],
+                                ),
                             ],
                           ),
                           if (meta.isNotEmpty)
