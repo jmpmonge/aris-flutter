@@ -168,7 +168,10 @@ final class ApiClient {
       debugPrint('$tag content combinado vacío');
       return Future.value(
         ApiResult.failure(
-          ApiException('El contenido de la nota no puede estar vacío.', code: 'validation'),
+          ApiException(
+            'El contenido de la nota no puede estar vacío.',
+            code: 'validation',
+          ),
         ),
       );
     }
@@ -339,6 +342,15 @@ final class ApiClient {
     );
   }
 
+  String _wireNotePatchContent({String? title, String? content}) {
+    final t = (title ?? '').trim();
+    final c = (content ?? '').trim();
+    if (t.isEmpty && c.isEmpty) return '';
+    if (t.isEmpty) return c;
+    if (c.isEmpty) return t;
+    return '$t\n\n$c';
+  }
+
   /// Ejemplo de ruta montada sobre [baseUrl] (solo documentación / tests).
   Uri? resolveProvisional(String relativePath) {
     final b = _baseUrl;
@@ -349,12 +361,3 @@ final class ApiClient {
   /// Referencia al contrato documentado para asistente.
   static String get assistantMessagePath => ApiEndpoints.assistantMessage;
 }
-
-  final t = (title ?? '').trim();
-  final c = (content ?? '').trim();
-  if (t.isEmpty && c.isEmpty) return '';
-  if (t.isEmpty) return c;
-  if (c.isEmpty) return t;
-  return '$t\n\n$c';
-}
-
