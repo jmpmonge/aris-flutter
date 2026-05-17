@@ -40,8 +40,7 @@ class _TasksScreenState extends State<TasksScreen> {
     messenger.showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        backgroundColor:
-            error ? scheme.error : scheme.surfaceContainerHighest,
+        backgroundColor: error ? scheme.error : scheme.surfaceContainerHighest,
         content: Text(
           message,
           style: TextStyle(
@@ -88,6 +87,7 @@ class _TasksScreenState extends State<TasksScreen> {
         final i = list.indexWhere((e) => e.id == t.id);
         if (i >= 0) list[i] = list[i].copyWith(completed: completed);
       }
+
       bump(_today);
       bump(_upcoming);
     });
@@ -105,6 +105,11 @@ class _TasksScreenState extends State<TasksScreen> {
 
     if (_busyTaskIds.contains(t.id)) return;
 
+    debugPrint(
+      '[TaskList] checkbox taskId=${t.id} '
+      'wasCompleted=${t.completed} nextCompleted=$nextCompleted',
+    );
+
     setState(() => _busyTaskIds.add(t.id));
     try {
       final ok = await Repositories.task.setTaskCompleted(t.id, nextCompleted);
@@ -112,7 +117,9 @@ class _TasksScreenState extends State<TasksScreen> {
       if (ok) {
         _briefSnack(
           context,
-          message: nextCompleted ? 'Tarea completada.' : 'Tarea marcada como pendiente.',
+          message: nextCompleted
+              ? 'Tarea completada.'
+              : 'Tarea marcada como pendiente.',
         );
       } else {
         _briefSnack(context, message: _taskBackendFail, error: true);
@@ -229,6 +236,7 @@ class _TasksScreenState extends State<TasksScreen> {
         break;
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
@@ -280,8 +288,8 @@ class _TasksScreenState extends State<TasksScreen> {
                     onChanged: _busyTaskIds.contains(t.id)
                         ? null
                         : Repositories.task.readsFromBackend
-                            ? (v) => _onTaskCheckbox(t, v)
-                            : (v) => _onTaskCheckbox(t, v),
+                        ? (v) => _onTaskCheckbox(t, v)
+                        : (v) => _onTaskCheckbox(t, v),
                   ),
                   title: Text(
                     t.title,
@@ -351,9 +359,7 @@ class _TasksScreenState extends State<TasksScreen> {
           ),
           SliverToBoxAdapter(child: section('HOY', _today)),
           SliverToBoxAdapter(child: section('PRÓXIMAS', _upcoming)),
-          SliverToBoxAdapter(
-            child: _arisTasksSection(context),
-          ),
+          SliverToBoxAdapter(child: _arisTasksSection(context)),
           const SliverToBoxAdapter(
             child: SizedBox(height: AppSpacing.fabStackClearance),
           ),

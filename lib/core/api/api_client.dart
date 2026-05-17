@@ -89,6 +89,9 @@ final class ApiClient {
         ),
       );
     }
+    debugPrint(
+      '$tag ${ApiEndpoints.taskPath(id)} body={completed: $completed}',
+    );
     return backendPatchTasksNotes(
       baseUri: _baseUrl,
       path: ApiEndpoints.taskPath(id),

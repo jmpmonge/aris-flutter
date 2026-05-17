@@ -42,11 +42,7 @@ abstract interface class TaskRepository {
 
   /// Renombrar tarea en servidor — **no** implementado contra backend minimal v0.47.31
   /// (`PATCH /tasks/{id}` sólo acepta `completed`; ver [setTaskCompleted]).
-  Future<bool> updateTask(
-    String taskId, {
-    String? title,
-    String? description,
-  });
+  Future<bool> updateTask(String taskId, {String? title, String? description});
 
   Future<bool> deleteTask(String taskId);
 }
@@ -62,6 +58,10 @@ final class HybridTaskRepository implements TaskRepository {
   bool _readsOk = false;
   List<TaskModel> _todayCached = [];
   List<TaskModel> _upcomingCached = [];
+
+  /// Evita que un **GET /tasks** antiguo (p. ej. arranque de pantalla) pise el
+  /// estado tras un **PATCH** ya aplicado.
+  int _tasksFetchGeneration = 0;
 
   @override
   bool get readsFromBackend => _readsOk;
@@ -86,9 +86,41 @@ final class HybridTaskRepository implements TaskRepository {
     _upcomingCached = List<TaskModel>.from(up);
   }
 
+  void _mergePatchedTaskRow(Map<String, dynamic> row) {
+    final tm = BackendTaskMapper.tryParse(row);
+    if (tm == null) return;
+    final mergedById = <String, TaskModel>{};
+    for (final t in _todayCached) {
+      mergedById[t.id] = t;
+    }
+    for (final t in _upcomingCached) {
+      mergedById[t.id] = t;
+    }
+    mergedById[tm.id] = tm;
+    final all = mergedById.values.toList();
+    final td = <TaskModel>[];
+    final up = <TaskModel>[];
+    BackendTaskMapper.partitionForUi(
+      all: all,
+      now: DateTime.now(),
+      outToday: td,
+      outUpcoming: up,
+    );
+    _todayCached = List<TaskModel>.from(td);
+    _upcomingCached = List<TaskModel>.from(up);
+  }
+
   @override
   Future<bool> refreshFromBackend() async {
+    final gen = ++_tasksFetchGeneration;
     final res = await _client.getTasks();
+    if (gen != _tasksFetchGeneration) {
+      debugPrint(
+        '[HybridTaskRepository] refreshFromBackend omitido (GET obsoleto gen=$gen '
+        'cur=$_tasksFetchGeneration)',
+      );
+      return _readsOk;
+    }
     if (!res.isSuccess || res.data == null) {
       _readsOk = false;
       _todayCached = [];
@@ -106,7 +138,15 @@ final class HybridTaskRepository implements TaskRepository {
   Future<void> _reloadTasksAfterMutation() async {
     if (!_readsOk) return;
 
+    final gen = ++_tasksFetchGeneration;
     final res = await _client.getTasks();
+    if (gen != _tasksFetchGeneration) {
+      debugPrint(
+        '[HybridTaskRepository] _reloadTasksAfterMutation omitido (GET obsoleto '
+        'gen=$gen cur=$_tasksFetchGeneration)',
+      );
+      return;
+    }
     if (!res.isSuccess || res.data == null) {
       debugPrint(
         '[HybridTaskRepository] refresco tras mutación sin éxito, se mantiene cache previa.',
@@ -175,16 +215,34 @@ final class HybridTaskRepository implements TaskRepository {
   Future<bool> setTaskCompleted(String taskId, bool completed) async {
     if (!_readsOk) return false;
 
+    debugPrint(
+      '[TaskToggle] id=$taskId previousUnknown desiredCompleted=$completed '
+      '(cache actual en UI)',
+    );
     final res = await _client.patchTaskCompletion(taskId, completed);
-    if (!res.isSuccess) return false;
+    if (!res.isSuccess) {
+      debugPrint('[TaskToggle] PATCH failure: ${res.error}');
+      return false;
+    }
+    final body = res.data;
+    if (body != null && body.containsKey('id')) {
+      debugPrint(
+        '[TaskToggle] PATCH ok body keys=${body.keys.take(12).join(",")} '
+        'completed=${body['completed']}',
+      );
+      _mergePatchedTaskRow(Map<String, dynamic>.from(body));
+      readRevision.value++;
+    }
 
+    debugPrint('[TaskToggle] lanzando GET /tasks tras mutación…');
     await _reloadTasksAfterMutation();
+
+    debugPrint('[TaskToggle] fin setTaskCompleted (éxito HTTP PATCH)');
     return true;
   }
 
   @override
-  Future<bool> completeTask(String taskId) =>
-      setTaskCompleted(taskId, true);
+  Future<bool> completeTask(String taskId) => setTaskCompleted(taskId, true);
 
   @override
   Future<bool> updateTask(
