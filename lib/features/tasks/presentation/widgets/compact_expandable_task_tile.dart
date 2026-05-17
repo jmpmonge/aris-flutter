@@ -116,9 +116,10 @@ class _CompactExpandableTaskTileState extends State<CompactExpandableTaskTile> {
                                   '\u26A0',
                                   style: tt.titleSmall?.copyWith(
                                     height: 1,
-                                    color: scheme.secondary.withValues(
-                                      alpha: 0.92,
-                                    ),
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? const Color(0xFFF59E0B)
+                                        : const Color(0xFFD97706),
                                   ),
                                   semanticsLabel: 'Prioridad alta',
                                 ),
