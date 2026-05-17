@@ -4,6 +4,7 @@ import '../api/api_client.dart';
 import '../models/backend_task_mapper.dart';
 import '../models/local_action_model.dart';
 import '../models/task_model.dart';
+import '../models/task_ui_buckets.dart';
 import '../services/local_action_service.dart';
 import '../services/task_service.dart';
 
@@ -21,6 +22,9 @@ abstract interface class TaskRepository {
   List<TaskModel> getUpcomingTasks();
 
   List<TaskModel> getHomeHighlightTasks();
+
+  /// Partición estable para pantalla (**HOY**/ **PRÓXIMAS**/ **SIN FECHA**/ **COMPLETADAS**).
+  TaskGroupedLists groupedForUi(DateTime now);
 
   List<LocalActionModel> getLocalTasks();
 
@@ -67,8 +71,7 @@ final class HybridTaskRepository implements TaskRepository {
   final ValueNotifier<int> readRevision = ValueNotifier<int>(0);
 
   bool _readsOk = false;
-  List<TaskModel> _todayCached = [];
-  List<TaskModel> _upcomingCached = [];
+  List<TaskModel> _taskCache = [];
 
   /// Evita que un **GET /tasks** antiguo (p. ej. arranque de pantalla) pise el
   /// estado tras un **PATCH** ya aplicado.
@@ -83,42 +86,20 @@ final class HybridTaskRepository implements TaskRepository {
       final t = BackendTaskMapper.tryParse(row);
       if (t != null) mapped.add(t);
     }
-
-    final td = <TaskModel>[];
-    final up = <TaskModel>[];
-    BackendTaskMapper.partitionForUi(
-      all: mapped,
-      now: DateTime.now(),
-      outToday: td,
-      outUpcoming: up,
-    );
-
-    _todayCached = List<TaskModel>.from(td);
-    _upcomingCached = List<TaskModel>.from(up);
+    mapped.sort((a, b) => a.id.compareTo(b.id));
+    _taskCache = mapped;
   }
 
   void _mergePatchedTaskRow(Map<String, dynamic> row) {
     final tm = BackendTaskMapper.tryParse(row);
     if (tm == null) return;
-    final mergedById = <String, TaskModel>{};
-    for (final t in _todayCached) {
-      mergedById[t.id] = t;
+    final byId = <String, TaskModel>{};
+    for (final t in _taskCache) {
+      byId[t.id] = t;
     }
-    for (final t in _upcomingCached) {
-      mergedById[t.id] = t;
-    }
-    mergedById[tm.id] = tm;
-    final all = mergedById.values.toList();
-    final td = <TaskModel>[];
-    final up = <TaskModel>[];
-    BackendTaskMapper.partitionForUi(
-      all: all,
-      now: DateTime.now(),
-      outToday: td,
-      outUpcoming: up,
-    );
-    _todayCached = List<TaskModel>.from(td);
-    _upcomingCached = List<TaskModel>.from(up);
+    byId[tm.id] = tm;
+    final next = byId.values.toList()..sort((a, b) => a.id.compareTo(b.id));
+    _taskCache = next;
   }
 
   @override
@@ -134,8 +115,7 @@ final class HybridTaskRepository implements TaskRepository {
     }
     if (!res.isSuccess || res.data == null) {
       _readsOk = false;
-      _todayCached = [];
-      _upcomingCached = [];
+      _taskCache = [];
       readRevision.value++;
       return false;
     }
@@ -171,16 +151,15 @@ final class HybridTaskRepository implements TaskRepository {
 
   @override
   List<TaskModel> getTodayTasks() {
-    return _readsOk
-        ? List<TaskModel>.unmodifiable(_todayCached)
-        : TaskService.getTodayTasks();
+    if (!_readsOk) return TaskService.getTodayTasks();
+    return TaskGroupedLists.partition(_taskCache, DateTime.now()).today;
   }
 
   @override
   List<TaskModel> getUpcomingTasks() {
-    return _readsOk
-        ? List<TaskModel>.unmodifiable(_upcomingCached)
-        : TaskService.getUpcomingTasks();
+    if (!_readsOk) return TaskService.getUpcomingTasks();
+    final g = TaskGroupedLists.partition(_taskCache, DateTime.now());
+    return [...g.upcoming, ...g.noDate];
   }
 
   @override
@@ -188,11 +167,29 @@ final class HybridTaskRepository implements TaskRepository {
     if (!_readsOk) {
       return TaskService.getHomeHighlightTasks();
     }
-    final pick = <TaskModel>[
-      ..._todayCached,
-      ..._upcomingCached,
-    ].where((t) => !t.completed).take(3).toList();
-    return pick;
+    final now = DateTime.now();
+    final g = TaskGroupedLists.partition(_taskCache, now);
+    final cand = [...g.today, ...g.upcoming, ...g.noDate];
+    if (cand.isEmpty && _taskCache.isNotEmpty) {
+      return _taskCache.take(3).toList(growable: false);
+    }
+    return cand.take(3).toList(growable: false);
+  }
+
+  @override
+  TaskGroupedLists groupedForUi(DateTime now) {
+    if (!_readsOk) {
+      final seen = <String>{};
+      final agg = <TaskModel>[];
+      for (final t in TaskService.getTodayTasks()) {
+        if (seen.add(t.id)) agg.add(t);
+      }
+      for (final t in TaskService.getUpcomingTasks()) {
+        if (seen.add(t.id)) agg.add(t);
+      }
+      return TaskGroupedLists.partition(agg, now);
+    }
+    return TaskGroupedLists.partition(List<TaskModel>.of(_taskCache), now);
   }
 
   @override

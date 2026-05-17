@@ -2,13 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../core/models/task_model.dart';
+import '../../../core/models/task_ui_buckets.dart';
 import '../../../core/repositories/repositories.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/local_action_form_sheet.dart';
 import '../../../theme/app_spacing.dart';
-import '../../../core/models/task_model.dart';
+import 'widgets/compact_expandable_task_tile.dart';
 
-/// Tareas — listas desde **GET /tasks** (hoy y próximas en cliente).
+/// Tareas desde **GET /tasks** · tarjetas compactas y desplegables (v0.47.34).
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
 
@@ -17,9 +19,8 @@ class TasksScreen extends StatefulWidget {
 }
 
 class _TasksScreenState extends State<TasksScreen> {
-  late List<TaskModel> _today;
-  late List<TaskModel> _upcoming;
   final Set<String> _busyTaskIds = <String>{};
+  final Map<String, bool> _localCompletionOverride = <String, bool>{};
 
   static const _taskBackendFail =
       'No he podido actualizar la tarea. Revisa la conexión con el backend.';
@@ -47,15 +48,29 @@ class _TasksScreenState extends State<TasksScreen> {
     );
   }
 
-  void _reloadTaskListsFromRepository() {
-    _today = List<TaskModel>.from(Repositories.task.getTodayTasks());
-    _upcoming = List<TaskModel>.from(Repositories.task.getUpcomingTasks());
+  TaskGroupedLists _effectiveGrouped() {
+    final now = DateTime.now();
+    final base = Repositories.task.groupedForUi(now);
+    if (_localCompletionOverride.isEmpty) return base;
+    final agg = [
+      ...base.today,
+      ...base.upcoming,
+      ...base.noDate,
+      ...base.completed,
+    ];
+    final byId = <String, TaskModel>{for (final t in agg) t.id: t};
+    for (final e in _localCompletionOverride.entries) {
+      final cur = byId[e.key];
+      if (cur != null) {
+        byId[e.key] = cur.copyWith(completed: e.value);
+      }
+    }
+    return TaskGroupedLists.partition(byId.values.toList(), now);
   }
 
   @override
   void initState() {
     super.initState();
-    _reloadTaskListsFromRepository();
     unawaited(Repositories.task.refreshFromBackend());
     Repositories.task.readRevision.addListener(_onTaskReads);
   }
@@ -67,29 +82,18 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   void _onTaskReads() {
-    if (!mounted) return;
-    setState(_reloadTaskListsFromRepository);
-  }
-
-  void _applyLocalCompletion(TaskModel t, bool completed) {
-    setState(() {
-      void bump(List<TaskModel> list) {
-        final i = list.indexWhere((e) => e.id == t.id);
-        if (i >= 0) list[i] = list[i].copyWith(completed: completed);
-      }
-
-      bump(_today);
-      bump(_upcoming);
-    });
+    _localCompletionOverride.clear();
+    if (mounted) setState(() {});
   }
 
   Future<void> _onTaskCheckbox(TaskModel t, bool? nextCompleted) async {
     if (nextCompleted == null) return;
 
-    final fromBackend = Repositories.task.readsFromBackend;
+    final online = Repositories.task.readsFromBackend;
 
-    if (!fromBackend) {
-      _applyLocalCompletion(t, nextCompleted);
+    if (!online) {
+      _localCompletionOverride[t.id] = nextCompleted;
+      if (mounted) setState(() {});
       return;
     }
 
@@ -121,210 +125,84 @@ class _TasksScreenState extends State<TasksScreen> {
     }
   }
 
-  Future<void> _confirmDeleteBackendTask(TaskModel t) async {
+  Widget _buildSection(
+    BuildContext context,
+    TaskBucketSection bucket,
+    List<TaskModel> rows,
+  ) {
+    final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    final yes = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar tarea'),
-        content: Text('¿Eliminar esta tarea del servidor?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.sm,
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: scheme.error,
-              foregroundColor: scheme.onError,
+          child: Text(
+            bucket.uiLabel,
+            style: text.labelSmall?.copyWith(
+              letterSpacing: 1.1,
+              color: scheme.primary,
+              fontWeight: FontWeight.w700,
             ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Eliminar'),
           ),
-        ],
-      ),
+        ),
+        ...rows.map(
+          (t) => Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              0,
+              AppSpacing.md,
+              AppSpacing.sm,
+            ),
+            child: CompactExpandableTaskTile(
+              task: t,
+              section: bucket,
+              busy: _busyTaskIds.contains(t.id),
+              onCheckboxChanged: (v) => _onTaskCheckbox(t, v),
+            ),
+          ),
+        ),
+      ],
     );
-    if (yes != true || !mounted) return;
-
-    setState(() => _busyTaskIds.add(t.id));
-    try {
-      final ok = await Repositories.task.deleteTask(t.id);
-      if (!mounted) return;
-      if (ok) {
-        _briefSnack(context, message: 'Tarea eliminada.');
-      } else {
-        _briefSnack(context, message: _taskBackendFail, error: true);
-      }
-    } finally {
-      if (mounted) setState(() => _busyTaskIds.remove(t.id));
-    }
-  }
-
-  Future<void> _editBackendTask(TaskModel t) async {
-    final titleCtrl = TextEditingController(text: t.title);
-
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        final dlgScheme = Theme.of(ctx).colorScheme;
-        return AlertDialog(
-          title: const Text('Editar tarea'),
-          content: TextField(
-            controller: titleCtrl,
-            autofocus: true,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: 'Título (PATCH /tasks/{id})',
-              border: OutlineInputBorder(
-                borderSide: BorderSide(color: dlgScheme.outline),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Guardar'),
-            ),
-          ],
-        );
-      },
-    );
-
-    final nextTitle = titleCtrl.text.trim();
-    titleCtrl.dispose();
-    if (saved != true || !mounted) return;
-    if (nextTitle.isEmpty) {
-      _briefSnack(context, message: _taskBackendFail, error: true);
-      return;
-    }
-
-    setState(() => _busyTaskIds.add(t.id));
-    try {
-      final ok = await Repositories.task.updateTask(t.id, title: nextTitle);
-      if (!mounted) return;
-      if (ok) {
-        _briefSnack(context, message: 'Cambios guardados.');
-      } else {
-        _briefSnack(context, message: _taskBackendFail, error: true);
-      }
-    } finally {
-      if (mounted) setState(() => _busyTaskIds.remove(t.id));
-    }
-  }
-
-  Future<void> _onTaskOverflow(String action, TaskModel t) async {
-    switch (action) {
-      case 'edit':
-        await _editBackendTask(t);
-      case 'delete':
-        await _confirmDeleteBackendTask(t);
-      default:
-        break;
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final grouped = _effectiveGrouped();
+    final sections = grouped.nonEmptySectionsInOrder();
 
-    Widget section(String title, List<TaskModel> items) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.md,
-              AppSpacing.md,
-              AppSpacing.sm,
-            ),
+    Widget bodyChildren() {
+      if (!grouped.hasAnyTask) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.xxl,
+            AppSpacing.md,
+            AppSpacing.md,
+          ),
+          child: Center(
             child: Text(
-              title,
-              style: text.labelSmall?.copyWith(
-                letterSpacing: 1.1,
-                color: scheme.primary,
-                fontWeight: FontWeight.w700,
+              'No tienes tareas.',
+              style: text.titleMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
               ),
+              textAlign: TextAlign.center,
             ),
           ),
-          ...List.generate(items.length, (i) {
-            final t = items[i];
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                0,
-                AppSpacing.md,
-                AppSpacing.sm,
-              ),
-              child: Card(
-                elevation: Theme.of(context).cardTheme.elevation ?? 2,
-                shadowColor: Theme.of(context).cardTheme.shadowColor,
-                shape: Theme.of(context).cardTheme.shape,
-                clipBehavior: Clip.antiAlias,
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xs,
-                  ),
-                  minVerticalPadding: AppSpacing.sm,
-                  leading: Checkbox(
-                    visualDensity: VisualDensity.compact,
-                    value: t.completed,
-                    onChanged: _busyTaskIds.contains(t.id)
-                        ? null
-                        : Repositories.task.readsFromBackend
-                        ? (v) => _onTaskCheckbox(t, v)
-                        : (v) => _onTaskCheckbox(t, v),
-                  ),
-                  title: Text(
-                    t.title,
-                    style: text.bodyLarge?.copyWith(
-                      decoration: t.completed
-                          ? TextDecoration.lineThrough
-                          : TextDecoration.none,
-                      color: t.completed
-                          ? scheme.onSurfaceVariant
-                          : scheme.onSurface,
-                    ),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        t.completed
-                            ? Icons.check_circle_rounded
-                            : Icons.radio_button_unchecked_rounded,
-                        color: t.completed
-                            ? scheme.secondary
-                            : scheme.onSurfaceVariant,
-                      ),
-                      if (Repositories.task.readsFromBackend)
-                        PopupMenuButton<String>(
-                          tooltip: 'Más opciones',
-                          enabled: !_busyTaskIds.contains(t.id),
-                          onSelected: (v) => _onTaskOverflow(v, t),
-                          itemBuilder: (_) => [
-                            const PopupMenuItem(
-                              value: 'edit',
-                              child: Text('Editar'),
-                            ),
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: Text('Eliminar'),
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
+        );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final row in sections) _buildSection(context, row.$1, row.$2),
+          const SizedBox(height: AppSpacing.fabStackClearance),
         ],
       );
     }
@@ -338,7 +216,7 @@ class _TasksScreenState extends State<TasksScreen> {
           SliverToBoxAdapter(
             child: AppHeader(
               title: 'Tareas',
-              subtitle: 'Lista desde el servidor · marcar/desmarcar con PATCH',
+              subtitle: 'Lista unificada · pulsa una tarea para ampliar',
               trailing: IconButton.filledTonal(
                 onPressed: () => LocalActionFormSheet.showTaskForm(context),
                 icon: const Icon(Icons.add_rounded),
@@ -346,11 +224,7 @@ class _TasksScreenState extends State<TasksScreen> {
               ),
             ),
           ),
-          SliverToBoxAdapter(child: section('HOY', _today)),
-          SliverToBoxAdapter(child: section('PRÓXIMAS', _upcoming)),
-          const SliverToBoxAdapter(
-            child: SizedBox(height: AppSpacing.fabStackClearance),
-          ),
+          SliverToBoxAdapter(child: bodyChildren()),
         ],
       ),
     );
