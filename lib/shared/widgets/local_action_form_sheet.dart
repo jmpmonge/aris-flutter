@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/models/local_action_model.dart';
+import '../../core/repositories/repositories.dart';
 import '../../core/services/local_action_service.dart';
 import '../../theme/app_spacing.dart';
 import '../layout/breakpoints.dart';
@@ -8,7 +9,8 @@ import 'app_form_button.dart';
 import 'app_text_field.dart';
 import 'form_section_title.dart';
 
-/// Formularios modales (bottom sheet) para crear acciones locales sin backend.
+/// Formularios modales (bottom sheet): tareas contra backend (v0.47.33+);
+/// otros tipos pueden seguir usando acciones locales de demostración.
 abstract final class LocalActionFormSheet {
   static Future<void> showTaskForm(BuildContext context) {
     return _open(context, const _TaskFormBody());
@@ -62,7 +64,11 @@ abstract final class LocalActionFormSheet {
     );
   }
 
-  static Widget _sheetHeader(BuildContext context, String title) {
+  static Widget _sheetHeader(
+    BuildContext context,
+    String title, {
+    String? subtitle,
+  }) {
     final theme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     return Padding(
@@ -76,7 +82,8 @@ abstract final class LocalActionFormSheet {
           ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            'Aris · contenido solo en este dispositivo (simulado)',
+            subtitle ??
+                'Aris · contenido solo en este dispositivo (simulado)',
             style: theme.bodySmall?.copyWith(
               color: scheme.onSurfaceVariant,
               height: 1.35,
@@ -100,6 +107,8 @@ class _TaskFormBodyState extends State<_TaskFormBody> {
   final _description = TextEditingController();
   LocalTaskPriority _priority = LocalTaskPriority.medium;
   String? _titleError;
+  String? _submitError;
+  bool _busy = false;
 
   @override
   void dispose() {
@@ -108,20 +117,36 @@ class _TaskFormBodyState extends State<_TaskFormBody> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final t = _title.text.trim();
     if (t.isEmpty) {
       setState(() => _titleError = 'Añade un título');
       return;
     }
-    setState(() => _titleError = null);
-    LocalActionService.createTask(
+    setState(() {
+      _titleError = null;
+      _submitError = null;
+      _busy = true;
+    });
+    final wirePriority =
+        _priority == LocalTaskPriority.high ? 'high' : 'normal';
+    final ok = await Repositories.task.createTaskOnBackend(
       title: t,
-      description: _description.text.trim().isEmpty
-          ? null
-          : _description.text.trim(),
-      priority: _priority,
+      description:
+          _description.text.trim().isEmpty ? null : _description.text.trim(),
+      priority: wirePriority,
+      tags: const <String>[],
     );
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (!ok) {
+      setState(
+        () => _submitError =
+            'No se pudo crear la tarea. Comprueba que el backend esté '
+            'en marcha y la URL configurada.',
+      );
+      return;
+    }
     Navigator.of(context).pop();
   }
 
@@ -134,7 +159,11 @@ class _TaskFormBodyState extends State<_TaskFormBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          LocalActionFormSheet._sheetHeader(context, 'Nueva tarea con Aris'),
+          LocalActionFormSheet._sheetHeader(
+            context,
+            'Nueva tarea',
+            subtitle: 'Se guarda en el servidor (misma lista que el chat).',
+          ),
           const FormSectionTitle('Título'),
           AppTextField(
             controller: _title,
@@ -167,15 +196,26 @@ class _TaskFormBodyState extends State<_TaskFormBody> {
               ),
             ],
             selected: {_priority},
-            onSelectionChanged: (s) =>
-                setState(() => _priority = s.first),
+            onSelectionChanged: (s) {
+              if (_busy) return;
+              setState(() => _priority = s.first);
+            },
             style: SegmentedButton.styleFrom(
               visualDensity: VisualDensity.compact,
             ),
           ),
+          if (_submitError != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _submitError!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.error,
+                  ),
+            ),
+          ],
           AppFormButton(
-            label: 'Crear tarea',
-            onPressed: _submit,
+            label: _busy ? 'Guardando…' : 'Crear tarea',
+            onPressed: _busy ? null : () => _submit(),
           ),
           const SizedBox(height: AppSpacing.sm),
           AppFormButton(

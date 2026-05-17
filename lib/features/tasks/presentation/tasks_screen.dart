@@ -2,17 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../core/models/local_action_model.dart';
 import '../../../core/repositories/repositories.dart';
-import '../../../core/services/local_action_service.dart';
 import '../../../shared/widgets/app_header.dart';
-import '../../../shared/widgets/local_action_card.dart';
-import '../../../shared/widgets/local_action_empty_state.dart';
 import '../../../shared/widgets/local_action_form_sheet.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../core/models/task_model.dart';
 
-/// Tareas — hoy y próximas, estados mock (sin persistencia).
+/// Tareas — listas desde **GET /tasks** (hoy y próximas en cliente).
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
 
@@ -61,24 +57,18 @@ class _TasksScreenState extends State<TasksScreen> {
     super.initState();
     _reloadTaskListsFromRepository();
     unawaited(Repositories.task.refreshFromBackend());
-    LocalActionService.revision.addListener(_onLocalActions);
     Repositories.task.readRevision.addListener(_onTaskReads);
   }
 
   @override
   void dispose() {
     Repositories.task.readRevision.removeListener(_onTaskReads);
-    LocalActionService.revision.removeListener(_onLocalActions);
     super.dispose();
   }
 
   void _onTaskReads() {
     if (!mounted) return;
     setState(_reloadTaskListsFromRepository);
-  }
-
-  void _onLocalActions() {
-    if (mounted) setState(() {});
   }
 
   void _applyLocalCompletion(TaskModel t, bool completed) {
@@ -348,8 +338,7 @@ class _TasksScreenState extends State<TasksScreen> {
           SliverToBoxAdapter(
             child: AppHeader(
               title: 'Tareas',
-              subtitle:
-                  'Marcar/desmarcar servidor · menú más opciones cuando hay datos GET',
+              subtitle: 'Lista desde el servidor · marcar/desmarcar con PATCH',
               trailing: IconButton.filledTonal(
                 onPressed: () => LocalActionFormSheet.showTaskForm(context),
                 icon: const Icon(Icons.add_rounded),
@@ -359,58 +348,11 @@ class _TasksScreenState extends State<TasksScreen> {
           ),
           SliverToBoxAdapter(child: section('HOY', _today)),
           SliverToBoxAdapter(child: section('PRÓXIMAS', _upcoming)),
-          SliverToBoxAdapter(child: _arisTasksSection(context)),
           const SliverToBoxAdapter(
             child: SizedBox(height: AppSpacing.fabStackClearance),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _arisTasksSection(BuildContext context) {
-    final arisTasks = LocalActionService.getActionsByType(LocalActionType.task);
-
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.md,
-            AppSpacing.md,
-            AppSpacing.sm,
-          ),
-          child: Text(
-            'Creadas por Aris',
-            style: text.labelSmall?.copyWith(
-              letterSpacing: 1.1,
-              color: scheme.primary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        if (arisTasks.isEmpty)
-          const LocalActionEmptyState(
-            message:
-                'Nada aquí todavía. Usa el botón + arriba o escribe en Inicio (p. ej. «recuérdame…»).',
-          )
-        else
-          ...List.generate(arisTasks.length, (i) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                0,
-                AppSpacing.md,
-                AppSpacing.sm,
-              ),
-              child: LocalActionCard(action: arisTasks[i]),
-            );
-          }),
-      ],
     );
   }
 }

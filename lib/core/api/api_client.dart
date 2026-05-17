@@ -100,6 +100,27 @@ final class ApiClient {
     );
   }
 
+  /// POST [`ApiEndpoints.tasksList`] (**`/tasks`**) creación manual sin GPT (v0.47.33+).
+  Future<ApiResult<Map<String, dynamic>?>> createTaskRaw(
+    Map<String, dynamic> body,
+  ) {
+    const tag = '[ApiClient.createTaskRaw]';
+    debugPrint('$tag delegando (baseUrl: $_baseUrl)');
+    if (body.isEmpty) {
+      return Future.value(
+        ApiResult.failure(
+          ApiException('El cuerpo de la tarea no puede estar vacío.', code: 'validation'),
+        ),
+      );
+    }
+    return backendPostTasksNotes(
+      baseUri: _baseUrl,
+      path: ApiEndpoints.tasksList,
+      jsonBody: body,
+      debugLabel: tag,
+    );
+  }
+
   /// Equivale a [patchTaskCompletion] con **`completed: true`**.
   Future<ApiResult<Map<String, dynamic>?>> completeTask(String taskId) =>
       patchTaskCompletion(taskId, true);

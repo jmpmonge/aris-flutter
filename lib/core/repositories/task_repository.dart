@@ -30,6 +30,17 @@ abstract interface class TaskRepository {
     LocalTaskPriority? priority,
   });
 
+  /// POST **`/tasks`**: creación en servidor (sin GPT). Requiere URL base válida.
+  Future<bool> createTaskOnBackend({
+    required String title,
+    String? description,
+    String? dateText,
+    String? dateIso,
+    String? timeText,
+    String priority = 'normal',
+    List<String>? tags,
+  });
+
   void toggleLocalTaskCompleted(String id);
 
   void removeLocalTask(String id);
@@ -199,6 +210,52 @@ final class HybridTaskRepository implements TaskRepository {
       description: description,
       priority: priority,
     );
+  }
+
+  @override
+  Future<bool> createTaskOnBackend({
+    required String title,
+    String? description,
+    String? dateText,
+    String? dateIso,
+    String? timeText,
+    String priority = 'normal',
+    List<String>? tags,
+  }) async {
+    if (!_client.isConfigured) {
+      debugPrint('[HybridTaskRepository] createTaskOnBackend sin baseUrl');
+      return false;
+    }
+    final trimmedTitle = title.trim();
+    if (trimmedTitle.isEmpty) return false;
+
+    final body = <String, dynamic>{'title': trimmedTitle};
+    final desc = description?.trim();
+    if (desc != null && desc.isNotEmpty) body['description'] = desc;
+
+    final dText = dateText?.trim();
+    if (dText != null && dText.isNotEmpty) body['date_text'] = dText;
+
+    final dIso = dateIso?.trim();
+    if (dIso != null && dIso.isNotEmpty) body['date_iso'] = dIso;
+
+    final tTxt = timeText?.trim();
+    if (tTxt != null && tTxt.isNotEmpty) body['time_text'] = tTxt;
+
+    final prio = priority.trim().toLowerCase() == 'high' ? 'high' : 'normal';
+    body['priority'] = prio;
+    body['tags'] = List<String>.from(tags ?? const <String>[]);
+
+    final res = await _client.createTaskRaw(body);
+    if (!res.isSuccess || res.data == null) {
+      debugPrint('[HybridTaskRepository] createTaskOnBackend error: ${res.error}');
+      return false;
+    }
+    _readsOk = true;
+    _mergePatchedTaskRow(Map<String, dynamic>.from(res.data!));
+    readRevision.value++;
+    await _reloadTasksAfterMutation();
+    return true;
   }
 
   @override
