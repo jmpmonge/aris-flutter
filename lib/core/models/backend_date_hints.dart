@@ -78,36 +78,75 @@ abstract final class BackendDateTimeHints {
   static int _clampHour(int h) => h.clamp(0, 23);
   static int _clampMin(int mm) => mm.clamp(0, 59);
 
-  /// Une `date_text` / `created_at` con hora desde `time_text`.
-  static DateTime approximateEventStart({
+  /// Sentinel de día civil **no sustituye** fecha textual del servidor.
+  ///
+  /// [start] combina día + hora; [hasCivilCalendarDate] indica si el día debe
+  /// usarse en rejillas día/semana/mes (**false** ⇒ mostrar sólo `date_text`).
+  static BackendResolvedEventInstant resolveEventInstant({
     required Map<String, dynamic> data,
     required DateTime fallbackCalendarDay,
   }) {
-    DateTime datePart =
-        BackendDateTimeHints.parseDateFlexible(data['date_text']) ??
-            BackendDateTimeHints.tryParseIso(
-              data['created_at']?.toString(),
-            )?.toUtc() ??
-            DateTime.utc(
-              fallbackCalendarDay.year,
-              fallbackCalendarDay.month,
-              fallbackCalendarDay.day,
-            );
+    final rawDate = data['date_text']?.toString().trim() ?? '';
+    DateTime datePartUtc;
+    final bool hasCivil;
 
-    datePart =
-        DateTime.utc(datePart.year, datePart.month, datePart.day).toUtc();
+    final parsedFlexible =
+        BackendDateTimeHints.parseDateFlexible(data['date_text']);
+    if (parsedFlexible != null) {
+      datePartUtc = parsedFlexible.toUtc();
+      hasCivil = true;
+    } else if (rawDate.isNotEmpty) {
+      // Texto («lunes», «mañana», …): no usar `created_at` ni día corriente.
+      datePartUtc = DateTime.utc(2000, 1, 1);
+      hasCivil = false;
+    } else {
+      // Sin `date_text`: anclaje civil explícito (sin `created_at` como día).
+      datePartUtc = DateTime.utc(
+        fallbackCalendarDay.year,
+        fallbackCalendarDay.month,
+        fallbackCalendarDay.day,
+      );
+      hasCivil = true;
+    }
 
     final clock = BackendDateTimeHints.parseTimeFlexible(data['time_text']);
     // Hora civil del backend (`time_text` sin zona): constructor local, no
     // DateTime.utc(...).toLocal() (evita desfase por huso p. ej. 19→14).
-    return DateTime(
-      datePart.year,
-      datePart.month,
-      datePart.day,
+    final instant = DateTime(
+      datePartUtc.year,
+      datePartUtc.month,
+      datePartUtc.day,
       clock.hour,
       clock.minute,
     );
+    return BackendResolvedEventInstant(
+      start: instant,
+      hasCivilCalendarDate: hasCivil,
+    );
   }
+
+  /// Compatibilidad — preferí [resolveEventInstant].
+  static DateTime approximateEventStart({
+    required Map<String, dynamic> data,
+    required DateTime fallbackCalendarDay,
+  }) {
+    return resolveEventInstant(
+      data: data,
+      fallbackCalendarDay: fallbackCalendarDay,
+    ).start;
+  }
+}
+
+/// Resultado de unir día + hora del JSON de `/events`.
+final class BackendResolvedEventInstant {
+  const BackendResolvedEventInstant({
+    required this.start,
+    required this.hasCivilCalendarDate,
+  });
+
+  final DateTime start;
+  /// `false` si `date_text` es texto sin parseo civil (ej. «lunes»).
+  final bool hasCivilCalendarDate;
 }
 
 class ResolvedClock {
