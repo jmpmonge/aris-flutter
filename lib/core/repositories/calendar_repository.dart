@@ -28,6 +28,10 @@ abstract interface class CalendarRepository {
   /// Eventos cuyo `date_text` no es fecha ISO: no aparecen en columna día corriente.
   List<EventModel> get textualOnlyDateBackendEvents;
 
+  /// Todos los eventos del backend, ordenados por `start`.
+  /// Útil para listar y borrar eventos con fecha civil no visible en la vista día.
+  List<EventModel> get allBackendEvents;
+
   List<LocalActionModel> getLocalEvents();
 
   LocalActionModel createLocalEvent({
@@ -141,6 +145,13 @@ final class HybridCalendarRepository implements CalendarRepository {
   @override
   List<EventModel> get textualOnlyDateBackendEvents =>
       List.unmodifiable(_textualOnlyDateBackendSorted());
+
+  @override
+  List<EventModel> get allBackendEvents {
+    final sorted = List<EventModel>.of(_backendEvents)
+      ..sort((a, b) => a.start.compareTo(b.start));
+    return List.unmodifiable(sorted);
+  }
 
   @override
   List<EventModel> getTodayEvents([DateTime? day]) {
