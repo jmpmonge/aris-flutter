@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/repositories/repositories.dart';
@@ -8,6 +10,7 @@ import '../../features/notes/presentation/notes_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
 import '../layout/app_scaffold.dart';
+import '../../theme/app_spacing.dart';
 import 'app_bottom_navigation.dart';
 import '../widgets/app_floating_action_button.dart';
 import '../widgets/chat_input_bar.dart';
@@ -23,6 +26,15 @@ class AppNavigationShell extends StatefulWidget {
 class _AppNavigationShellState extends State<AppNavigationShell> {
   int _tabIndex = 0;
   final _chatController = TextEditingController();
+  bool _chatSending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(Repositories.prefetchBackendReads());
+    });
+  }
 
   static const List<Widget> _pages = [
     HomeScreen(),
@@ -72,9 +84,14 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
     );
   }
 
-  void _onChatSend(String text) {
-    Repositories.assistant.sendUserMessage(text);
+  Future<void> _onChatSend(String text) async {
+    final t = text.trim();
+    if (t.isEmpty) return;
     _chatController.clear();
+    setState(() => _chatSending = true);
+    await Repositories.assistant.sendMessage(t);
+    if (!mounted) return;
+    setState(() => _chatSending = false);
   }
 
   void _onMicTap() {
@@ -94,24 +111,33 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
             ChatInputBar(
               controller: _chatController,
               hintText: 'Escribe a Aris…',
+              isSending: _chatSending,
               onSend: _onChatSend,
               onMicTap: _onMicTap,
             ),
-          Material(
-            color: scheme.surface,
-            child: Column(
-              children: [
-                Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: scheme.outline.withValues(alpha: 0.12),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.homePageMarginH,
+              6,
+              AppSpacing.homePageMarginH,
+              10,
+            ),
+            child: Material(
+              color: scheme.surface,
+              elevation: 4,
+              shadowColor: scheme.shadow.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(AppSpacing.homeNavBarRadius),
+              clipBehavior: Clip.antiAlias,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.homeNavBarHorizontalPadding,
                 ),
-                AppBottomNavigation(
+                child: AppBottomNavigation(
                   currentIndex: _tabIndex,
                   onDestinationSelected: (i) => setState(() => _tabIndex = i),
                   destinations: _destinations,
                 ),
-              ],
+              ),
             ),
           ),
         ],

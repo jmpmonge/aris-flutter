@@ -54,6 +54,57 @@ abstract final class AppSpacing {
   /// y respiro final antes de la barra de chat. Valor intermedio (16–24) para ritmo premium.
   static const double homeSectionSpacing = 20;
 
+  /// Inicio v0.48.2 — margen lateral global referencia Structured (iPhone ~393).
+  static const double homePageMarginH = 18;
+
+  /// Mínimo en zonas muy densas (no sustituye al global salvo casos puntuales).
+  static const double homePageMarginDenseH = 16;
+
+  /// Separación vertical entre bloques de Inicio.
+  static const double homeSectionGap = 12;
+
+  /// Máxima entre bloques principales (evita > 20 px de aire).
+  static const double homeSectionGapMax = 16;
+
+  /// Tras cabecera → primera tarjeta (Greeting).
+  static const double homeHeaderToGreetingGap = 14;
+
+  /// Radio tarjetas Home (Structured).
+  static const double homeCardRadius = 22;
+
+  /// Radios internos / chapas.
+  static const double homeCardRadiusInner = 18;
+
+  static const double homeCardPadding = 14;
+
+  static const double homeCardPaddingCompact = 12;
+
+  /// Barra inferior tipo cápsula.
+  static const double homeNavBarHeight = 76;
+
+  static const double homeNavBarRadius = 34;
+
+  static const double homeNavBarHorizontalPadding = 12;
+
+  static const double homeNavIconSize = 26;
+
+  /// Altura fila barra “Escribe a Aris…”.
+  static const double homeChatInputHeight = 52;
+
+  static const double homeChatMicButtonSize = 48;
+
+  /// FAB asistente (shell).
+  static const double homeFabDiameter = 64;
+
+  static const double homeFabIconSize = 34;
+
+  /// Iconos de fila en listas Home (HOY, etc.).
+  static const double homeRowIconSize = 21;
+
+  /// Sombra muy suave para tarjetas Home (casi planas).
+  static const double shadowBlurHomeCard = 5;
+  static const Offset shadowOffsetHomeCard = Offset(0, 2);
+
   static const double shadowBlurHero = 20;
   static const Offset shadowOffsetHero = Offset(0, 8);
 

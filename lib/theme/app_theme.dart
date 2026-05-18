@@ -90,11 +90,11 @@ abstract final class AppTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        height: 62,
+        height: AppSpacing.homeNavBarHeight,
         elevation: 0,
         backgroundColor: scheme.surface,
         indicatorColor: scheme.secondaryContainer.withValues(
-          alpha: isLight ? 0.85 : 0.55,
+          alpha: isLight ? 0.88 : 0.5,
         ),
         surfaceTintColor: Colors.transparent,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
@@ -102,13 +102,13 @@ abstract final class AppTheme {
           return text.labelSmall?.copyWith(
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
             color: selected ? scheme.primary : scheme.onSurfaceVariant,
-            fontSize: 11,
+            fontSize: 11.5,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return IconThemeData(
-            size: 24,
+            size: AppSpacing.homeNavIconSize,
             color: selected ? scheme.primary : scheme.onSurfaceVariant,
           );
         }),
@@ -120,6 +120,14 @@ abstract final class AppTheme {
         focusElevation: 4,
         hoverElevation: 6,
         highlightElevation: 6,
+        sizeConstraints: BoxConstraints.tightFor(
+          width: AppSpacing.homeFabDiameter,
+          height: AppSpacing.homeFabDiameter,
+        ),
+        smallSizeConstraints: BoxConstraints.tightFor(
+          width: AppSpacing.homeFabDiameter,
+          height: AppSpacing.homeFabDiameter,
+        ),
         shape: const CircleBorder(),
       ),
       iconButtonTheme: IconButtonThemeData(

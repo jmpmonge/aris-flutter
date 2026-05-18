@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// FAB **circular** alineado al tema global (primario Aris).
+import '../../theme/app_spacing.dart';
+
+/// FAB circular — v0.48.2 medidas Structured (64 / icono 34).
 class AppFloatingActionButton extends StatelessWidget {
   const AppFloatingActionButton({
     super.key,
@@ -22,7 +24,7 @@ class AppFloatingActionButton extends StatelessWidget {
       tooltip: tooltip,
       onPressed: onPressed,
       shape: const CircleBorder(),
-      child: Icon(icon, size: 24),
+      child: Icon(icon, size: AppSpacing.homeFabIconSize),
     );
   }
 }

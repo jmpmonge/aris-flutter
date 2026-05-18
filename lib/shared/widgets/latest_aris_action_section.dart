@@ -17,19 +17,20 @@ class LatestArisActionSection extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.homePageMarginH),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Última acción de Aris',
             style: text.labelSmall?.copyWith(
-              letterSpacing: 1.1,
+              fontSize: 11.5,
+              letterSpacing: 0.7,
               color: scheme.primary,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.xs),
           LocalActionCard(action: latest, compact: true),
         ],
       ),

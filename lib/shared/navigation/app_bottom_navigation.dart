@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/app_spacing.dart';
+
 /// Destino para [AppBottomNavigation].
 class AppNavDestination {
   const AppNavDestination({
@@ -13,7 +15,7 @@ class AppNavDestination {
   final String label;
 }
 
-/// Barra inferior limpia (Material 3), mobile-first.
+/// Barra inferior Material 3 — en shell va dentro de cápsula (margen + [Material]).
 class AppBottomNavigation extends StatelessWidget {
   const AppBottomNavigation({
     super.key,
@@ -28,14 +30,24 @@ class AppBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return NavigationBar(
+      height: AppSpacing.homeNavBarHeight,
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: Colors.transparent,
+      elevation: 0,
+      labelPadding: const EdgeInsets.only(top: 4),
       selectedIndex: currentIndex,
       onDestinationSelected: onDestinationSelected,
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      indicatorColor: scheme.secondaryContainer.withValues(alpha: 0.75),
       destinations: [
         for (final d in destinations)
           NavigationDestination(
-            icon: Icon(d.icon),
-            selectedIcon: Icon(d.selectedIcon),
+            icon: Icon(d.icon, size: AppSpacing.homeNavIconSize),
+            selectedIcon: Icon(d.selectedIcon, size: AppSpacing.homeNavIconSize),
             label: d.label,
           ),
       ],

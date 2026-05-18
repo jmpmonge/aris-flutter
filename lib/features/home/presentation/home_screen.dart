@@ -82,11 +82,11 @@ class _HomeScreenState extends State<HomeScreen> {
         key: const Key('tab_home'),
         controller: _scrollController,
         padding: const EdgeInsets.only(
-          bottom: AppSpacing.homeSectionSpacing + AppSpacing.sm,
+          bottom: AppSpacing.homeSectionGap + AppSpacing.sm,
         ),
         children: [
           ArisHeader(onAssistantTap: () => _openAssistant(context)),
-          const SizedBox(height: 17),
+          const SizedBox(height: AppSpacing.homeHeaderToGreetingGap),
           GreetingCard(
             greeting: UserService.getGreetingForNow(),
             secondaryLines: const [
@@ -94,17 +94,17 @@ class _HomeScreenState extends State<HomeScreen> {
               'y un hueco útil a las 11:30.',
             ],
           ),
-          const SizedBox(height: AppSpacing.homeSectionSpacing),
+          const SizedBox(height: AppSpacing.homeSectionGap),
           SuggestionCard(message: UserService.getHomeSuggestionLine()),
-          const SizedBox(height: AppSpacing.homeSectionSpacing),
+          const SizedBox(height: AppSpacing.homeSectionGap),
           TodaySummaryCard(
             events: Repositories.calendar.getHomeHighlightEvents(),
             tasks: Repositories.task.getHomeHighlightTasks(),
             notes: Repositories.note.getHomeHighlightNotes(),
           ),
-          const SizedBox(height: AppSpacing.homeSectionSpacing),
+          const SizedBox(height: AppSpacing.homeSectionGap),
           const LatestArisActionSection(),
-          const SizedBox(height: AppSpacing.homeSectionSpacing),
+          const SizedBox(height: AppSpacing.homeSectionGap),
           RecentConversationCard(
             messages: Repositories.history.conversationForHome(),
             onFollowUpMessage: _sendChatFollowUp,

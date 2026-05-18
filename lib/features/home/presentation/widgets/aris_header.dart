@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Cabecera compacta de Home — v0.48.1 (bloque superior; no “portada”).
-///
-/// Tras [SafeArea] del padre aplica **+16 px** aprox. de margen superior.
+import '../../../../theme/app_spacing.dart';
+
+/// Cabecera Home — v0.48.2 Structured (presencia, sin “portada”).
 class ArisHeader extends StatelessWidget {
   const ArisHeader({
     super.key,
@@ -14,15 +14,15 @@ class ArisHeader extends StatelessWidget {
   static const Color _titleColor = Color(0xFF132B4F);
   static const Color _subtitleColor = Color(0xFF6E7480);
 
-  /// Rango briefing 22–24 px → 23 px.
-  static const double _horizontalMargin = 23;
-
-  /// SafeArea + ~16 px.
-  static const double _paddingTop = 16;
+  /// SafeArea ya aplica en [HomeScreen]; aquí +18 px de ritmo superior.
+  static const double _paddingTop = 18;
 
   static const double _titleSize = 32;
-  static const double _subtitleSize = 13;
+  static const double _subtitleSize = 14;
   static const double _titleSubtitleGap = 3;
+
+  static const double _assistantButtonSize = 44;
+  static const double _assistantIconSize = 23;
 
   @override
   Widget build(BuildContext context) {
@@ -34,18 +34,18 @@ class ArisHeader extends StatelessWidget {
       children: [
         Text(
           'aris',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: _titleSize,
             fontWeight: FontWeight.w700,
             height: 1.0,
-            letterSpacing: -0.45,
+            letterSpacing: -0.4,
             color: _titleColor,
           ),
         ),
         const SizedBox(height: _titleSubtitleGap),
         Text(
           'Tu asistente personal',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: _subtitleSize,
             height: 1.25,
             fontWeight: FontWeight.w400,
@@ -57,9 +57,9 @@ class ArisHeader extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        _horizontalMargin,
+        AppSpacing.homePageMarginH,
         _paddingTop,
-        _horizontalMargin,
+        AppSpacing.homePageMarginH,
         0,
       ),
       child: Row(
@@ -71,16 +71,19 @@ class ArisHeader extends StatelessWidget {
             IconButton.filledTonal(
               onPressed: onAssistantTap,
               tooltip: 'Hablar con Aris',
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints.tightFor(width: 36, height: 36),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints.tightFor(
+                width: _assistantButtonSize,
+                height: _assistantButtonSize,
+              ),
               style: IconButton.styleFrom(
-                visualDensity: VisualDensity.compact,
+                visualDensity: VisualDensity.standard,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              iconSize: 20,
+              iconSize: _assistantIconSize,
               icon: Icon(
                 Icons.auto_awesome_rounded,
-                size: 20,
+                size: _assistantIconSize,
                 color: scheme.primary,
               ),
             ),
