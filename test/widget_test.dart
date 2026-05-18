@@ -8,7 +8,7 @@ void main() {
     await tester.pumpWidget(const ArisApp());
 
     expect(find.textContaining('José'), findsWidgets);
-    expect(find.text('Aris'), findsWidgets);
+    expect(find.text('aris'), findsWidgets);
     expect(find.byKey(const Key('tab_home')), findsOneWidget);
 
     await tester.tap(find.byTooltip('Hablar con Aris'));
