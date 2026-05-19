@@ -12,7 +12,10 @@ import 'widgets/compact_expandable_task_tile.dart';
 
 /// Tareas desde **GET /tasks** · tarjetas compactas y desplegables (v0.47.34).
 class TasksScreen extends StatefulWidget {
-  const TasksScreen({super.key});
+  const TasksScreen({super.key, this.initialExpandedTaskId});
+
+  /// Al abrir desde Home (HOY): expandir la misma tarea por id.
+  final String? initialExpandedTaskId;
 
   @override
   State<TasksScreen> createState() => _TasksScreenState();
@@ -202,6 +205,7 @@ class _TasksScreenState extends State<TasksScreen> {
             child: CompactExpandableTaskTile(
               task: t,
               section: bucket,
+              initiallyExpanded: widget.initialExpandedTaskId == t.id,
               busy: _busyTaskIds.contains(t.id),
               onCheckboxChanged: (v) => _onTaskCheckbox(t, v),
               onDelete: Repositories.task.readsFromBackend

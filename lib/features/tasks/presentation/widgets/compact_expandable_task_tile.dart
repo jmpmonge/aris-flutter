@@ -9,6 +9,7 @@ class CompactExpandableTaskTile extends StatefulWidget {
     super.key,
     required this.task,
     required this.section,
+    this.initiallyExpanded = false,
     required this.busy,
     required this.onCheckboxChanged,
     this.onDelete,
@@ -16,6 +17,9 @@ class CompactExpandableTaskTile extends StatefulWidget {
 
   final TaskModel task;
   final TaskBucketSection section;
+
+  /// Desde Home: abrir detalle inline de la tarea seleccionada.
+  final bool initiallyExpanded;
   final bool busy;
   final ValueChanged<bool?> onCheckboxChanged;
 
@@ -28,7 +32,13 @@ class CompactExpandableTaskTile extends StatefulWidget {
 }
 
 class _CompactExpandableTaskTileState extends State<CompactExpandableTaskTile> {
-  bool _open = false;
+  late bool _open;
+
+  @override
+  void initState() {
+    super.initState();
+    _open = widget.initiallyExpanded;
+  }
 
   @override
   Widget build(BuildContext context) {
