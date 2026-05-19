@@ -22,6 +22,24 @@ abstract final class MockTasks {
         completed: false,
         dueDate: DateTime(t.year, t.month, t.day),
       ),
+      TaskModel(
+        id: 'mock_task_call',
+        title: 'Llamar al proveedor',
+        completed: false,
+        dueDate: DateTime(t.year, t.month, t.day),
+      ),
+      TaskModel(
+        id: 'mock_task_report',
+        title: 'Enviar informe trimestral',
+        completed: false,
+        dueDate: DateTime(t.year, t.month, t.day),
+      ),
+      TaskModel(
+        id: 'mock_task_review',
+        title: 'Revisar presupuesto Q2',
+        completed: false,
+        dueDate: DateTime(t.year, t.month, t.day),
+      ),
     ];
   }
 
@@ -40,12 +58,8 @@ abstract final class MockTasks {
     ];
   }
 
-  /// Títulos para el resumen Home (subset amigable).
+  /// Títulos para el resumen Home (fallback si no hay candidatas en buckets).
   static List<TaskModel> homeHighlights() {
-    return const [
-      TaskModel(id: 'mock_home_t1', title: 'Responder al equipo de diseño'),
-      TaskModel(id: 'mock_home_t2', title: 'Llamar a papá antes de cenar'),
-      TaskModel(id: 'mock_home_t3', title: 'Enviar borrador del informe'),
-    ];
+    return today();
   }
 }

@@ -86,7 +86,13 @@ abstract final class MockEvents {
 
   /// Eventos mostrados en el resumen «HOY» del Home (copia enriquecida).
   static List<EventModel> homeTodayHighlights(DateTime day) {
-    return [
+    final events = [
+      EventModel(
+        id: 'mock_home_evt_cafe',
+        start: DateTime(day.year, day.month, day.day, 10, 0),
+        title: 'Café con Laura',
+        detail: 'Café Central (mock)',
+      ),
       EventModel(
         id: 'mock_home_evt_med',
         start: DateTime(day.year, day.month, day.day, 15, 30),
@@ -100,5 +106,7 @@ abstract final class MockEvents {
         detail: '',
       ),
     ];
+    events.sort((a, b) => a.start.compareTo(b.start));
+    return events;
   }
 }

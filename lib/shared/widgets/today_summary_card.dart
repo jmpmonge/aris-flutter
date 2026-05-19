@@ -112,12 +112,14 @@ class TodaySummaryCard extends StatefulWidget {
     required this.tasks,
     this.onOpenCalendar,
     this.onOpenTasks,
+    this.onOpenMail,
   });
 
   final List<EventModel> events;
   final List<TaskModel> tasks;
   final VoidCallback? onOpenCalendar;
   final VoidCallback? onOpenTasks;
+  final VoidCallback? onOpenMail;
 
   @override
   State<TodaySummaryCard> createState() => _TodaySummaryCardState();
@@ -328,6 +330,13 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
 
   static const double _labelToContentGap =
       AppSpacing.homeCardHeaderToContentGap;
+  /// Cabeceras de sección alineadas con hora / mail / círculos de tarea (v0.48.42).
+  static const EdgeInsets _sectionHeaderPadding = EdgeInsets.symmetric(
+    vertical: AppSpacing.homeCardHeaderInkPaddingV,
+  );
+  /// Inicio del texto «TAREAS» / títulos de fila (icono cabecera + gap).
+  static const double _sectionTitleTextInset =
+      AppSpacing.homeCardHeaderIconSize + AppSpacing.homeCardHeaderIconTitleGap;
   /// Separación entre filas de tarea (2–4 px).
   static const double _taskRowGap = 3;
 
@@ -348,32 +357,62 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
     );
   }
 
+  /// Separación última línea de sección → «+ X más» (referencia TAREAS).
+  static const double _lastLineToMoreLinkGap = 7;
+  static const double _lastLineToMoreLinkPad = 5;
+  static const double _moreLinkTopPad = 2;
+  static const EdgeInsets _moreLinkPadding = EdgeInsets.only(
+    top: _moreLinkTopPad,
+    bottom: 1,
+  );
+
+  /// Compensa el hueco de la fila fija de evento para igualar el gap de TAREAS.
+  static double _homeEventMoreLinkPullUp(EventModel event) {
+    final raw = event.detail.trim().isNotEmpty
+        ? event.detail.trim()
+        : (event.description.trim().isNotEmpty
+            ? event.description.trim()
+            : (event.location.trim().isNotEmpty ? event.location.trim() : ''));
+    final titleH = 14.75 * 1.2;
+    final subH = raw.isNotEmpty ? 12.5 * 1.22 : 0.0;
+    final contentBottom = -_eventTextTopOffset +
+        _eventTextInkPaddingV +
+        titleH +
+        subH +
+        _eventTextInkPaddingV;
+    final slack = _eventRowHeight - contentBottom - _lastLineToMoreLinkGap;
+    return slack.clamp(0.0, _eventRowHeight);
+  }
+
   Widget _buildMoreLink({
     required String label,
     required VoidCallback? onTap,
-    required Color linkColor,
+    required Color sectionColor,
     required ColorScheme scheme,
     required bool isDark,
+    double contentLeftInset = 0,
   }) {
+    final linkTint = sectionColor.withValues(alpha: 0.75);
     final style = TextStyle(
       fontSize: 13,
-      height: 1.25,
+      height: 1.2,
       fontWeight: FontWeight.w500,
-      color: onTap != null
-          ? linkColor
-          : scheme.onSurfaceVariant.withValues(alpha: 0.65),
+      color: linkTint,
     );
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(label, style: style),
+    return Padding(
+      padding: EdgeInsets.only(left: contentLeftInset),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          child: Padding(
+            padding: _moreLinkPadding,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(label, style: style),
+            ),
           ),
         ),
       ),
@@ -430,36 +469,31 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
     required Color chevronColor,
     bool showChevron = true,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: AppSpacing.homeTasksSectionHeaderLeftInset,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(
-            kAppNavTasksTabIcon,
-            size: AppSpacing.homeCardHeaderIconSize,
-            color: iconColor,
-          ),
-          const SizedBox(width: AppSpacing.homeCardHeaderIconTitleGap),
-          Text('TAREAS', style: _hoyLabelStyle(scheme, isDark)),
-          if (showChevron) ...[
-            const Spacer(),
-            SizedBox(
-              width: AppSpacing.homeCardHeaderChevronBox,
-              height: AppSpacing.homeCardHeaderChevronBox,
-              child: Center(
-                child: Icon(
-                  Icons.chevron_right_rounded,
-                  size: AppSpacing.homeCardHeaderChevronSize,
-                  color: chevronColor,
-                ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Icon(
+          kAppNavTasksTabIcon,
+          size: AppSpacing.homeCardHeaderIconSize,
+          color: iconColor,
+        ),
+        const SizedBox(width: AppSpacing.homeCardHeaderIconTitleGap),
+        Text('TAREAS', style: _hoyLabelStyle(scheme, isDark)),
+        if (showChevron) ...[
+          const Spacer(),
+          SizedBox(
+            width: AppSpacing.homeCardHeaderChevronBox,
+            height: AppSpacing.homeCardHeaderChevronBox,
+            child: Center(
+              child: Icon(
+                Icons.chevron_right_rounded,
+                size: AppSpacing.homeCardHeaderChevronSize,
+                color: chevronColor,
               ),
             ),
-          ],
+          ),
         ],
-      ),
+      ],
     );
   }
 
@@ -467,6 +501,8 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
     required ColorScheme scheme,
     required bool isDark,
     required Color mailIconColor,
+    required Color chevronColor,
+    bool showChevron = true,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -478,6 +514,20 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
         ),
         const SizedBox(width: AppSpacing.homeCardHeaderIconTitleGap),
         Text('MAIL', style: _hoyLabelStyle(scheme, isDark)),
+        if (showChevron) ...[
+          const Spacer(),
+          SizedBox(
+            width: AppSpacing.homeCardHeaderChevronBox,
+            height: AppSpacing.homeCardHeaderChevronBox,
+            child: Center(
+              child: Icon(
+                Icons.chevron_right_rounded,
+                size: AppSpacing.homeCardHeaderChevronSize,
+                color: chevronColor,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -510,14 +560,16 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
             color: scheme.onSurfaceVariant,
           ),
         ),
-        if (moreMails > 0)
+        if (moreMails > 0) ...[
+          const SizedBox(height: _lastLineToMoreLinkPad),
           _buildMoreLink(
             label: _moreMailsLabel(moreMails),
-            onTap: null, // TODO: pantalla Mail
-            linkColor: mailLinkColor,
+            onTap: widget.onOpenMail,
+            sectionColor: mailLinkColor,
             scheme: scheme,
             isDark: isDark,
           ),
+        ],
       ],
     );
   }
@@ -558,10 +610,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
               ),
               overlayColor: _hoyHeaderOverlayColor(isDark),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.homeCardHeaderInkPaddingH,
-                  vertical: AppSpacing.homeCardHeaderInkPaddingV,
-                ),
+                padding: _sectionHeaderPadding,
                 child: _buildHoyHeaderRow(
                   scheme: scheme,
                   isDark: isDark,
@@ -572,10 +621,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
             ),
           )
         : Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.homeCardHeaderInkPaddingH,
-              vertical: AppSpacing.homeCardHeaderInkPaddingV,
-            ),
+            padding: _sectionHeaderPadding,
             child: _buildHoyHeaderRow(
               scheme: scheme,
               isDark: isDark,
@@ -595,10 +641,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
               ),
               overlayColor: _hoyHeaderOverlayColor(isDark),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.homeCardHeaderInkPaddingH,
-                  vertical: AppSpacing.homeCardHeaderInkPaddingV,
-                ),
+                padding: _sectionHeaderPadding,
                 child: _buildTasksHeaderRow(
                   scheme: scheme,
                   isDark: isDark,
@@ -609,10 +652,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
             ),
           )
         : Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.homeCardHeaderInkPaddingH,
-              vertical: AppSpacing.homeCardHeaderInkPaddingV,
-            ),
+            padding: _sectionHeaderPadding,
             child: _buildTasksHeaderRow(
               scheme: scheme,
               isDark: isDark,
@@ -622,18 +662,36 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
             ),
           );
 
-    // TODO: onTap Mail cuando exista pantalla.
-    final mailHeader = Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.homeCardHeaderInkPaddingH,
-        vertical: AppSpacing.homeCardHeaderInkPaddingV,
-      ),
-      child: _buildMailHeaderRow(
-        scheme: scheme,
-        isDark: isDark,
-        mailIconColor: mailPurple,
-      ),
-    );
+    final mailHeader = widget.onOpenMail != null
+        ? Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: widget.onOpenMail,
+              borderRadius: BorderRadius.circular(
+                AppSpacing.homeCardHeaderInkBorderRadius,
+              ),
+              overlayColor: _hoyHeaderOverlayColor(isDark),
+              child: Padding(
+                padding: _sectionHeaderPadding,
+                child: _buildMailHeaderRow(
+                  scheme: scheme,
+                  isDark: isDark,
+                  mailIconColor: mailPurple,
+                  chevronColor: mailPurple,
+                ),
+              ),
+            ),
+          )
+        : Padding(
+            padding: _sectionHeaderPadding,
+            child: _buildMailHeaderRow(
+              scheme: scheme,
+              isDark: isDark,
+              mailIconColor: mailPurple,
+              chevronColor: mailPurple,
+              showChevron: false,
+            ),
+          );
 
     final taskBlockChildren = <Widget>[
       tasksHeader,
@@ -642,7 +700,12 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
       ),
     ];
     if (displayedTasks.isEmpty) {
-      taskBlockChildren.add(Text(_emptyTasksLine, style: emptyLineStyle));
+      taskBlockChildren.add(
+        Padding(
+          padding: const EdgeInsets.only(left: _sectionTitleTextInset),
+          child: Text(_emptyTasksLine, style: emptyLineStyle),
+        ),
+      );
     } else {
       for (var i = 0; i < displayedTasks.length; i++) {
         final t = displayedTasks[i];
@@ -671,7 +734,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
         _buildMoreLink(
           label: _moreTasksLabel(moreTasks),
           onTap: widget.onOpenTasks,
-          linkColor: tasksOrange,
+          sectionColor: tasksOrange,
           scheme: scheme,
           isDark: isDark,
         ),
@@ -690,12 +753,18 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
       else
         Text(_emptyCalendarLine, style: emptyLineStyle),
       if (moreEvents > 0)
-        _buildMoreLink(
-          label: _moreEventsLabel(moreEvents),
-          onTap: widget.onOpenCalendar,
-          linkColor: calendarBlue,
-          scheme: scheme,
-          isDark: isDark,
+        Transform.translate(
+          offset: Offset(
+            0,
+            -_homeEventMoreLinkPullUp(visibleEvents.last),
+          ),
+          child: _buildMoreLink(
+            label: _moreEventsLabel(moreEvents),
+            onTap: widget.onOpenCalendar,
+            sectionColor: calendarBlue,
+            scheme: scheme,
+            isDark: isDark,
+          ),
         ),
       _thinGroupDivider(scheme, isDark),
       AnimatedSize(
@@ -997,11 +1066,9 @@ class _TaskRow extends StatelessWidget {
   /// y descompensa la alineación vertical con el texto.
   static const double _iconHitHeight = 32;
 
-  /// Gap entre círculo/check y cápsula textual.
-  static const double _iconTextGap = 10;
-
-  /// Desplaza el bloque entero de tareas hacia dentro de la tarjeta.
-  static const double _taskRowLeftInset = 12;
+  /// Misma tabulación que el texto «TAREAS» en la cabecera de sección.
+  static const double _titleTextInset =
+      _TodaySummaryCardState._sectionTitleTextInset;
 
   /// Cápsula hover del bloque textual.
   static const double _textBlockInkPaddingH = 9;
@@ -1097,51 +1164,56 @@ class _TaskRow extends StatelessWidget {
       metaStr: metaStr,
     );
 
-    return Padding(
-      padding: const EdgeInsets.only(left: _taskRowLeftInset),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: _iconColWidth,
-            height: _iconHitHeight,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => onCompleteTap(),
-                customBorder: const CircleBorder(),
-                overlayColor: _calendarEventRowOverlayColor(isDark),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                      top: _taskIconTopWhenStartAligned,
-                    ),
-                    child: Icon(
-                      iconData,
-                      size: _iconSize,
-                      color: iconColor,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: _titleTextInset,
+          height: _iconHitHeight,
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              width: _iconColWidth,
+              height: _iconHitHeight,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => onCompleteTap(),
+                  customBorder: const CircleBorder(),
+                  overlayColor: _calendarEventRowOverlayColor(isDark),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        top: _taskIconTopWhenStartAligned,
+                      ),
+                      child: Icon(
+                        iconData,
+                        size: _iconSize,
+                        color: iconColor,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: _iconTextGap),
-          Expanded(
-            child: Material(
-              color: Colors.transparent,
-              clipBehavior: Clip.antiAlias,
+        ),
+        Expanded(
+          child: Material(
+            color: Colors.transparent,
+            clipBehavior: Clip.antiAlias,
+            borderRadius: BorderRadius.circular(_textBlockInkBorderRadius),
+            child: InkWell(
+              onTap: onToggleExpand,
               borderRadius: BorderRadius.circular(_textBlockInkBorderRadius),
-              child: InkWell(
-                onTap: onToggleExpand,
-                borderRadius: BorderRadius.circular(_textBlockInkBorderRadius),
-                overlayColor: _taskTextBlockOverlayColor(isDark),
-                child: Padding(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: _textBlockInkPaddingH,
-                    vertical: _textBlockInkPaddingV,
-                  ),
+              overlayColor: _taskTextBlockOverlayColor(isDark),
+              child: Padding(
+                padding: const EdgeInsetsDirectional.only(
+                  top: _textBlockInkPaddingV,
+                  bottom: _textBlockInkPaddingV,
+                  end: _textBlockInkPaddingH,
+                ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -1182,8 +1254,7 @@ class _TaskRow extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 

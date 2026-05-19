@@ -203,18 +203,10 @@ final class HybridCalendarRepository implements CalendarRepository {
     if (!_readsOk) {
       return CalendarService.getHomeHighlightEvents(day);
     }
-    final civil = _civilCalendarDay(d);
-    final textual = _textualOnlyDateBackendSorted();
-    final merged = <EventModel>[];
-    merged.addAll(civil.take(3));
-    final need = (3 - merged.length).clamp(0, 99);
-    if (need > 0) {
-      merged.addAll(textual.take(need));
-    }
-    if (merged.isEmpty) {
-      return CalendarService.getHomeHighlightEvents(day);
-    }
-    return merged;
+    // Lista completa del día; el recorte (2 visibles + «+ X más») lo hace Home.
+    final today = getTodayEvents(d);
+    if (today.isNotEmpty) return today;
+    return CalendarService.getHomeHighlightEvents(day);
   }
 
   @override
