@@ -6,7 +6,7 @@ import '../../theme/app_spacing.dart';
 class HomeBrandHeader extends StatelessWidget {
   const HomeBrandHeader({
     super.key,
-    this.subtitle = 'Organiza tu día con claridad',
+    this.subtitle = 'Una forma más inteligente de organizar tu día',
     this.onAssistantTap,
   });
 

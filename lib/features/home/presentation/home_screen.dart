@@ -6,7 +6,6 @@ import '../../../core/services/local_action_service.dart';
 import '../../../core/services/user_service.dart';
 import '../../assistant/presentation/assistant_screen.dart';
 import 'widgets/aris_header.dart';
-import 'widgets/greeting_card.dart';
 import '../../../shared/widgets/latest_aris_action_section.dart';
 import '../../../shared/widgets/recent_conversation_card.dart';
 import '../../../shared/widgets/suggestion_card.dart';
@@ -15,7 +14,13 @@ import '../../../theme/app_spacing.dart';
 
 /// Inicio — estructura vertical según prototipo funcional + estética premium Aris.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.onOpenCalendar, this.onOpenTasks});
+
+  /// Desde shell: ir a pestaña Calendario (índice fijo de app).
+  final VoidCallback? onOpenCalendar;
+
+  /// Desde shell: ir a pestaña Tareas (índice fijo de app).
+  final VoidCallback? onOpenTasks;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -75,6 +80,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Si no hay «última acción», no insertar un bloque vacío: evita doble
+    // [homeSectionGap] entre HOY y chat (24 px) frente a sugerencia→HOY (12 px).
+    final hasLatestArisAction = LocalActionService.getMostRecentAction() != null;
+
     return SafeArea(
       top: true,
       bottom: false,
@@ -87,27 +96,23 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           ArisHeader(onAssistantTap: () => _openAssistant(context)),
           const SizedBox(height: AppSpacing.homeHeaderToGreetingGap),
-          GreetingCard(
-            greeting: UserService.getGreetingForNow(),
-            secondaryLines: const [
-              'Dos tareas importantes',
-              'y un hueco útil a las 11:30.',
-            ],
-          ),
-          const SizedBox(height: AppSpacing.homeSectionGap),
           SuggestionCard(message: UserService.getHomeSuggestionLine()),
           const SizedBox(height: AppSpacing.homeSectionGap),
           TodaySummaryCard(
             events: Repositories.calendar.getHomeHighlightEvents(),
             tasks: Repositories.task.getHomeHighlightTasks(),
-            notes: Repositories.note.getHomeHighlightNotes(),
+            onOpenCalendar: widget.onOpenCalendar,
+            onOpenTasks: widget.onOpenTasks,
           ),
-          const SizedBox(height: AppSpacing.homeSectionGap),
-          const LatestArisActionSection(),
+          if (hasLatestArisAction) ...[
+            const SizedBox(height: AppSpacing.homeSectionGap),
+            const LatestArisActionSection(),
+          ],
           const SizedBox(height: AppSpacing.homeSectionGap),
           RecentConversationCard(
             messages: Repositories.history.conversationForHome(),
             onFollowUpMessage: _sendChatFollowUp,
+            onOpenFullChat: () => _openAssistant(context),
           ),
         ],
       ),

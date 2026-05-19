@@ -25,7 +25,7 @@ class LocalActionCard extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final pad = compact ? AppSpacing.sm : AppSpacing.md;
+    final pad = compact ? 10.0 : AppSpacing.md;
     final vGap = compact ? AppSpacing.xxs : AppSpacing.xs;
     final completed = action.status == LocalActionStatus.completed;
 
@@ -76,13 +76,25 @@ class LocalActionCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: scheme.surface,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        borderRadius: BorderRadius.circular(
+          compact ? AppSpacing.homeCardRadius : AppSpacing.radiusLg,
+        ),
         border: Border.all(color: scheme.outline.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: scheme.shadow.withValues(alpha: isDark ? 0.06 : 0.11),
-            blurRadius: AppSpacing.shadowBlurCard,
-            offset: AppSpacing.shadowOffsetCard,
+            color: scheme.shadow.withValues(
+              alpha: isDark
+                  ? 0.05
+                  : compact
+                      ? 0.07
+                      : 0.11,
+            ),
+            blurRadius: compact
+                ? AppSpacing.shadowBlurHomeCard
+                : AppSpacing.shadowBlurCard,
+            offset: compact
+                ? AppSpacing.shadowOffsetHomeCard
+                : AppSpacing.shadowOffsetCard,
           ),
         ],
       ),

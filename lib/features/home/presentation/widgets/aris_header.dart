@@ -1,65 +1,93 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../theme/app_spacing.dart';
 
-/// Cabecera Home — v0.48.2 Structured (presencia, sin “portada”).
+/// Cabecera Home — marca textual Nunito Sans ExtraBold (v0.48.23) + avatar; oscuro v0.48.16.
 class ArisHeader extends StatelessWidget {
   const ArisHeader({
     super.key,
     this.onAssistantTap,
   });
 
+  /// Conserva el gesto previo (p. ej. abrir asistente). Sin rutas nuevas.
   final VoidCallback? onAssistantTap;
 
-  static const Color _titleColor = Color(0xFF132B4F);
-  static const Color _subtitleColor = Color(0xFF6E7480);
-
-  /// SafeArea ya aplica en [HomeScreen]; aquí +18 px de ritmo superior.
+  /// Ritmo vertical superior (SafeArea ya está en [HomeScreen]).
   static const double _paddingTop = 18;
 
-  static const double _titleSize = 32;
-  static const double _subtitleSize = 14;
-  static const double _titleSubtitleGap = 3;
+  /// Alineación con contenido interno de tarjetas (~18 margen + ~14 padding).
+  static const double _contentPaddingLeft = 30;
+  static const double _paddingRight = AppSpacing.homePageMarginH;
 
-  static const double _assistantButtonSize = 44;
-  static const double _assistantIconSize = 23;
+  static const double _subtitleSize = 14;
+  static const double _titleSubtitleGap = 4;
+
+  static const double _avatarSize = 40;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    const kLightArisWordmark = Color(0xFF071B3F);
+    /// Modo oscuro: azul claro legible (referencia #DCE8FF).
+    const kDarkArisWordmark = Color(0xFFDCE8FF);
+
+    final arisStyle = GoogleFonts.nunitoSans(
+      fontSize: 34,
+      fontWeight: FontWeight.w800,
+      letterSpacing: -1.1,
+      height: 1.0,
+      color: isDark ? kDarkArisWordmark : kLightArisWordmark,
+    );
 
     final column = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          'aris',
-          style: const TextStyle(
-            fontSize: _titleSize,
-            fontWeight: FontWeight.w700,
-            height: 1.0,
-            letterSpacing: -0.4,
-            color: _titleColor,
-          ),
-        ),
+        Text('aris', style: arisStyle),
         const SizedBox(height: _titleSubtitleGap),
         Text(
-          'Tu asistente personal',
-          style: const TextStyle(
+          'Una forma más inteligente de organizar tu día.',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
             fontSize: _subtitleSize,
-            height: 1.25,
+            height: 1.28,
             fontWeight: FontWeight.w400,
-            color: _subtitleColor,
+            color: isDark
+                ? const Color(0xFFC3CAD6)
+                : scheme.onSurfaceVariant,
           ),
         ),
       ],
     );
 
+    /// Mismo azul de contenedor que [ProfileScreen] (`primaryContainer` / `onPrimaryContainer`).
+    final avatar = Container(
+      width: _avatarSize,
+      height: _avatarSize,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: scheme.primaryContainer,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        'J',
+        style: TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+          color: scheme.onPrimaryContainer,
+        ),
+      ),
+    );
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.homePageMarginH,
+        _contentPaddingLeft,
         _paddingTop,
-        AppSpacing.homePageMarginH,
+        _paddingRight,
         0,
       ),
       child: Row(
@@ -67,26 +95,18 @@ class ArisHeader extends StatelessWidget {
         children: [
           Expanded(child: column),
           if (onAssistantTap != null) ...[
-            const SizedBox(width: 4),
-            IconButton.filledTonal(
-              onPressed: onAssistantTap,
-              tooltip: 'Hablar con Aris',
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints.tightFor(
-                width: _assistantButtonSize,
-                height: _assistantButtonSize,
-              ),
-              style: IconButton.styleFrom(
-                visualDensity: VisualDensity.standard,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              iconSize: _assistantIconSize,
-              icon: Icon(
-                Icons.auto_awesome_rounded,
-                size: _assistantIconSize,
-                color: scheme.primary,
+            const SizedBox(width: 8),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onAssistantTap,
+                customBorder: const CircleBorder(),
+                child: avatar,
               ),
             ),
+          ] else ...[
+            const SizedBox(width: 8),
+            avatar,
           ],
         ],
       ),

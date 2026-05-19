@@ -52,8 +52,10 @@ class _ChatInputBarState extends State<ChatInputBar> {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final bg = Theme.of(context).scaffoldBackgroundColor;
+
     return Material(
-      color: Theme.of(context).scaffoldBackgroundColor,
+      color: bg,
       child: Container(
         padding: EdgeInsets.fromLTRB(
           AppSpacing.homePageMarginH,
@@ -64,17 +66,10 @@ class _ChatInputBarState extends State<ChatInputBar> {
               : AppSpacing.xs,
         ),
         decoration: BoxDecoration(
-          color: scheme.surface.withValues(alpha: isDark ? 0.92 : 0.97),
+          color: bg,
           border: Border(
-            top: BorderSide(color: scheme.outline.withValues(alpha: 0.16)),
+            top: BorderSide(color: scheme.outline.withValues(alpha: 0.10)),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: scheme.shadow.withValues(alpha: isDark ? 0.05 : 0.08),
-              blurRadius: AppSpacing.shadowBlurBar,
-              offset: AppSpacing.shadowOffsetBar,
-            ),
-          ],
         ),
         child: SafeArea(
           top: false,
@@ -156,33 +151,109 @@ class _ChatInputBarState extends State<ChatInputBar> {
                     ),
                   )
                 else
-                  Material(
-                    color: scheme.secondaryContainer.withValues(alpha: 0.65),
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: widget.isSending
-                          ? null
-                          : (widget.onMicTap ??
-                              () {
-                                ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Micrófono · solo demo'),
-                                  ),
-                                );
-                              }),
-                      child: SizedBox(
-                        width: _micSize,
-                        height: _micSize,
-                        child: Icon(
-                          Icons.mic_none_rounded,
-                          size: _micIconSize,
-                          color: scheme.onSecondaryContainer,
-                        ),
-                      ),
-                    ),
+                  _MicButton(
+                    isSending: widget.isSending,
+                    isDark: isDark,
+                    micSize: _micSize,
+                    micIconSize: _micIconSize,
+                    onMicTap: widget.onMicTap,
                   ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Micrófono: claro sin cambios; oscuro fondo neutro v0.48.18 (#303746, borde lavanda suave).
+class _MicButton extends StatelessWidget {
+  const _MicButton({
+    required this.isSending,
+    required this.isDark,
+    required this.micSize,
+    required this.micIconSize,
+    required this.onMicTap,
+  });
+
+  final bool isSending;
+  final bool isDark;
+  final double micSize;
+  final double micIconSize;
+  final VoidCallback? onMicTap;
+
+  static const Color _kDarkMicBg = Color(0xFF303746);
+  static const Color _kDarkMicIcon = Color(0xFFE8ECF4);
+  static const Color _kDarkMicBorder = Color(0xFF4A456A);
+  static const Color _kDarkPressedOverlay = Color(0xFF343B4A);
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    void showDemoSnack() {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(content: Text('Micrófono · solo demo')),
+      );
+    }
+
+    if (!isDark) {
+      return Material(
+        color: scheme.secondaryContainer.withValues(alpha: 0.65),
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: isSending
+              ? null
+              : (onMicTap ?? showDemoSnack),
+          child: SizedBox(
+            width: micSize,
+            height: micSize,
+            child: Icon(
+              Icons.mic_none_rounded,
+              size: micIconSize,
+              color: scheme.onSecondaryContainer,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: micSize,
+      height: micSize,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: _kDarkMicBg,
+        border: Border.all(
+          color: _kDarkMicBorder.withValues(alpha: 0.32),
+          width: 1,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        type: MaterialType.transparency,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: isSending
+              ? null
+              : (onMicTap ?? showDemoSnack),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.pressed)) {
+              return _kDarkPressedOverlay.withValues(alpha: 0.85);
+            }
+            if (states.contains(WidgetState.hovered)) {
+              return Colors.white.withValues(alpha: 0.07);
+            }
+            return null;
+          }),
+          child: Center(
+            child: Icon(
+              Icons.mic_none_rounded,
+              size: micIconSize,
+              color: _kDarkMicIcon,
             ),
           ),
         ),

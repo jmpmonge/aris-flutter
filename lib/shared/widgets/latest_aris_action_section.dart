@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/services/local_action_service.dart';
+import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import 'local_action_card.dart';
 
@@ -15,6 +16,7 @@ class LatestArisActionSection extends StatelessWidget {
 
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.homePageMarginH),
@@ -26,7 +28,7 @@ class LatestArisActionSection extends StatelessWidget {
             style: text.labelSmall?.copyWith(
               fontSize: 11.5,
               letterSpacing: 0.7,
-              color: scheme.primary,
+              color: isDark ? scheme.onSurface : AppColors.primaryDeep,
               fontWeight: FontWeight.w700,
             ),
           ),
