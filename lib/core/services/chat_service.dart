@@ -23,10 +23,82 @@ abstract final class ChatService {
     _initialized = true;
   }
 
+  /// Mensaje amistoso cuando FastAPI no responde en el flujo v0.40.
+  static const String backendOfflineFriendlyReply =
+      'No puedo conectar con el backend ahora mismo. Mantengo el modo local.';
+
   /// Copia actual de la conversación (incluye envíos locales de la sesión).
   static List<ChatMessageModel> getRecentConversation() {
     _ensureInitialized();
     return List<ChatMessageModel>.unmodifiable(_messages);
+  }
+
+  /// Solo el mensaje de usuario (v0.40 antes de llamar al backend).
+  static void appendUserOnly(String rawText) {
+    _ensureInitialized();
+    final text = rawText.trim();
+    if (text.isEmpty) return;
+    final now = DateTime.now();
+    _messages.add(
+      ChatMessageModel(
+        id: 'local_${now.microsecondsSinceEpoch}_user',
+        sender: ChatMessageSender.user,
+        text: text,
+        createdAt: now,
+        kind: ChatMessageKind.text,
+      ),
+    );
+    revision.value++;
+  }
+
+  /// Indicador discreto hasta recibir respuesta HTTP.
+  static String appendPendingBackendBubble() {
+    _ensureInitialized();
+    final id = 'pending_backend_${DateTime.now().microsecondsSinceEpoch}';
+    _messages.add(
+      ChatMessageModel(
+        id: id,
+        sender: ChatMessageSender.aris,
+        text: 'Consultando…',
+        createdAt: DateTime.now(),
+        kind: ChatMessageKind.suggestion,
+        awaitingBackend: true,
+      ),
+    );
+    revision.value++;
+    return id;
+  }
+
+  static void removeMessageById(String id) {
+    final i = _messages.indexWhere((m) => m.id == id);
+    if (i < 0) return;
+    _messages.removeAt(i);
+    revision.value++;
+  }
+
+  /// Respuesta remota tras `POST /message`.
+  static void appendArisBackendMessage(
+    String reply, {
+    String? uiHint,
+  }) {
+    _ensureInitialized();
+    final trimmed = reply.trim();
+    if (trimmed.isEmpty) return;
+    _messages.add(
+      ChatMessageModel(
+        id: 'backend_${DateTime.now().microsecondsSinceEpoch}_aris',
+        sender: ChatMessageSender.aris,
+        text: trimmed,
+        createdAt: DateTime.now(),
+        kind: ChatMessageKind.suggestion,
+        backendUiHint: uiHint,
+      ),
+    );
+    revision.value++;
+  }
+
+  static void appendOfflineBackendFallback() {
+    appendArisBackendMessage(backendOfflineFriendlyReply);
   }
 
   /// Añade el mensaje del usuario y una respuesta simulada de Aris según intención local.

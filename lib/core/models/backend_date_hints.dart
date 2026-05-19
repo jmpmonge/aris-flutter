@@ -86,27 +86,37 @@ abstract final class BackendDateTimeHints {
     required Map<String, dynamic> data,
     required DateTime fallbackCalendarDay,
   }) {
-    final rawDate = data['date_text']?.toString().trim() ?? '';
     DateTime datePartUtc;
     final bool hasCivil;
 
-    final parsedFlexible =
-        BackendDateTimeHints.parseDateFlexible(data['date_text']);
-    if (parsedFlexible != null) {
-      datePartUtc = parsedFlexible.toUtc();
-      hasCivil = true;
-    } else if (rawDate.isNotEmpty) {
-      // Texto («lunes», «mañana», …): no usar `created_at` ni día corriente.
-      datePartUtc = DateTime.utc(2000, 1, 1);
-      hasCivil = false;
-    } else {
-      // Sin `date_text`: anclaje civil explícito (sin `created_at` como día).
+    final fromServerIso = BackendDateTimeHints.parseDateFlexible(data['date_iso']);
+    if (fromServerIso != null) {
       datePartUtc = DateTime.utc(
-        fallbackCalendarDay.year,
-        fallbackCalendarDay.month,
-        fallbackCalendarDay.day,
+        fromServerIso.year,
+        fromServerIso.month,
+        fromServerIso.day,
       );
       hasCivil = true;
+    } else {
+      final rawDate = data['date_text']?.toString().trim() ?? '';
+      final parsedFlexible =
+          BackendDateTimeHints.parseDateFlexible(data['date_text']);
+      if (parsedFlexible != null) {
+        datePartUtc = parsedFlexible.toUtc();
+        hasCivil = true;
+      } else if (rawDate.isNotEmpty) {
+        // Texto («lunes», «mañana», …): no usar `created_at` ni día corriente.
+        datePartUtc = DateTime.utc(2000, 1, 1);
+        hasCivil = false;
+      } else {
+        // Sin `date_text`: anclaje civil explícito (sin `created_at` como día).
+        datePartUtc = DateTime.utc(
+          fallbackCalendarDay.year,
+          fallbackCalendarDay.month,
+          fallbackCalendarDay.day,
+        );
+        hasCivil = true;
+      }
     }
 
     final clock = BackendDateTimeHints.parseTimeFlexible(data['time_text']);

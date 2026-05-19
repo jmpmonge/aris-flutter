@@ -18,6 +18,8 @@ class ChatMessageModel {
     this.createdAt,
     this.kind = ChatMessageKind.text,
     this.detectedIntent,
+    this.backendUiHint,
+    this.awaitingBackend = false,
   });
 
   final String id;
@@ -29,6 +31,12 @@ class ChatMessageModel {
   /// Intención asociada (típicamente en respuestas de Aris tras clasificar el mensaje del usuario).
   final IntentModel? detectedIntent;
 
+  /// Indicación opcional desde el backend (`ui_hint`), p. ej. `confirm_rescue`.
+  final String? backendUiHint;
+
+  /// Burbuja temporal de «procesando» mientras se espera a `POST /message`.
+  final bool awaitingBackend;
+
   bool get isAris => sender == ChatMessageSender.aris;
 
   Map<String, dynamic> toJson() => {
@@ -38,6 +46,8 @@ class ChatMessageModel {
         'kind': kind.name,
         if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
         if (detectedIntent != null) 'detectedIntent': detectedIntent!.toJson(),
+        if (backendUiHint != null) 'backendUiHint': backendUiHint,
+        if (awaitingBackend) 'awaitingBackend': awaitingBackend,
       };
 
   factory ChatMessageModel.fromJson(Map<String, dynamic> json) {
@@ -56,6 +66,8 @@ class ChatMessageModel {
               json['detectedIntent'] as Map<String, dynamic>,
             )
           : null,
+      backendUiHint: json['backendUiHint'] as String?,
+      awaitingBackend: json['awaitingBackend'] as bool? ?? false,
     );
   }
 }

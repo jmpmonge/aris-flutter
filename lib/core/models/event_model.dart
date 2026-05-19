@@ -1,4 +1,11 @@
 /// Evento de agenda (solo cliente; sin acoplar a proveedor de calendario).
+library;
+
+String? _jsonOptionalTrimmed(Object? raw) {
+  final s = raw?.toString().trim() ?? '';
+  return s.isEmpty ? null : s;
+}
+
 class EventModel {
   const EventModel({
     required this.id,
@@ -9,6 +16,7 @@ class EventModel {
     this.syntheticBackendId = false,
     this.hasCivilCalendarDate = true,
     this.dateText = '',
+    this.dateIso,
     this.timeText = '',
     this.location = '',
     this.description = '',
@@ -38,6 +46,10 @@ class EventModel {
 
   /// Coincidencias con GET `/events` (JSON snake_case → aquí camelCase tolerante).
   final String dateText;
+
+  /// Día civil `YYYY-MM-DD` desde servidor (opcional).
+  final String? dateIso;
+
   final String timeText;
   final String location;
   final String description;
@@ -91,6 +103,7 @@ class EventModel {
     'title': title,
     'detail': detail,
     'date_text': dateText,
+    if (dateIso != null && dateIso!.trim().isNotEmpty) 'date_iso': dateIso,
     'time_text': timeText,
     'location': location,
     'description': description,
@@ -117,6 +130,8 @@ class EventModel {
       title: json['title'] as String,
       detail: json['detail'] as String? ?? '',
       dateText: json['date_text'] as String? ?? '',
+      dateIso: _jsonOptionalTrimmed(json['date_iso']) ??
+          _jsonOptionalTrimmed(json['dateIso']),
       timeText: json['time_text'] as String? ?? '',
       location: json['location'] as String? ?? '',
       description: json['description'] as String? ?? '',

@@ -164,14 +164,28 @@ final class HybridTaskRepository implements TaskRepository {
 
   @override
   List<TaskModel> getHomeHighlightTasks() {
-    if (!_readsOk) {
-      return TaskService.getHomeHighlightTasks();
-    }
     final now = DateTime.now();
+    if (!_readsOk) {
+      final seen = <String>{};
+      final agg = <TaskModel>[];
+      for (final t in TaskService.getTodayTasks()) {
+        if (seen.add(t.id)) agg.add(t);
+      }
+      for (final t in TaskService.getUpcomingTasks()) {
+        if (seen.add(t.id)) agg.add(t);
+      }
+      final g = TaskGroupedLists.partition(agg, now);
+      // HOY Home: hoy + vencidas + sin fecha; no «próximas» con fecha futura estructurada.
+      final cand = [...g.today, ...g.noDate];
+      if (cand.isNotEmpty) {
+        return cand.take(3).toList(growable: false);
+      }
+      return List<TaskModel>.from(TaskService.getHomeHighlightTasks().take(3));
+    }
     final g = TaskGroupedLists.partition(_taskCache, now);
-    final cand = [...g.today, ...g.upcoming, ...g.noDate];
+    final cand = [...g.today, ...g.noDate];
     if (cand.isEmpty && _taskCache.isNotEmpty) {
-      return _taskCache.take(3).toList(growable: false);
+      return _taskCache.where((t) => !t.completed).take(3).toList(growable: false);
     }
     return cand.take(3).toList(growable: false);
   }

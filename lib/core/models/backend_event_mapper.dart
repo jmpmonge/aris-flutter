@@ -53,6 +53,10 @@ abstract final class BackendEventMapper {
       final createdAt = DateTime.tryParse(_str(m['created_at']));
       final updatedAt = DateTime.tryParse(_str(m['updated_at']));
 
+      final dateIso =
+          BackendEventMapper._optionalIso(m['date_iso']) ??
+          BackendEventMapper._optionalIso(m['dateISO']);
+
       return EventModel(
         id: id,
         syntheticBackendId: syntheticBackendId,
@@ -61,6 +65,7 @@ abstract final class BackendEventMapper {
         title: title,
         detail: detail,
         dateText: dateText,
+        dateIso: dateIso,
         timeText: timeText,
         location: loc,
         description: desc,
@@ -79,6 +84,11 @@ abstract final class BackendEventMapper {
   }
 
   static String _str(Object? v) => v?.toString().trim() ?? '';
+
+  static String? _optionalIso(Object? v) {
+    final s = _str(v);
+    return s.isEmpty ? null : s;
+  }
 
   static int? _intOrNull(Object? v) {
     if (v == null) return null;
