@@ -220,6 +220,10 @@ class CalendarWeekView extends StatelessWidget {
 
   static const weekdayShortLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
+  /// Ancho mínimo aproximado del [PopupMenuButton] de acciones backend; por
+  /// debajo de esto el menú fuerza overflow en columnas semanales estrechas.
+  static const double _kMinWidthForWeekCellBackendMenu = 52;
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
@@ -295,23 +299,35 @@ class CalendarWeekView extends StatelessWidget {
                                 padding: const EdgeInsets.only(
                                   bottom: AppSpacing.xxs,
                                 ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        e.title,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: text.bodySmall?.copyWith(height: 1.2),
-                                      ),
-                                    ),
-                                    if (calendarShouldShowBackendActions(e))
-                                      calendarBackendEventOverflowMenu(
-                                        context,
-                                        e,
-                                      ),
-                                  ],
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final showBackendMenu =
+                                        calendarShouldShowBackendActions(e) &&
+                                            constraints.maxWidth >=
+                                                _kMinWidthForWeekCellBackendMenu;
+                                    return Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            e.title,
+                                            maxLines: 2,
+                                            softWrap: true,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: text.bodySmall
+                                                ?.copyWith(height: 1.2),
+                                          ),
+                                        ),
+                                        if (showBackendMenu)
+                                          calendarBackendEventOverflowMenu(
+                                            context,
+                                            e,
+                                          ),
+                                      ],
+                                    );
+                                  },
                                 ),
                               ),
                             ),
