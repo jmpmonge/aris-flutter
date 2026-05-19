@@ -14,7 +14,7 @@ class HomeFixedDateHeader extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.homePageMarginH,
+        AppSpacing.homeFixedDateLeftInsetH,
         AppSpacing.homeFixedDateTopGap,
         AppSpacing.homePageMarginH,
         0,

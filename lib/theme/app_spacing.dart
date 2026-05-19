@@ -107,6 +107,9 @@ abstract final class AppSpacing {
   /// Hueco mínimo tras colapsar saludo temporal (v0.48.41).
   static const double homeGreetingCollapsedGap = 0;
 
+  /// Padding vertical zona hover saludo temporal (v0.48.41).
+  static const double homeGreetingInteractivePadV = 6;
+
   /// Radio tarjetas Home (Structured).
   static const double homeCardRadius = 22;
 

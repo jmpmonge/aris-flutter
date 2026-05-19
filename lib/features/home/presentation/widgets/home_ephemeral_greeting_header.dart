@@ -34,21 +34,22 @@ class HomeEphemeralGreetingHeader extends StatelessWidget {
     super.key,
     required this.eventCount,
     required this.taskCount,
-    this.onTap,
   });
 
   final int eventCount;
   final int taskCount;
-  final VoidCallback? onTap;
 
   // TODO: conectar clima real en una versión posterior.
   static const String _mockTemperature = '21°';
   static const String _mockCity = 'Madrid';
 
   static const double _greetingToSummaryGap = 4;
-  static const double _weatherIconSize = 26;
-  static const double _weatherIconTextGap = 6;
-  static const double _weatherTempCityGap = 1;
+  static const double _weatherIconSize = 28;
+  static const double _weatherIconTextGap = 8;
+  static const double _weatherTempCityGap = 3;
+
+  static const Color _sunTintLight = Color(0xFFF0A830);
+  static const Color _sunTintDark = Color(0xFFE8C547);
 
   @override
   Widget build(BuildContext context) {
@@ -62,14 +63,14 @@ class HomeEphemeralGreetingHeader extends StatelessWidget {
       color: scheme.onSurfaceVariant,
     );
     final greetingStyle = TextStyle(
-      fontSize: 24,
+      fontSize: 26,
       height: 1.08,
       fontWeight: FontWeight.w600,
       letterSpacing: -0.3,
       color: scheme.onSurface,
     );
     final tempStyle = TextStyle(
-      fontSize: 14.5,
+      fontSize: 17.5,
       height: 1.05,
       fontWeight: FontWeight.w600,
       color: scheme.onSurface,
@@ -81,59 +82,60 @@ class HomeEphemeralGreetingHeader extends StatelessWidget {
       color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.70 : 0.65),
     );
 
-    final content = Padding(
+    final cloudColor = scheme.onSurfaceVariant.withValues(
+      alpha: isDark ? 0.88 : 0.78,
+    );
+    final sunColor = isDark ? _sunTintDark : _sunTintLight;
+
+    final inner = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Text(
+                UserService.getHomeGreetingShort(),
+                style: greetingStyle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 6),
+            _WeatherGreetingBlock(
+              temperature: _mockTemperature,
+              city: _mockCity,
+              iconSize: _weatherIconSize,
+              iconTextGap: _weatherIconTextGap,
+              tempCityGap: _weatherTempCityGap,
+              tempStyle: tempStyle,
+              cityStyle: cityStyle,
+              cloudColor: cloudColor,
+              sunColor: sunColor,
+            ),
+          ],
+        ),
+        const SizedBox(height: _greetingToSummaryGap),
+        Text(
+          homeEphemeralGreetingSummary(
+            eventCount: eventCount,
+            taskCount: taskCount,
+          ),
+          style: summaryStyle,
+        ),
+      ],
+    );
+
+    return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.homePageMarginH,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Text(
-                  UserService.getHomeGreetingShort(),
-                  style: greetingStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 6),
-              _WeatherGreetingBlock(
-                temperature: _mockTemperature,
-                city: _mockCity,
-                iconSize: _weatherIconSize,
-                iconTextGap: _weatherIconTextGap,
-                tempCityGap: _weatherTempCityGap,
-                tempStyle: tempStyle,
-                cityStyle: cityStyle,
-                iconColor: scheme.onSurfaceVariant.withValues(
-                  alpha: isDark ? 0.88 : 0.78,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: _greetingToSummaryGap),
-          Text(
-            homeEphemeralGreetingSummary(
-              eventCount: eventCount,
-              taskCount: taskCount,
-            ),
-            style: summaryStyle,
-          ),
-        ],
-      ),
-    );
-
-    if (onTap == null) return content;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: content,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.homeCardPadding,
+        ),
+        child: inner,
       ),
     );
   }
@@ -149,7 +151,8 @@ class _WeatherGreetingBlock extends StatelessWidget {
     required this.tempCityGap,
     required this.tempStyle,
     required this.cityStyle,
-    required this.iconColor,
+    required this.cloudColor,
+    required this.sunColor,
   });
 
   final String temperature;
@@ -159,7 +162,8 @@ class _WeatherGreetingBlock extends StatelessWidget {
   final double tempCityGap;
   final TextStyle tempStyle;
   final TextStyle cityStyle;
-  final Color iconColor;
+  final Color cloudColor;
+  final Color sunColor;
 
   @override
   Widget build(BuildContext context) {
@@ -167,10 +171,29 @@ class _WeatherGreetingBlock extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Icon(
-          Icons.wb_cloudy_rounded,
-          size: iconSize,
-          color: iconColor,
+        SizedBox(
+          width: iconSize,
+          height: iconSize,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.bottomLeft,
+            children: [
+              Icon(
+                Icons.wb_cloudy_rounded,
+                size: iconSize,
+                color: cloudColor,
+              ),
+              Positioned(
+                right: -2,
+                top: 0,
+                child: Icon(
+                  Icons.wb_sunny_rounded,
+                  size: iconSize * 0.56,
+                  color: sunColor,
+                ),
+              ),
+            ],
+          ),
         ),
         SizedBox(width: iconTextGap),
         Column(

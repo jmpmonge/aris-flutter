@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../../../core/repositories/repositories.dart';
@@ -12,36 +10,6 @@ import '../../../shared/widgets/latest_aris_action_section.dart';
 import '../../../shared/widgets/recent_conversation_card.dart';
 import '../../../shared/widgets/today_summary_card.dart';
 import '../../../theme/app_spacing.dart';
-
-/// Colapso saludo temporal: altura ~360 ms + fade ~280 ms (v0.48.41).
-Widget _greetingCollapseTransition(
-  Widget child,
-  Animation<double> animation,
-) {
-  const fadeMs = 280;
-  const collapseMs = 360;
-  final fadeEnd = fadeMs / collapseMs;
-
-  final sizeAnimation = CurvedAnimation(
-    parent: animation,
-    curve: Curves.easeInOutCubic,
-  );
-  final fadeAnimation = CurvedAnimation(
-    parent: animation,
-    curve: Interval(0.0, fadeEnd, curve: Curves.easeOutCubic),
-  );
-
-  return ClipRect(
-    child: SizeTransition(
-      sizeFactor: sizeAnimation,
-      axisAlignment: -1,
-      child: FadeTransition(
-        opacity: fadeAnimation,
-        child: child,
-      ),
-    ),
-  );
-}
 
 /// Inicio — estructura vertical según prototipo funcional + estética premium Aris.
 class HomeScreen extends StatefulWidget {
@@ -60,14 +28,6 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   final _scrollController = ScrollController();
 
-  /// Saludo temporal visible al entrar (v0.48.41).
-  bool _showGreetingHeader = true;
-
-  Timer? _greetingAutoHideTimer;
-
-  static const Duration _greetingCollapseDuration =
-      Duration(milliseconds: 360);
-
   @override
   void initState() {
     super.initState();
@@ -77,8 +37,6 @@ class HomeScreenState extends State<HomeScreen> {
     Repositories.task.readRevision.addListener(_onHomeDataRevision);
     Repositories.note.readRevision.addListener(_onHomeDataRevision);
     Repositories.calendar.readRevision.addListener(_onHomeDataRevision);
-    _scrollController.addListener(_onHomeScroll);
-    _startGreetingAutoHideTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) => _ensureScrollAtTop());
   }
 
@@ -95,8 +53,6 @@ class HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    _greetingAutoHideTimer?.cancel();
-    _scrollController.removeListener(_onHomeScroll);
     Repositories.calendar.readRevision.removeListener(_onHomeDataRevision);
     Repositories.note.readRevision.removeListener(_onHomeDataRevision);
     Repositories.task.readRevision.removeListener(_onHomeDataRevision);
@@ -106,30 +62,6 @@ class HomeScreenState extends State<HomeScreen> {
     _scrollController.dispose();
     super.dispose();
   }
-
-  void _startGreetingAutoHideTimer() {
-    _greetingAutoHideTimer?.cancel();
-    _greetingAutoHideTimer = Timer(const Duration(seconds: 10), () {
-      if (mounted) _hideGreetingHeader();
-    });
-  }
-
-  void _onHomeScroll() {
-    if (!_scrollController.hasClients || !_showGreetingHeader) return;
-    if (_scrollController.offset > 0) {
-      _hideGreetingHeader();
-    }
-  }
-
-  /// Oculta el saludo temporal (tap, scroll, timer o input futuro).
-  void _hideGreetingHeader() {
-    if (!_showGreetingHeader) return;
-    _greetingAutoHideTimer?.cancel();
-    setState(() => _showGreetingHeader = false);
-  }
-
-  /// Pendiente: conectar con [ChatInputBar] al recibir foco (v0.48.42+).
-  void hideGreetingHeaderFromInput() => _hideGreetingHeader();
 
   void _onHistoryRevision() => _onChatRevision();
 
@@ -177,28 +109,15 @@ class HomeScreenState extends State<HomeScreen> {
         ),
         children: [
           const HomeFixedDateHeader(),
-          AnimatedSwitcher(
-            duration: _greetingCollapseDuration,
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInOutCubic,
-            transitionBuilder: _greetingCollapseTransition,
-            child: _showGreetingHeader
-                ? Padding(
-                    key: const ValueKey<String>('home_greeting_visible'),
-                    padding: const EdgeInsets.only(
-                      top: AppSpacing.homeFixedDateToEphemeralGap,
-                      bottom: AppSpacing.homeGreetingToHoyGap,
-                    ),
-                    child: HomeEphemeralGreetingHeader(
-                      eventCount: homeEvents.length,
-                      taskCount: homeTasks.length,
-                      onTap: _hideGreetingHeader,
-                    ),
-                  )
-                : SizedBox(
-                    key: const ValueKey<String>('home_greeting_hidden'),
-                    height: AppSpacing.homeFixedDateToHoyWhenGreetingHidden,
-                  ),
+          Padding(
+            padding: const EdgeInsets.only(
+              top: AppSpacing.homeFixedDateToEphemeralGap,
+              bottom: AppSpacing.homeGreetingToHoyGap,
+            ),
+            child: HomeEphemeralGreetingHeader(
+              eventCount: homeEvents.length,
+              taskCount: homeTasks.length,
+            ),
           ),
           TodaySummaryCard(
             events: homeEvents,
