@@ -61,6 +61,15 @@ abstract final class AppSpacing {
   /// Respiro superior antes de fecha+avatar en Home (v0.48.37).
   static const double homeHeaderTopGap = 6;
 
+  /// Margen superior fecha fija Home (v0.48.41).
+  static const double homeFixedDateTopGap = 16;
+
+  /// Fecha fija → bloque saludo temporal (v0.48.41).
+  static const double homeFixedDateToEphemeralGap = 9;
+
+  /// Fecha fija → HOY cuando el saludo temporal está oculto (v0.48.41).
+  static const double homeFixedDateToHoyWhenGreetingHidden = 12;
+
   /// Inset izquierdo del texto de fecha fija (margen pantalla + sangría; v0.48.37).
   static const double homeFixedDateLeftInsetH =
       homePageMarginH + homeCardPadding;

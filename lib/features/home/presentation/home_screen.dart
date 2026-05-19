@@ -7,6 +7,7 @@ import '../../../core/services/chat_service.dart';
 import '../../../core/services/local_action_service.dart';
 import '../../assistant/presentation/assistant_screen.dart';
 import 'widgets/home_ephemeral_greeting_header.dart';
+import 'widgets/home_fixed_date_header.dart';
 import '../../../shared/widgets/latest_aris_action_section.dart';
 import '../../../shared/widgets/recent_conversation_card.dart';
 import '../../../shared/widgets/today_summary_card.dart';
@@ -175,6 +176,7 @@ class HomeScreenState extends State<HomeScreen> {
           bottom: AppSpacing.homeSectionGap + AppSpacing.sm,
         ),
         children: [
+          const HomeFixedDateHeader(),
           AnimatedSwitcher(
             duration: _greetingCollapseDuration,
             switchInCurve: Curves.easeOutCubic,
@@ -184,6 +186,7 @@ class HomeScreenState extends State<HomeScreen> {
                 ? Padding(
                     key: const ValueKey<String>('home_greeting_visible'),
                     padding: const EdgeInsets.only(
+                      top: AppSpacing.homeFixedDateToEphemeralGap,
                       bottom: AppSpacing.homeGreetingToHoyGap,
                     ),
                     child: HomeEphemeralGreetingHeader(
@@ -194,7 +197,7 @@ class HomeScreenState extends State<HomeScreen> {
                   )
                 : SizedBox(
                     key: const ValueKey<String>('home_greeting_hidden'),
-                    height: AppSpacing.homeGreetingCollapsedGap,
+                    height: AppSpacing.homeFixedDateToHoyWhenGreetingHidden,
                   ),
           ),
           TodaySummaryCard(

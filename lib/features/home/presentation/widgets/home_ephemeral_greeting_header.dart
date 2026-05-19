@@ -28,7 +28,7 @@ String homeEphemeralGreetingSummary({
   return parts.join(' · ');
 }
 
-/// Encabezado temporal sin tarjeta: fecha, saludo, resumen y clima compacto (v0.48.41).
+/// Bloque temporal: saludo, resumen y clima (sin fecha; v0.48.41).
 class HomeEphemeralGreetingHeader extends StatelessWidget {
   const HomeEphemeralGreetingHeader({
     super.key,
@@ -41,23 +41,20 @@ class HomeEphemeralGreetingHeader extends StatelessWidget {
   final int taskCount;
   final VoidCallback? onTap;
 
-  // Mock clima hasta conectar API (v0.48.41).
+  // TODO: conectar clima real en una versión posterior.
   static const String _mockTemperature = '21°';
   static const String _mockCity = 'Madrid';
 
-  static const double _dateToGreetingGap = 8;
   static const double _greetingToSummaryGap = 4;
-  static const double _weatherBlockWidth = 80;
+  static const double _weatherIconSize = 26;
   static const double _weatherIconTextGap = 6;
+  static const double _weatherTempCityGap = 1;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final dateMuted = scheme.onSurfaceVariant.withValues(
-      alpha: isDark ? 0.78 : 0.72,
-    );
     final summaryStyle = TextStyle(
       fontSize: 13.5,
       height: 1.2,
@@ -72,41 +69,28 @@ class HomeEphemeralGreetingHeader extends StatelessWidget {
       color: scheme.onSurface,
     );
     final tempStyle = TextStyle(
-      fontSize: 14,
-      height: 1.1,
+      fontSize: 14.5,
+      height: 1.05,
       fontWeight: FontWeight.w600,
       color: scheme.onSurface,
     );
     final cityStyle = TextStyle(
       fontSize: 11,
-      height: 1.1,
+      height: 1.05,
       fontWeight: FontWeight.w400,
-      color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.72 : 0.68),
+      color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.70 : 0.65),
     );
 
     final content = Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.homePageMarginH,
-        AppSpacing.homeHeaderTopGap,
-        AppSpacing.homePageMarginH,
-        0,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.homePageMarginH,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            UserService.getHomeFixedDateLine(),
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.15,
-              fontWeight: FontWeight.w500,
-              color: dateMuted,
-            ),
-          ),
-          const SizedBox(height: _dateToGreetingGap),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
                 child: Text(
@@ -116,16 +100,17 @@ class HomeEphemeralGreetingHeader extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
-              _WeatherCompact(
+              const SizedBox(width: 6),
+              _WeatherGreetingBlock(
                 temperature: _mockTemperature,
                 city: _mockCity,
-                blockWidth: _weatherBlockWidth,
+                iconSize: _weatherIconSize,
                 iconTextGap: _weatherIconTextGap,
+                tempCityGap: _weatherTempCityGap,
                 tempStyle: tempStyle,
                 cityStyle: cityStyle,
                 iconColor: scheme.onSurfaceVariant.withValues(
-                  alpha: isDark ? 0.85 : 0.75,
+                  alpha: isDark ? 0.88 : 0.78,
                 ),
               ),
             ],
@@ -154,12 +139,14 @@ class HomeEphemeralGreetingHeader extends StatelessWidget {
   }
 }
 
-class _WeatherCompact extends StatelessWidget {
-  const _WeatherCompact({
+/// Clima compacto: icono a la izquierda; grados y ciudad apilados (v0.48.41).
+class _WeatherGreetingBlock extends StatelessWidget {
+  const _WeatherGreetingBlock({
     required this.temperature,
     required this.city,
-    required this.blockWidth,
+    required this.iconSize,
     required this.iconTextGap,
+    required this.tempCityGap,
     required this.tempStyle,
     required this.cityStyle,
     required this.iconColor,
@@ -167,35 +154,35 @@ class _WeatherCompact extends StatelessWidget {
 
   final String temperature;
   final String city;
-  final double blockWidth;
+  final double iconSize;
   final double iconTextGap;
+  final double tempCityGap;
   final TextStyle tempStyle;
   final TextStyle cityStyle;
   final Color iconColor;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: blockWidth,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.wb_cloudy_rounded,
-                size: 18,
-                color: iconColor,
-              ),
-              SizedBox(width: iconTextGap),
-              Text(temperature, style: tempStyle),
-            ],
-          ),
-          Text(city, style: cityStyle, textAlign: TextAlign.right),
-        ],
-      ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Icon(
+          Icons.wb_cloudy_rounded,
+          size: iconSize,
+          color: iconColor,
+        ),
+        SizedBox(width: iconTextGap),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(temperature, style: tempStyle),
+            SizedBox(height: tempCityGap),
+            Text(city, style: cityStyle),
+          ],
+        ),
+      ],
     );
   }
 }
