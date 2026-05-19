@@ -8,22 +8,68 @@ const String kHomeArisDefaultActiveMessage =
     'He visto que tienes dos eventos esta tarde.\n'
     '¿Quieres que te avise 15 min antes del primero?';
 
-/// Tarjeta compacta Aris en Home: una intervención + input encapsulado (v0.48.43).
+/// Respuestas rápidas mock para [HomeArisReplyCard] (sin backend).
+abstract final class HomeArisMockReplies {
+  static const String yesReply =
+      'Listo, te avisaré 15 min antes del primer evento.';
+  static const String noReply = 'De acuerdo, no crearé ningún aviso.';
+  static const String otherReply =
+      'Te he entendido. Puedo ayudarte con eso desde la conversación completa de Aris.';
+
+  static String resolve(String userText) {
+    final t = _normalize(userText);
+    if (t.isEmpty) return otherReply;
+    if (_matchesNo(t)) return noReply;
+    if (_matchesYes(t)) return yesReply;
+    return otherReply;
+  }
+
+  static String _normalize(String raw) {
+    var s = raw.trim().toLowerCase();
+    const accents = {
+      'á': 'a',
+      'é': 'e',
+      'í': 'i',
+      'ó': 'o',
+      'ú': 'u',
+      'ü': 'u',
+    };
+    accents.forEach((k, v) => s = s.replaceAll(k, v));
+    return s;
+  }
+
+  static bool _matchesYes(String t) {
+    if (RegExp(r'\b(si|vale|ok|okay|claro)\b').hasMatch(t)) return true;
+    if (t.contains('avisa')) return true;
+    return false;
+  }
+
+  static bool _matchesNo(String t) {
+    if (RegExp(r'\b(no|cancelar|cancela)\b').hasMatch(t)) return true;
+    if (t.contains('dejalo')) return true;
+    return false;
+  }
+}
+
+/// Tarjeta compacta Aris en Home: intervención activa + input funcional (v0.48.43).
 class HomeArisReplyCard extends StatefulWidget {
   const HomeArisReplyCard({
     super.key,
-    this.activeMessage = kHomeArisDefaultActiveMessage,
-    this.isSending = false,
-    this.onTapCard,
-    this.onSubmitted,
+    this.initialMessage = kHomeArisDefaultActiveMessage,
+    this.onOpenFullConversation,
     this.onMicPressed,
+    this.onUserSubmitted,
   });
 
-  final String activeMessage;
-  final bool isSending;
-  final VoidCallback? onTapCard;
-  final ValueChanged<String>? onSubmitted;
+  final String initialMessage;
+
+  /// Abre conversación completa (p. ej. [AssistantScreen]).
+  final VoidCallback? onOpenFullConversation;
+
   final VoidCallback? onMicPressed;
+
+  /// Opcional: notificar texto enviado sin obligar backend.
+  final ValueChanged<String>? onUserSubmitted;
 
   @override
   State<HomeArisReplyCard> createState() => _HomeArisReplyCardState();
@@ -31,6 +77,7 @@ class HomeArisReplyCard extends StatefulWidget {
 
 class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
   final _controller = TextEditingController();
+  late String _activeMessage;
 
   static const double _cardRadius = AppSpacing.homeCardRadius;
   static const double _padH = 16;
@@ -47,6 +94,7 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
   @override
   void initState() {
     super.initState();
+    _activeMessage = widget.initialMessage;
     _controller.addListener(_onTextChanged);
   }
 
@@ -60,6 +108,20 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
   void _onTextChanged() => setState(() {});
 
   bool get _hasText => _controller.text.trim().isNotEmpty;
+
+  void _handleSubmit(String raw) {
+    final t = raw.trim();
+    if (t.isEmpty) return;
+    _controller.clear();
+    setState(() {
+      _activeMessage = HomeArisMockReplies.resolve(t);
+    });
+    widget.onUserSubmitted?.call(t);
+  }
+
+  void _openFullConversation() {
+    widget.onOpenFullConversation?.call();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +181,9 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
               Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: widget.onTapCard,
+                  onTap: widget.onOpenFullConversation != null
+                      ? _openFullConversation
+                      : null,
                   borderRadius: BorderRadius.circular(
                     AppSpacing.homeCardHeaderInkBorderRadius,
                   ),
@@ -167,7 +231,7 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          widget.activeMessage,
+                          _activeMessage,
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -202,7 +266,6 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
                         ),
                         child: TextField(
                           controller: _controller,
-                          enabled: !widget.isSending,
                           textInputAction: TextInputAction.send,
                           maxLines: 1,
                           style: TextStyle(
@@ -210,12 +273,7 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
                             height: 1.25,
                             color: scheme.onSurface,
                           ),
-                          onSubmitted: (value) {
-                            final t = value.trim();
-                            if (t.isEmpty || widget.isSending) return;
-                            widget.onSubmitted?.call(t);
-                            _controller.clear();
-                          },
+                          onSubmitted: _handleSubmit,
                           decoration: InputDecoration(
                             hintText: 'Escribe a Aris…',
                             hintStyle: TextStyle(
@@ -257,14 +315,7 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
         width: _micSize,
         height: _micSize,
         child: FilledButton(
-          onPressed: widget.isSending
-              ? null
-              : () {
-                  final t = _controller.text.trim();
-                  if (t.isEmpty) return;
-                  widget.onSubmitted?.call(t);
-                  _controller.clear();
-                },
+          onPressed: () => _handleSubmit(_controller.text),
           style: FilledButton.styleFrom(
             shape: const CircleBorder(),
             padding: EdgeInsets.zero,
@@ -272,20 +323,11 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
             maximumSize: const Size(_micSize, _micSize),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: widget.isSending
-              ? SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: scheme.onPrimary,
-                  ),
-                )
-              : Icon(
-                  Icons.send_rounded,
-                  size: 20,
-                  color: scheme.onPrimary,
-                ),
+          child: Icon(
+            Icons.send_rounded,
+            size: 20,
+            color: scheme.onPrimary,
+          ),
         ),
       );
     }
@@ -297,7 +339,7 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
-        onTap: widget.isSending ? null : widget.onMicPressed,
+        onTap: widget.onMicPressed,
         child: SizedBox(
           width: _micSize,
           height: _micSize,

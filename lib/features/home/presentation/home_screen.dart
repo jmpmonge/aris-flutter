@@ -33,7 +33,6 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
   final _scrollController = ScrollController();
-  bool _arisSending = false;
 
   @override
   void initState() {
@@ -75,15 +74,6 @@ class HomeScreenState extends State<HomeScreen> {
   void _onLocalActions() {
     if (!mounted) return;
     setState(() {});
-  }
-
-  Future<void> _sendArisMessage(String text) async {
-    final t = text.trim();
-    if (t.isEmpty) return;
-    setState(() => _arisSending = true);
-    await Repositories.assistant.sendMessage(t);
-    if (!mounted) return;
-    setState(() => _arisSending = false);
   }
 
   void _openAssistant(BuildContext context) {
@@ -130,9 +120,7 @@ class HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: AppSpacing.homeSectionGapMax),
           HomeArisReplyCard(
-            isSending: _arisSending,
-            onTapCard: () => _openAssistant(context),
-            onSubmitted: _sendArisMessage,
+            onOpenFullConversation: () => _openAssistant(context),
             onMicPressed: _onMicPressed,
           ),
         ],
