@@ -92,6 +92,12 @@ abstract final class AppSpacing {
   /// Fecha fija → HOY cuando SUGERENCIA está oculta (v0.48.34).
   static const double homeFixedDateToHoyGapCollapsed = 11;
 
+  /// Saludo temporal → tarjeta HOY (v0.48.41).
+  static const double homeGreetingToHoyGap = 13;
+
+  /// Hueco mínimo tras colapsar saludo temporal (v0.48.41).
+  static const double homeGreetingCollapsedGap = 0;
+
   /// Radio tarjetas Home (Structured).
   static const double homeCardRadius = 22;
 
