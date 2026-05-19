@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/repositories/repositories.dart';
+import '../../../core/services/chat_service.dart';
 import '../../../core/services/local_action_service.dart';
-import '../../assistant/presentation/assistant_screen.dart';
+import 'widgets/home_aris_chat_inside_sheet.dart';
+import 'widgets/home_aris_conversation_utils.dart';
 import 'widgets/home_ephemeral_greeting_header.dart';
 import 'widgets/home_fixed_date_header.dart';
 import '../../../shared/widgets/home_aris_reply_card.dart';
@@ -33,6 +35,8 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
   final _scrollController = ScrollController();
+  int _homeArisInstructionCount = 0;
+  bool _arisSending = false;
 
   @override
   void initState() {
@@ -41,6 +45,8 @@ class HomeScreenState extends State<HomeScreen> {
     Repositories.task.readRevision.addListener(_onHomeDataRevision);
     Repositories.note.readRevision.addListener(_onHomeDataRevision);
     Repositories.calendar.readRevision.addListener(_onHomeDataRevision);
+    ChatService.revision.addListener(_onConversationRevision);
+    Repositories.history.revision.addListener(_onConversationRevision);
     WidgetsBinding.instance.addPostFrameCallback((_) => _ensureScrollAtTop());
   }
 
@@ -60,12 +66,13 @@ class HomeScreenState extends State<HomeScreen> {
     Repositories.calendar.readRevision.removeListener(_onHomeDataRevision);
     Repositories.note.readRevision.removeListener(_onHomeDataRevision);
     Repositories.task.readRevision.removeListener(_onHomeDataRevision);
+    ChatService.revision.removeListener(_onConversationRevision);
+    Repositories.history.revision.removeListener(_onConversationRevision);
     LocalActionService.revision.removeListener(_onLocalActions);
     _scrollController.dispose();
     super.dispose();
   }
 
-  /// Calendario / tareas / notas: refrescar sin mover el scroll (v0.48.31).
   void _onHomeDataRevision() {
     if (!mounted) return;
     setState(() {});
@@ -76,10 +83,41 @@ class HomeScreenState extends State<HomeScreen> {
     setState(() {});
   }
 
-  void _openAssistant(BuildContext context) {
-    Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(builder: (_) => const AssistantScreen()),
+  void _onConversationRevision() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  String get _lastArisMessage => homeLastArisMessageText(
+        Repositories.history.conversationForHome(),
+      );
+
+  Future<void> _sendArisMessage(String text) async {
+    final t = text.trim();
+    if (t.isEmpty) return;
+
+    _homeArisInstructionCount++;
+    setState(() => _arisSending = true);
+
+    final result = await Repositories.assistant.sendMessage(t);
+
+    if (!mounted) return;
+    setState(() => _arisSending = false);
+
+    final responseText = result.data?.text.trim() ?? '';
+    final openForResponse = homeShouldOpenFullChatForResponse(
+      text: responseText.isNotEmpty ? responseText : _lastArisMessage,
+      uiHint: result.data?.uiHint,
     );
+
+    if (_homeArisInstructionCount >= kHomeArisInstructionsBeforeInsideChat ||
+        openForResponse) {
+      await HomeArisChatInsideSheet.show(
+        context,
+        onSend: _sendArisMessage,
+        onMicTap: _onMicPressed,
+      );
+    }
   }
 
   void _onMicPressed() {
@@ -120,7 +158,14 @@ class HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: AppSpacing.homeSectionGapMax),
           HomeArisReplyCard(
-            onOpenFullConversation: () => _openAssistant(context),
+            activeMessage: _lastArisMessage,
+            isSending: _arisSending,
+            onOpenFullConversation: () => HomeArisChatInsideSheet.show(
+              context,
+              onSend: _sendArisMessage,
+              onMicTap: _onMicPressed,
+            ),
+            onSubmit: _sendArisMessage,
             onMicPressed: _onMicPressed,
           ),
         ],

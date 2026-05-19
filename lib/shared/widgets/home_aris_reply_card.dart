@@ -3,73 +3,48 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 
-/// Mensaje demo de intervención activa (v0.48.43).
-const String kHomeArisDefaultActiveMessage =
-    'He visto que tienes dos eventos esta tarde.\n'
-    '¿Quieres que te avise 15 min antes del primero?';
-
-/// Respuestas rápidas mock para [HomeArisReplyCard] (sin backend).
-abstract final class HomeArisMockReplies {
-  static const String yesReply =
-      'Listo, te avisaré 15 min antes del primer evento.';
-  static const String noReply = 'De acuerdo, no crearé ningún aviso.';
-  static const String otherReply =
-      'Te he entendido. Puedo ayudarte con eso desde la conversación completa de Aris.';
-
-  static String resolve(String userText) {
-    final t = _normalize(userText);
-    if (t.isEmpty) return otherReply;
-    if (_matchesNo(t)) return noReply;
-    if (_matchesYes(t)) return yesReply;
-    return otherReply;
-  }
-
-  static String _normalize(String raw) {
-    var s = raw.trim().toLowerCase();
-    const accents = {
-      'á': 'a',
-      'é': 'e',
-      'í': 'i',
-      'ó': 'o',
-      'ú': 'u',
-      'ü': 'u',
-    };
-    accents.forEach((k, v) => s = s.replaceAll(k, v));
-    return s;
-  }
-
-  static bool _matchesYes(String t) {
-    if (RegExp(r'\b(si|vale|ok|okay|claro)\b').hasMatch(t)) return true;
-    if (t.contains('avisa')) return true;
-    return false;
-  }
-
-  static bool _matchesNo(String t) {
-    if (RegExp(r'\b(no|cancelar|cancela)\b').hasMatch(t)) return true;
-    if (t.contains('dejalo')) return true;
-    return false;
-  }
+/// Overlay cabecera ARIS — igual que CHAT CON ARIS (v0.48.43).
+WidgetStateProperty<Color?> _arisHeaderOverlayColor(bool isDark) {
+  const light = Color(0xFFF0EEFF);
+  const lightHover = Color(0xFFEDE9FF);
+  return WidgetStateProperty.resolveWith((states) {
+    if (isDark) {
+      if (states.contains(WidgetState.pressed)) {
+        return AppColors.surfaceHoverDark.withValues(alpha: 0.96);
+      }
+      if (states.contains(WidgetState.hovered) ||
+          states.contains(WidgetState.focused)) {
+        return AppColors.surfaceRaisedDark.withValues(alpha: 0.92);
+      }
+      return Colors.transparent;
+    }
+    if (states.contains(WidgetState.pressed)) {
+      return light.withValues(alpha: 0.92);
+    }
+    if (states.contains(WidgetState.hovered) ||
+        states.contains(WidgetState.focused)) {
+      return lightHover.withValues(alpha: 0.72);
+    }
+    return Colors.transparent;
+  });
 }
 
-/// Tarjeta compacta Aris en Home: intervención activa + input funcional (v0.48.43).
+/// Tarjeta compacta Aris en Home — última respuesta + input real (v0.48.43).
 class HomeArisReplyCard extends StatefulWidget {
   const HomeArisReplyCard({
     super.key,
-    this.initialMessage = kHomeArisDefaultActiveMessage,
+    required this.activeMessage,
+    this.isSending = false,
     this.onOpenFullConversation,
+    this.onSubmit,
     this.onMicPressed,
-    this.onUserSubmitted,
   });
 
-  final String initialMessage;
-
-  /// Abre conversación completa (p. ej. [AssistantScreen]).
+  final String activeMessage;
+  final bool isSending;
   final VoidCallback? onOpenFullConversation;
-
+  final Future<void> Function(String text)? onSubmit;
   final VoidCallback? onMicPressed;
-
-  /// Opcional: notificar texto enviado sin obligar backend.
-  final ValueChanged<String>? onUserSubmitted;
 
   @override
   State<HomeArisReplyCard> createState() => _HomeArisReplyCardState();
@@ -77,7 +52,6 @@ class HomeArisReplyCard extends StatefulWidget {
 
 class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
   final _controller = TextEditingController();
-  late String _activeMessage;
 
   static const double _cardRadius = AppSpacing.homeCardRadius;
   static const double _padH = 16;
@@ -94,7 +68,6 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
   @override
   void initState() {
     super.initState();
-    _activeMessage = widget.initialMessage;
     _controller.addListener(_onTextChanged);
   }
 
@@ -109,25 +82,29 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
 
   bool get _hasText => _controller.text.trim().isNotEmpty;
 
-  void _handleSubmit(String raw) {
+  Future<void> _handleSubmit(String raw) async {
     final t = raw.trim();
-    if (t.isEmpty) return;
+    if (t.isEmpty || widget.isSending) return;
     _controller.clear();
-    setState(() {
-      _activeMessage = HomeArisMockReplies.resolve(t);
-    });
-    widget.onUserSubmitted?.call(t);
+    await widget.onSubmit?.call(t);
   }
 
   void _openFullConversation() {
     widget.onOpenFullConversation?.call();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final arisTitleColor = isDark ? _kArisTitleDark : _kArisTitleLight;
+  Widget _buildArisHeaderRow({
+    required ColorScheme scheme,
+    required bool isDark,
+    required Color arisIconColor,
+  }) {
+    final titleStyle = TextStyle(
+      fontSize: 11.5,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.7,
+      height: 1.0,
+      color: isDark ? scheme.onSurface : AppColors.primaryDeep,
+    );
 
     final activePillBg = isDark
         ? AppColors.suggestionGreenDark.withValues(alpha: 0.14)
@@ -135,6 +112,69 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
     final activePillFg = isDark
         ? AppColors.suggestionGreenDark.withValues(alpha: 0.92)
         : AppColors.success.withValues(alpha: 0.88);
+
+    final row = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.auto_awesome_rounded,
+          size: AppSpacing.homeCardHeaderIconSize,
+          color: arisIconColor,
+        ),
+        const SizedBox(width: AppSpacing.homeCardHeaderIconTitleGap),
+        Text('ARIS', style: titleStyle),
+        const Spacer(),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: activePillBg,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+            child: Text(
+              'Activo',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+                height: 1.0,
+                color: activePillFg,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+
+    final padded = Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.homeCardHeaderInkPaddingH,
+        vertical: AppSpacing.homeCardHeaderInkPaddingV,
+      ),
+      child: row,
+    );
+
+    if (widget.onOpenFullConversation == null) return padded;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _openFullConversation,
+        borderRadius: BorderRadius.circular(
+          AppSpacing.homeCardHeaderInkBorderRadius,
+        ),
+        overlayColor: _arisHeaderOverlayColor(isDark),
+        child: padded,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final arisTitleColor = isDark ? _kArisTitleDark : _kArisTitleLight;
+    final arisIconColor =
+        isDark ? _kArisTitleDark : AppColors.secondaryViolet;
 
     final dividerColor = isDark
         ? scheme.outlineVariant.withValues(alpha: 0.28)
@@ -178,72 +218,21 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: widget.onOpenFullConversation != null
-                      ? _openFullConversation
-                      : null,
-                  borderRadius: BorderRadius.circular(
-                    AppSpacing.homeCardHeaderInkBorderRadius,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              'ARIS',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.8,
-                                height: 1.0,
-                                color: arisTitleColor,
-                              ),
-                            ),
-                            const Spacer(),
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: activePillBg,
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 9,
-                                  vertical: 3.5,
-                                ),
-                                child: Text(
-                                  'Activo',
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w600,
-                                    height: 1.0,
-                                    color: activePillFg,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          _activeMessage,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14.5,
-                            height: 1.32,
-                            fontWeight: FontWeight.w400,
-                            color: scheme.onSurface,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+              _buildArisHeaderRow(
+                scheme: scheme,
+                isDark: isDark,
+                arisIconColor: arisIconColor,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                widget.activeMessage,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14.5,
+                  height: 1.32,
+                  fontWeight: FontWeight.w400,
+                  color: scheme.onSurface,
                 ),
               ),
               Padding(
@@ -266,6 +255,7 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
                         ),
                         child: TextField(
                           controller: _controller,
+                          enabled: !widget.isSending,
                           textInputAction: TextInputAction.send,
                           maxLines: 1,
                           style: TextStyle(
@@ -315,7 +305,9 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
         width: _micSize,
         height: _micSize,
         child: FilledButton(
-          onPressed: () => _handleSubmit(_controller.text),
+          onPressed: widget.isSending
+              ? null
+              : () => _handleSubmit(_controller.text),
           style: FilledButton.styleFrom(
             shape: const CircleBorder(),
             padding: EdgeInsets.zero,
@@ -323,11 +315,20 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
             maximumSize: const Size(_micSize, _micSize),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: Icon(
-            Icons.send_rounded,
-            size: 20,
-            color: scheme.onPrimary,
-          ),
+          child: widget.isSending
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: scheme.onPrimary,
+                  ),
+                )
+              : Icon(
+                  Icons.send_rounded,
+                  size: 20,
+                  color: scheme.onPrimary,
+                ),
         ),
       );
     }
@@ -339,7 +340,7 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
-        onTap: widget.onMicPressed,
+        onTap: widget.isSending ? null : widget.onMicPressed,
         child: SizedBox(
           width: _micSize,
           height: _micSize,
