@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../core/models/app_theme_mode.dart';
 import '../../../core/repositories/repositories.dart';
+import '../../../core/services/backend_reads_caption.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../theme/app_spacing.dart';
+import 'backend_status_section.dart';
 
 /// Ajustes — apariencia real + opciones **sin efecto backend**.
 class SettingsScreen extends StatelessWidget {
@@ -120,6 +122,38 @@ class SettingsScreen extends StatelessWidget {
             subtitle: const Text('Amable · Directa · Profesional (mock)'),
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: () {},
+          ),
+          const Divider(height: AppSpacing.xl),
+          Text(
+            'Servidor FastAPI (desarrollo)',
+            style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Comprueba si el backend local responde en el puerto 8000. '
+            'Las lecturas GET pueden rellenar listas; si no hay servidor, '
+            'Aris usa datos locales de demostración.',
+            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          const BackendStatusSection(),
+          Text(
+            'Origen mostrado (solo lecturas GET)',
+            style: text.labelSmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+              letterSpacing: 0.6,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          ValueListenableBuilder<String>(
+            valueListenable: backendReadsCaption,
+            builder: (context, caption, _) {
+              return Text(
+                caption,
+                style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+              );
+            },
           ),
           const Divider(height: AppSpacing.xl),
           Text(
