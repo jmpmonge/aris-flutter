@@ -30,7 +30,8 @@ abstract final class AppTheme {
   }) {
     final text = AppTypography.textTheme(scheme);
     final isLight = scheme.brightness == Brightness.light;
-    final borderAlpha = isLight ? 0.28 : 0.4;
+    final borderAlpha =
+        isLight ? 0.28 : AppColors.homeCardBorderAlpha(Brightness.dark);
 
     return ThemeData(
       useMaterial3: true,
@@ -95,12 +96,12 @@ abstract final class AppTheme {
         backgroundColor: scheme.surface,
         indicatorColor: isLight
             ? scheme.secondaryContainer.withValues(alpha: 0.88)
-            : const Color(0xFF303746).withValues(alpha: 0.88),
+            : AppColors.surfaceHoverDark.withValues(alpha: 0.92),
         surfaceTintColor: Colors.transparent,
         overlayColor: WidgetStateProperty.resolveWith((states) {
           if (isLight) return null;
           if (states.contains(WidgetState.pressed)) {
-            return const Color(0xFF303746).withValues(alpha: 0.45);
+            return AppColors.surfaceHoverDark.withValues(alpha: 0.55);
           }
           return null;
         }),
@@ -153,7 +154,7 @@ abstract final class AppTheme {
               ? null
               : WidgetStateProperty.resolveWith((states) {
                   if (states.contains(WidgetState.pressed)) {
-                    return const Color(0xFF303746).withValues(alpha: 0.5);
+                    return AppColors.surfaceHoverDark.withValues(alpha: 0.55);
                   }
                   return null;
                 }),
@@ -164,11 +165,11 @@ abstract final class AppTheme {
             ? null
             : SegmentedButton.styleFrom(
                 backgroundColor: Colors.transparent,
-                foregroundColor: const Color(0xFFC3CAD6),
-                selectedForegroundColor: const Color(0xFFE8ECF4),
-                selectedBackgroundColor: const Color(0xFF263044),
-                side: const BorderSide(
-                  color: Color(0xFF3A4354),
+                foregroundColor: AppColors.textSecondaryDark,
+                selectedForegroundColor: AppColors.textPrimaryDark,
+                selectedBackgroundColor: AppColors.surfaceHoverDark,
+                side: BorderSide(
+                  color: AppColors.outlineVariantDark.withValues(alpha: 0.75),
                   width: 1,
                 ),
               ),

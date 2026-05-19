@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_spacing.dart';
 
+/// Icono pestaña **Tareas** en barra inferior (`AppNavigationShell`, campo `icon`).
+/// Compartido con el microencabezado TAREAS de [TodaySummaryCard] (v0.48.29).
+const IconData kAppNavTasksTabIcon = Icons.task_alt_outlined;
+
 /// Destino para [AppBottomNavigation].
 class AppNavDestination {
   const AppNavDestination({

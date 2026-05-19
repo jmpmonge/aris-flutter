@@ -65,18 +65,37 @@ abstract final class AppColors {
   static const Color softOrange = Color(0xFFFFF0DF);
   static const Color softPurple = Color(0xFFEFEAFF);
 
-  /// Modo oscuro — paleta existente.
-  static const Color canvasDark = Color(0xFF121820);
-  static const Color surfaceDark = Color(0xFF1A222C);
-  static const Color surfaceRaisedDark = Color(0xFF242E3A);
-  static const Color surfaceTintDark = Color(0xFF2F3A48);
+  /// Modo oscuro — profundidad y capas (v0.48.33).
+  static const Color canvasDark = Color(0xFF0D121A);
+  static const Color scaffoldDark = Color(0xFF0F151E);
+  static const Color surfaceDark = Color(0xFF171D27);
+  static const Color surfaceRaisedDark = Color(0xFF1A202B);
+  static const Color surfaceHoverDark = Color(0xFF202938);
+  static const Color surfaceContainerLowDark = Color(0xFF111821);
 
-  static const Color textPrimaryDark = Color(0xFFE8EEF4);
-  static const Color textSecondaryDark = Color(0xFFB4BCC6);
-  static const Color textTertiaryDark = Color(0xFF858D98);
+  /// Alias legado (elevación máxima ≈ hover).
+  static const Color surfaceTintDark = surfaceHoverDark;
 
-  static const Color outlineDark = Color(0xFF3D4A5C);
-  static const Color outlineVariantDark = Color(0xFF2A3440);
+  static const Color textPrimaryDark = Color(0xFFEAF0FA);
+  static const Color textSecondaryDark = Color(0xFFB8C0CC);
+  static const Color textTertiaryDark = Color(0xFF8F98A8);
+
+  static const Color outlineDark = Color(0xFF293445);
+  static const Color outlineVariantDark = Color(0xFF344154);
+
+  /// Acentos modo oscuro (solo iconos / detalle, no fondos dominantes).
+  static const Color calendarBlueDark = Color(0xFF7DB7FF);
+  static const Color suggestionGreenDark = Color(0xFF5EE0A0);
+  static const Color chatAccentLavenderDark = Color(0xFFB8A7FF);
+  static const Color tasksOrangeDark = Color(0xFFFDBA74);
+
+  /// Borde tarjeta Home — opacidad según tema.
+  static double homeCardBorderAlpha(Brightness brightness) =>
+      brightness == Brightness.dark ? 0.75 : 0.18;
+
+  /// Sombra tarjeta Home en oscuro (muy sutil).
+  static double homeCardShadowAlpha(Brightness brightness) =>
+      brightness == Brightness.dark ? 0.14 : 0.08;
 
   static const Color danger = Color(0xFFB3261E);
   static const Color success = Color(0xFF25A66A);
@@ -121,47 +140,38 @@ abstract final class AppColors {
     );
   }
 
-  /// Modo oscuro — v0.48.21: neutros azulados, sin morado; referencia brief Aris.
+  /// Modo oscuro — v0.48.33: capas, bordes y acentos controlados.
   static ColorScheme get darkScheme {
-    const kCanvas = Color(0xFF0F1117);
-    const kSurface = Color(0xFF171A22);
-    const kSurfaceRaised = Color(0xFF202634);
-    const kOutline = Color(0xFF3A4354);
-    const kPrimary = Color(0xFF7DB7FF);
-    const kOnPrimary = Color(0xFF0C1624);
-    const kTextPrimary = Color(0xFFE8ECF4);
-    const kTextSecondary = Color(0xFFC3CAD6);
-
     return ColorScheme(
       brightness: Brightness.dark,
-      primary: kPrimary,
-      onPrimary: kOnPrimary,
+      primary: calendarBlueDark,
+      onPrimary: const Color(0xFF0C1624),
       primaryContainer: const Color(0xFF10243F),
-      onPrimaryContainer: kTextPrimary,
-      secondary: kTextSecondary,
-      onSecondary: kCanvas,
-      secondaryContainer: kSurfaceRaised,
-      onSecondaryContainer: kTextPrimary,
-      tertiary: const Color(0xFFAEB6C8),
-      onTertiary: kCanvas,
+      onPrimaryContainer: textPrimaryDark,
+      secondary: chatAccentLavenderDark,
+      onSecondary: canvasDark,
+      secondaryContainer: surfaceRaisedDark,
+      onSecondaryContainer: textPrimaryDark,
+      tertiary: textTertiaryDark,
+      onTertiary: canvasDark,
       tertiaryContainer: surfaceRaisedDark,
-      onTertiaryContainer: kTextPrimary,
-      error: Color(0xFFF2B8B5),
-      onError: Color(0xFF601410),
-      errorContainer: Color(0xFF8C1D18),
-      onErrorContainer: Color(0xFFF9DEDC),
-      surface: kSurface,
-      onSurface: kTextPrimary,
-      surfaceContainerLowest: kCanvas,
-      surfaceContainerLow: kSurface,
-      surfaceContainer: kSurfaceRaised,
-      surfaceContainerHigh: const Color(0xFF263044),
-      surfaceContainerHighest: surfaceTintDark,
-      onSurfaceVariant: kTextSecondary,
-      outline: kOutline,
-      outlineVariant: const Color(0xFF2A2F3A),
-      shadow: Colors.black.withValues(alpha: 0.35),
-      scrim: Color(0x99000000),
+      onTertiaryContainer: textPrimaryDark,
+      error: const Color(0xFFF2B8B5),
+      onError: const Color(0xFF601410),
+      errorContainer: const Color(0xFF8C1D18),
+      onErrorContainer: const Color(0xFFF9DEDC),
+      surface: surfaceDark,
+      onSurface: textPrimaryDark,
+      surfaceContainerLowest: canvasDark,
+      surfaceContainerLow: surfaceContainerLowDark,
+      surfaceContainer: surfaceDark,
+      surfaceContainerHigh: surfaceRaisedDark,
+      surfaceContainerHighest: surfaceHoverDark,
+      onSurfaceVariant: textSecondaryDark,
+      outline: outlineDark,
+      outlineVariant: outlineVariantDark,
+      shadow: Colors.black.withValues(alpha: 0.42),
+      scrim: const Color(0x99000000),
       inverseSurface: surfaceLight,
       onInverseSurface: textPrimaryLight,
       inversePrimary: primaryDeep,

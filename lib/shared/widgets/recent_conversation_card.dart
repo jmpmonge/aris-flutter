@@ -7,21 +7,18 @@ import '../../core/models/intent_model.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 
-/// Overlay cabecera CHAT CON ARIS: claro lavanda pálido; oscuro hover lavanda (v0.48.15+).
-/// Pressed en oscuro: neutro #303746 (v0.48.18).
+/// Overlay cabecera CHAT CON ARIS: claro lavanda pálido; oscuro neutro (v0.48.33).
 WidgetStateProperty<Color?> _chatHeaderOverlayColor(bool isDark) {
   const light = Color(0xFFF0EEFF);
   const lightHover = Color(0xFFEDE9FF);
-  const darkInk = Color(0xFF2B2547);
-  const darkPressed = Color(0xFF303746);
   return WidgetStateProperty.resolveWith((states) {
     if (isDark) {
       if (states.contains(WidgetState.pressed)) {
-        return darkPressed.withValues(alpha: 0.96);
+        return AppColors.surfaceHoverDark.withValues(alpha: 0.96);
       }
       if (states.contains(WidgetState.hovered) ||
           states.contains(WidgetState.focused)) {
-        return darkInk.withValues(alpha: 0.85);
+        return AppColors.surfaceRaisedDark.withValues(alpha: 0.92);
       }
       return Colors.transparent;
     }
@@ -40,13 +37,13 @@ WidgetStateProperty<Color?> _chatHeaderOverlayColor(bool isDark) {
 /// p. ej. `"sí"` / `"no"` tras `ui_hint == confirm_rescue`.
 typedef ChatFollowUpSender = Future<void> Function(String text);
 
-/// Fondos burbuja chat Home en oscuro (v0.48.16+; Aris aclarado v0.48.18 #242A38).
-const Color _chatBubbleArisBgDark = Color(0xFF242A38);
-const Color _chatBubbleUserBgDark = Color(0xFF2A3346);
-const Color _chatBubbleBorderDark = Color(0xFF2A2F3A);
-const Color _chatDarkPrimaryText = Color(0xFFE8ECF4);
-const Color _chatDarkSecondaryText = Color(0xFFC3CAD6);
-const Color _chatDarkAccentLavender = Color(0xFFB8AEFF);
+/// Fondos burbuja chat Home en oscuro (v0.48.33 — capas sobre tarjeta).
+const Color _chatBubbleArisBgDark = AppColors.surfaceRaisedDark;
+const Color _chatBubbleUserBgDark = AppColors.surfaceHoverDark;
+const Color _chatBubbleBorderDark = AppColors.outlineVariantDark;
+const Color _chatDarkPrimaryText = AppColors.textPrimaryDark;
+const Color _chatDarkSecondaryText = AppColors.textSecondaryDark;
+const Color _chatDarkAccentLavender = AppColors.chatAccentLavenderDark;
 
 /// Bloque **CHAT CON ARIS** con burbujas tipo chat (histórico reciente).
 ///
@@ -115,10 +112,20 @@ class _RecentConversationCardState extends State<RecentConversationCard> {
         decoration: BoxDecoration(
           color: scheme.surface,
           borderRadius: BorderRadius.circular(AppSpacing.homeCardRadius),
-          border: Border.all(color: scheme.outline.withValues(alpha: 0.18)),
+          border: Border.all(
+            color: scheme.outline.withValues(
+              alpha: AppColors.homeCardBorderAlpha(
+                isDark ? Brightness.dark : Brightness.light,
+              ),
+            ),
+          ),
           boxShadow: [
             BoxShadow(
-              color: scheme.shadow.withValues(alpha: isDark ? 0.05 : 0.09),
+              color: scheme.shadow.withValues(
+                alpha: AppColors.homeCardShadowAlpha(
+                  isDark ? Brightness.dark : Brightness.light,
+                ),
+              ),
               blurRadius: AppSpacing.shadowBlurHomeCard,
               offset: AppSpacing.shadowOffsetHomeCard,
             ),
@@ -135,7 +142,7 @@ class _RecentConversationCardState extends State<RecentConversationCard> {
                 isDark: isDark,
                 onOpenFullChat: widget.onOpenFullChat,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.homeCardHeaderToContentGap),
               SizedBox(
                 height: AppSpacing.recentConversationBodyMaxHeight,
                 child: ListView.separated(
@@ -202,44 +209,45 @@ class _ChatWithArisHeader extends StatelessWidget {
     final iconColor =
         isDark ? chatHeaderAccentDark : AppColors.secondaryViolet;
 
-    final row = ConstrainedBox(
-      constraints: const BoxConstraints(
-        minHeight: AppSpacing.homeCardHeaderMinHeight,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.chat_bubble_outline_rounded,
-            size: AppSpacing.homeCardHeaderIconSize,
-            color: iconColor,
+    final row = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.chat_bubble_outline_rounded,
+          size: AppSpacing.homeCardHeaderIconSize,
+          color: iconColor,
+        ),
+        const SizedBox(width: AppSpacing.homeCardHeaderIconTitleGap),
+        Expanded(
+          child: Text(
+            'CHAT CON ARIS',
+            style: titleStyle,
           ),
-          SizedBox(width: AppSpacing.homeCardHeaderIconTitleGap),
-          Expanded(
-            child: Text(
-              'CHAT CON ARIS',
-              style: titleStyle,
+        ),
+        SizedBox(
+          width: AppSpacing.homeCardHeaderChevronBox,
+          height: AppSpacing.homeCardHeaderChevronBox,
+          child: Center(
+            child: Icon(
+              Icons.chevron_right_rounded,
+              size: AppSpacing.homeCardHeaderChevronSize,
+              color: isDark
+                  ? chatHeaderAccentDark.withValues(alpha: 0.55)
+                  : scheme.onSurfaceVariant.withValues(alpha: 0.72),
             ),
           ),
-          SizedBox(
-            width: AppSpacing.homeCardHeaderChevronBox,
-            height: AppSpacing.homeCardHeaderChevronBox,
-            child: Center(
-              child: Icon(
-                Icons.chevron_right_rounded,
-                size: AppSpacing.homeCardHeaderChevronSize,
-                color: isDark
-                    ? chatHeaderAccentDark.withValues(alpha: 0.55)
-                    : scheme.onSurfaceVariant.withValues(alpha: 0.72),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
 
     if (onOpenFullChat == null) {
-      return row;
+      return Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.homeCardHeaderInkPaddingH,
+          vertical: AppSpacing.homeCardHeaderInkPaddingV,
+        ),
+        child: row,
+      );
     }
 
     return Material(
@@ -339,7 +347,7 @@ class _Bubble extends StatelessWidget {
         ),
         border: Border.all(
           color: isDark
-              ? _chatBubbleBorderDark.withValues(alpha: 0.42)
+              ? _chatBubbleBorderDark.withValues(alpha: 0.55)
               : scheme.outline.withValues(alpha: 0.16),
         ),
         boxShadow: alignLeft
@@ -575,12 +583,12 @@ class _IntentChip extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF2B2547).withValues(alpha: 0.85)
+            ? AppColors.surfaceRaisedDark.withValues(alpha: 0.95)
             : scheme.secondaryContainer.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
         border: Border.all(
           color: isDark
-              ? _chatDarkAccentLavender.withValues(alpha: 0.32)
+              ? AppColors.outlineVariantDark.withValues(alpha: 0.55)
               : scheme.outline.withValues(alpha: 0.18),
         ),
       ),

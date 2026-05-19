@@ -5,27 +5,35 @@ import '../../core/models/task_model.dart';
 import '../../core/repositories/repositories.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
+import '../navigation/app_bottom_navigation.dart';
 
 /// Azul calendario HOY — v0.48.17 contraste reforzado (claro/oscuro).
 const Color _kCalendarBlueLight = Color(0xFF1F6FEB);
-const Color _kCalendarBlueDark = Color(0xFF7DB7FF);
+const Color _kCalendarBlueDark = AppColors.calendarBlueDark;
 
-/// Divisor calendario ↔ tareas (v0.48.17).
+/// Divisor calendario ↔ tareas (v0.48.17 / v0.48.33 oscuro).
 const Color _kCalendarGroupDividerLight = Color(0xFFCBD5E1);
-const Color _kCalendarGroupDividerDark = Color(0xFF4A5568);
 
-/// Overlay cabecera HOY → Calendario (azul muy pálido; v0.48.14).
+/// Línea vertical timeline — secundaria frente a los puntos (v0.48.27).
+const Color _kTimelineSpineLight = Color(0xFFC7DCFF);
+const Color _kTimelineSpineDark = Color(0xFF416A98);
+
+/// Icono microsección TAREAS (v0.48.28).
+const Color _kTasksSectionIconLight = Color(0xFFF59E0B);
+const Color _kTasksSectionIconDark = AppColors.tasksOrangeDark;
+
+/// Overlay cabecera HOY → Calendario (claro azul; oscuro neutro v0.48.33).
 WidgetStateProperty<Color?> _hoyHeaderOverlayColor(bool isDark) {
   const light = Color(0xFFEAF3FF);
   const lightHover = Color(0xFFDDEBFF);
   return WidgetStateProperty.resolveWith((states) {
     if (isDark) {
       if (states.contains(WidgetState.pressed)) {
-        return _kCalendarBlueDark.withValues(alpha: 0.22);
+        return AppColors.surfaceHoverDark.withValues(alpha: 0.96);
       }
       if (states.contains(WidgetState.hovered) ||
           states.contains(WidgetState.focused)) {
-        return _kCalendarBlueDark.withValues(alpha: 0.14);
+        return AppColors.surfaceRaisedDark.withValues(alpha: 0.92);
       }
       return Colors.transparent;
     }
@@ -44,8 +52,8 @@ WidgetStateProperty<Color?> _hoyHeaderOverlayColor(bool isDark) {
 WidgetStateProperty<Color?> _calendarEventRowOverlayColor(bool isDark) {
   const lightHover = Color(0xFFEAF3FF);
   const lightPressed = Color(0xFFDDEBFF);
-  const darkHover = Color(0xFF10243F);
-  const darkPressed = Color(0xFF1A2F4A);
+  const darkHover = AppColors.surfaceHoverDark;
+  const darkPressed = AppColors.surfaceRaisedDark;
   return WidgetStateProperty.resolveWith((states) {
     if (states.contains(WidgetState.pressed)) {
       return (isDark ? darkPressed : lightPressed)
@@ -64,8 +72,8 @@ WidgetStateProperty<Color?> _calendarEventRowOverlayColor(bool isDark) {
 WidgetStateProperty<Color?> _taskTextBlockOverlayColor(bool isDark) {
   const lightHover = Color(0xFFF3F5F8);
   const lightPressed = Color(0xFFEEF2F6);
-  const darkHover = Color(0xFF303746);
-  const darkPressed = Color(0xFF343B4A);
+  const darkHover = AppColors.surfaceHoverDark;
+  const darkPressed = AppColors.surfaceRaisedDark;
   return WidgetStateProperty.resolveWith((states) {
     if (states.contains(WidgetState.pressed)) {
       return isDark
@@ -104,14 +112,139 @@ class TodaySummaryCard extends StatefulWidget {
 class _TodaySummaryCardState extends State<TodaySummaryCard> {
   String? _expandedTaskId;
 
+  /// Copias temporales de tareas recién completadas (persisten aunque salgan de
+  /// [widget.tasks] tras el PATCH).
+  final Map<String, TaskModel> _recentlyCompletedTasks = {};
+
+  /// Orden estable de ids en Home (evita saltos al completar / desaparecer).
+  final List<String> _homeTaskOrderIds = [];
+
+  static const Duration _tasksBlockSizeDuration = Duration(milliseconds: 180);
+
+  @override
+  void didUpdateWidget(covariant TodaySummaryCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _mergeHomeTaskOrderIds();
+  }
+
+  void _ensureHomeTaskOrderIds() {
+    if (_homeTaskOrderIds.isNotEmpty) return;
+    _homeTaskOrderIds.addAll(
+      widget.tasks.where((t) => !t.completed).map((t) => t.id),
+    );
+  }
+
+  void _mergeHomeTaskOrderIds() {
+    final byId = <String, TaskModel>{};
+    for (final task in widget.tasks) {
+      final recent = _recentlyCompletedTasks[task.id];
+      if (recent != null) {
+        byId[task.id] = recent;
+      } else if (!task.completed) {
+        byId[task.id] = task;
+      }
+    }
+    for (final recent in _recentlyCompletedTasks.values) {
+      byId.putIfAbsent(recent.id, () => recent);
+    }
+
+    final merged = <String>[];
+    for (final id in _homeTaskOrderIds) {
+      if (byId.containsKey(id)) merged.add(id);
+    }
+    for (final task in widget.tasks) {
+      if (byId.containsKey(task.id) && !merged.contains(task.id)) {
+        merged.add(task.id);
+      }
+    }
+    for (final id in _recentlyCompletedTasks.keys) {
+      if (byId.containsKey(id) && !merged.contains(id)) merged.add(id);
+    }
+    _homeTaskOrderIds
+      ..clear()
+      ..addAll(merged);
+  }
+
   void _toggleTaskExpand(String id) {
     setState(() {
       _expandedTaskId = _expandedTaskId == id ? null : id;
     });
   }
 
+  /// Lista visible en Home: pendientes + completadas recientes (orden estable).
+  List<TaskModel> _homeVisibleTasks() {
+    _ensureHomeTaskOrderIds();
+
+    final byId = <String, TaskModel>{};
+    for (final task in widget.tasks) {
+      final recent = _recentlyCompletedTasks[task.id];
+      if (recent != null) {
+        byId[task.id] = recent;
+      } else if (!task.completed) {
+        byId[task.id] = task;
+      }
+    }
+    for (final recent in _recentlyCompletedTasks.values) {
+      byId.putIfAbsent(recent.id, () => recent);
+    }
+
+    final visible = <TaskModel>[];
+    final used = <String>{};
+    for (final id in _homeTaskOrderIds) {
+      final t = byId[id];
+      if (t != null) {
+        visible.add(t);
+        used.add(id);
+      }
+    }
+    for (final task in widget.tasks) {
+      if (byId.containsKey(task.id) && !used.contains(task.id)) {
+        visible.add(byId[task.id]!);
+        used.add(task.id);
+      }
+    }
+    for (final id in _recentlyCompletedTasks.keys) {
+      if (!used.contains(id) && byId.containsKey(id)) {
+        visible.add(byId[id]!);
+      }
+    }
+    return visible;
+  }
+
   Future<void> _onTaskCompleteTap(TaskModel task) async {
-    await Repositories.task.setTaskCompleted(task.id, !task.completed);
+    final willComplete = !task.completed;
+
+    if (willComplete) {
+      _ensureHomeTaskOrderIds();
+      if (!_homeTaskOrderIds.contains(task.id)) {
+        _homeTaskOrderIds.add(task.id);
+      }
+      setState(() {
+        _recentlyCompletedTasks[task.id] = task.copyWith(completed: true);
+        if (_expandedTaskId == task.id) {
+          _expandedTaskId = null;
+        }
+      });
+    }
+
+    await Repositories.task.setTaskCompleted(task.id, willComplete);
+
+    if (!mounted) return;
+
+    if (willComplete) {
+      Future<void>.delayed(const Duration(seconds: 2), () {
+        if (!mounted) return;
+        setState(() {
+          _recentlyCompletedTasks.remove(task.id);
+          _homeTaskOrderIds.remove(task.id);
+        });
+      });
+    } else {
+      setState(() {
+        _recentlyCompletedTasks.remove(task.id);
+        _homeTaskOrderIds.remove(task.id);
+      });
+    }
   }
 
   static const double _radius = AppSpacing.homeCardRadius;
@@ -139,7 +272,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
 
   /// Texto secundario / cuerpo como [SuggestionCard] y tarjetas `surface`.
   static Color homeCardSecondaryText(ColorScheme scheme, bool isDark) =>
-      isDark ? const Color(0xFFC3CAD6) : scheme.onSurfaceVariant;
+      isDark ? AppColors.textSecondaryDark : scheme.onSurfaceVariant;
 
   /// Párrafo descripción en expansión tarea — mismo tono que cuerpo de tarjeta.
   static TextStyle homeCardBodyDescriptionStyle(
@@ -153,10 +286,10 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
         color: homeCardSecondaryText(scheme, isDark),
       );
 
-  /// Línea vertical timeline (v0.48.17): mismo azul calendario, opacidad media.
+  /// Línea vertical timeline (v0.48.27): azul muy suave, no compite con los puntos.
   static Color _eventTimelineLineColor(bool isDark) => isDark
-      ? _kCalendarBlueDark.withValues(alpha: 0.58)
-      : _kCalendarBlueLight.withValues(alpha: 0.50);
+      ? _kTimelineSpineDark.withValues(alpha: 0.62)
+      : _kTimelineSpineLight.withValues(alpha: 0.70);
 
   /// Grosor spine vertical (1.2 px para legibilidad sin dominar).
   static const double _eventTimelineLineWidth = 1.2;
@@ -170,7 +303,8 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
         color: isDark ? scheme.onSurface : AppColors.primaryDeep,
       );
 
-  static const double _labelToContentGap = 11;
+  static const double _labelToContentGap =
+      AppSpacing.homeCardHeaderToContentGap;
   /// Separación entre filas de tarea (2–4 px).
   static const double _taskRowGap = 3;
 
@@ -179,7 +313,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
 
   static Widget _thinGroupDivider(bool isDark) {
     final Color lineColor = isDark
-        ? _kCalendarGroupDividerDark.withValues(alpha: 0.90)
+        ? AppColors.outlineVariantDark.withValues(alpha: 0.85)
         : _kCalendarGroupDividerLight.withValues(alpha: 0.80);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 9),
@@ -191,13 +325,68 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
     );
   }
 
+  /// Fila compacta cabecera HOY (v0.48.29): sin `minHeight`; chevron 26×26.
+  static Widget _buildHoyHeaderRow({
+    required ColorScheme scheme,
+    required bool isDark,
+    required Color calendarIconColor,
+    required Color chevronColor,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.calendar_today_outlined,
+          size: AppSpacing.homeCardHeaderIconSize,
+          color: calendarIconColor,
+        ),
+        const SizedBox(width: AppSpacing.homeCardHeaderIconTitleGap),
+        Text('HOY', style: _hoyLabelStyle(scheme, isDark)),
+        const Spacer(),
+        SizedBox(
+          width: AppSpacing.homeCardHeaderChevronBox,
+          height: AppSpacing.homeCardHeaderChevronBox,
+          child: Center(
+            child: Icon(
+              Icons.chevron_right_rounded,
+              size: AppSpacing.homeCardHeaderChevronSize,
+              color: chevronColor,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Microcabecera TAREAS — icono naranja + etiqueta (sin cajetín; v0.48.28).
+  static Widget _tasksSectionMicroHeader(ColorScheme scheme, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: AppSpacing.homeTasksSectionHeaderLeftInset,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            kAppNavTasksTabIcon,
+            size: AppSpacing.homeTasksSectionIconSize,
+            color: isDark ? _kTasksSectionIconDark : _kTasksSectionIconLight,
+          ),
+          const SizedBox(width: AppSpacing.homeTasksSectionIconTitleGap),
+          Text('TAREAS', style: _hoyLabelStyle(scheme, isDark)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final hasEvents = widget.events.isNotEmpty;
-    final hasTasks = widget.tasks.isNotEmpty;
+    final visibleTasks = _homeVisibleTasks();
+    final hasTasks = visibleTasks.isNotEmpty;
     final hasAny = hasEvents || hasTasks;
     final showCalendarTasksDivider = hasEvents && hasTasks;
 
@@ -210,80 +399,33 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
                 AppSpacing.homeCardHeaderInkBorderRadius,
               ),
               overlayColor: _hoyHeaderOverlayColor(isDark),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minHeight: AppSpacing.homeCardHeaderMinHeight,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.homeCardHeaderInkPaddingH,
+                  vertical: AppSpacing.homeCardHeaderInkPaddingV,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.homeCardHeaderInkPaddingH,
-                    vertical: AppSpacing.homeCardHeaderInkPaddingV,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.calendar_today_outlined,
-                        size: AppSpacing.homeCardHeaderIconSize,
-                        color:
-                            isDark ? _kCalendarBlueDark : _kCalendarBlueLight,
-                      ),
-                      SizedBox(width: AppSpacing.homeCardHeaderIconTitleGap),
-                      Text('HOY', style: _hoyLabelStyle(scheme, isDark)),
-                      const Spacer(),
-                      SizedBox(
-                        width: AppSpacing.homeCardHeaderChevronBox,
-                        height: AppSpacing.homeCardHeaderChevronBox,
-                        child: Center(
-                          child: Icon(
-                            Icons.chevron_right_rounded,
-                            size: AppSpacing.homeCardHeaderChevronSize,
-                            color: isDark
-                                ? _kCalendarBlueDark
-                                : _kCalendarBlueLight,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                child: _buildHoyHeaderRow(
+                  scheme: scheme,
+                  isDark: isDark,
+                  calendarIconColor:
+                      isDark ? _kCalendarBlueDark : _kCalendarBlueLight,
+                  chevronColor:
+                      isDark ? _kCalendarBlueDark : _kCalendarBlueLight,
                 ),
               ),
             ),
           )
-        : ConstrainedBox(
-            constraints: const BoxConstraints(
-              minHeight: AppSpacing.homeCardHeaderMinHeight,
+        : Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.homeCardHeaderInkPaddingH,
+              vertical: AppSpacing.homeCardHeaderInkPaddingV,
             ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.homeCardHeaderInkPaddingH,
-                vertical: AppSpacing.homeCardHeaderInkPaddingV,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.calendar_today_outlined,
-                    size: AppSpacing.homeCardHeaderIconSize,
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
-                  ),
-                  SizedBox(width: AppSpacing.homeCardHeaderIconTitleGap),
-                  Text('HOY', style: _hoyLabelStyle(scheme, isDark)),
-                  const Spacer(),
-                  SizedBox(
-                    width: AppSpacing.homeCardHeaderChevronBox,
-                    height: AppSpacing.homeCardHeaderChevronBox,
-                    child: Center(
-                      child: Icon(
-                        Icons.chevron_right_rounded,
-                        size: AppSpacing.homeCardHeaderChevronSize,
-                        color:
-                            scheme.onSurfaceVariant.withValues(alpha: 0.45),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            child: _buildHoyHeaderRow(
+              scheme: scheme,
+              isDark: isDark,
+              calendarIconColor:
+                  scheme.onSurfaceVariant.withValues(alpha: 0.45),
+              chevronColor: scheme.onSurfaceVariant.withValues(alpha: 0.45),
             ),
           );
 
@@ -330,31 +472,53 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
       if (hasTasks) {
         if (showCalendarTasksDivider) {
           sections.add(_thinGroupDivider(isDark));
+          sections.add(
+            const SizedBox(
+              height: AppSpacing.homeTasksSectionDividerToHeaderGap,
+            ),
+          );
+        } else {
+          sections.add(
+            const SizedBox(
+              height: AppSpacing.homeTasksSectionNoDividerToHeaderGap,
+            ),
+          );
         }
-        final allTasks = widget.tasks;
-        final displayed = allTasks.length > _maxHomeTasks
-            ? allTasks.sublist(0, _maxHomeTasks)
-            : allTasks;
-        final more = allTasks.length - displayed.length;
+        final displayed = visibleTasks.length > _maxHomeTasks
+            ? visibleTasks.sublist(0, _maxHomeTasks)
+            : visibleTasks;
+        final more = visibleTasks.length - displayed.length;
+
+        final taskBlockChildren = <Widget>[
+          _tasksSectionMicroHeader(scheme, isDark),
+          const SizedBox(
+            height: AppSpacing.homeTasksSectionHeaderToFirstTaskGap,
+          ),
+        ];
         for (var i = 0; i < displayed.length; i++) {
           final t = displayed[i];
-          sections.add(
-            _TaskRow(
-              task: t,
-              scheme: scheme,
-              isDark: isDark,
-              isExpanded: _expandedTaskId == t.id,
-              onToggleExpand: () => _toggleTaskExpand(t.id),
-              onCompleteTap: () => _onTaskCompleteTap(t),
+          taskBlockChildren.add(
+            AnimatedOpacity(
+              opacity: t.completed ? 0.72 : 1.0,
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+              child: _TaskRow(
+                task: t,
+                scheme: scheme,
+                isDark: isDark,
+                isExpanded: _expandedTaskId == t.id,
+                onToggleExpand: () => _toggleTaskExpand(t.id),
+                onCompleteTap: () => _onTaskCompleteTap(t),
+              ),
             ),
           );
           if (i < displayed.length - 1) {
-            sections.add(const SizedBox(height: _taskRowGap));
+            taskBlockChildren.add(const SizedBox(height: _taskRowGap));
           }
         }
         if (more > 0) {
-          sections.add(const SizedBox(height: 5));
-          sections.add(
+          taskBlockChildren.add(const SizedBox(height: 5));
+          taskBlockChildren.add(
             Material(
               color: Colors.transparent,
               child: InkWell(
@@ -385,6 +549,19 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
             ),
           );
         }
+
+        sections.add(
+          AnimatedSize(
+            duration: _tasksBlockSizeDuration,
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: taskBlockChildren,
+            ),
+          ),
+        );
       }
     }
 
@@ -394,10 +571,20 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
         decoration: BoxDecoration(
           color: scheme.surface,
           borderRadius: BorderRadius.circular(_radius),
-          border: Border.all(color: scheme.outline.withValues(alpha: 0.18)),
+          border: Border.all(
+            color: scheme.outline.withValues(
+              alpha: AppColors.homeCardBorderAlpha(
+                isDark ? Brightness.dark : Brightness.light,
+              ),
+            ),
+          ),
           boxShadow: [
             BoxShadow(
-              color: scheme.shadow.withValues(alpha: isDark ? 0.05 : 0.08),
+              color: scheme.shadow.withValues(
+                alpha: AppColors.homeCardShadowAlpha(
+                  isDark ? Brightness.dark : Brightness.light,
+                ),
+              ),
               blurRadius: AppSpacing.shadowBlurHomeCard,
               offset: AppSpacing.shadowOffsetHomeCard,
             ),
@@ -685,11 +872,14 @@ class _TaskRow extends StatelessWidget {
   static const double _expandRadius = 13;
   static const double _expandPadH = 11;
   static const double _expandPadV = 7.5;
-  static const Color _expandBgLight = Color(0xFFFFF2B8);
-  static const Color _expandBorderLight = Color(0xFFF4D96B);
+  /// Panel expandido — misma familia que hover de tarea (v0.48.30, sin amarillo).
+  static const Color _expandBgLight = Color(0xFFF3F5F8);
+  static const Color _expandBgDark = AppColors.surfaceRaisedDark;
+  static const Color _expandBorderLight = Color(0xFFDDE3EA);
+  static const Color _expandBorderDark = AppColors.outlineVariantDark;
 
   /// Meta texto panel expandido oscuro.
-  static const Color _expandTextDarkMeta = Color(0xFFC3CAD6);
+  static const Color _expandTextDarkMeta = AppColors.textSecondaryDark;
 
   static TextStyle _detailMetaStyle(ColorScheme scheme, bool isDark) {
     return TextStyle(
@@ -922,12 +1112,12 @@ class _TaskRow extends StatelessWidget {
     }
 
     final borderColor = isDark
-        ? scheme.outline.withValues(alpha: 0.32)
-        : _expandBorderLight.withValues(alpha: 0.35);
+        ? _expandBorderDark.withValues(alpha: 0.55)
+        : _expandBorderLight.withValues(alpha: 0.85);
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: isDark ? scheme.surfaceContainerHigh : _expandBgLight,
+        color: isDark ? _expandBgDark : _expandBgLight,
         borderRadius: BorderRadius.circular(_expandRadius),
         border: Border.all(color: borderColor, width: 1),
       ),

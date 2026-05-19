@@ -27,6 +27,7 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
   int _tabIndex = 0;
   final _chatController = TextEditingController();
   bool _chatSending = false;
+  final _homeKey = GlobalKey<HomeScreenState>();
 
   late final List<Widget> _pages;
 
@@ -35,6 +36,7 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
     super.initState();
     _pages = [
       HomeScreen(
+        key: _homeKey,
         onOpenCalendar: _goToCalendarTab,
         onOpenTasks: _goToTasksTab,
       ),
@@ -48,9 +50,18 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
     });
   }
 
-  void _goToCalendarTab() => setState(() => _tabIndex = 1);
+  void _goToCalendarTab() => _onTabSelected(1);
 
-  void _goToTasksTab() => setState(() => _tabIndex = 3);
+  void _goToTasksTab() => _onTabSelected(3);
+
+  void _onTabSelected(int index) {
+    setState(() => _tabIndex = index);
+    if (index == 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _homeKey.currentState?.scrollToTop();
+      });
+    }
+  }
 
   static const List<AppNavDestination> _destinations = [
     AppNavDestination(
@@ -143,7 +154,7 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
                 ),
                 child: AppBottomNavigation(
                   currentIndex: _tabIndex,
-                  onDestinationSelected: (i) => setState(() => _tabIndex = i),
+                  onDestinationSelected: _onTabSelected,
                   destinations: _destinations,
                 ),
               ),

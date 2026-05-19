@@ -55,7 +55,15 @@ abstract final class AppSpacing {
   static const double homeSectionSpacing = 20;
 
   /// Inicio v0.48.2 — margen lateral global referencia Structured (iPhone ~393).
+  /// Fecha fija superior y tarjetas (SUGERENCIA, HOY, CHAT) comparten este inset (v0.48.36).
   static const double homePageMarginH = 18;
+
+  /// Respiro superior antes de fecha+avatar en Home (v0.48.37).
+  static const double homeHeaderTopGap = 6;
+
+  /// Inset izquierdo del texto de fecha fija (margen pantalla + sangría; v0.48.37).
+  static const double homeFixedDateLeftInsetH =
+      homePageMarginH + homeCardPadding;
 
   /// Mínimo en zonas muy densas (no sustituye al global salvo casos puntuales).
   static const double homePageMarginDenseH = 16;
@@ -69,6 +77,21 @@ abstract final class AppSpacing {
   /// Tras cabecera → primera tarjeta (Greeting).
   static const double homeHeaderToGreetingGap = 14;
 
+  /// Tarjeta superior descartable → tarjeta HOY (v0.48.32).
+  static const double homeTopInsightToHoyGap = 17;
+
+  /// Fecha compacta → tarjeta HOY tras descartar insight (v0.48.32).
+  static const double homeCompactDateToHoyGap = 8;
+
+  /// Fecha fija → tarjeta SUGERENCIA (v0.48.34).
+  static const double homeFixedDateToSuggestionGap = 9;
+
+  /// SUGERENCIA visible → tarjeta HOY (v0.48.34).
+  static const double homeSuggestionToHoyGap = 15;
+
+  /// Fecha fija → HOY cuando SUGERENCIA está oculta (v0.48.34).
+  static const double homeFixedDateToHoyGapCollapsed = 11;
+
   /// Radio tarjetas Home (Structured).
   static const double homeCardRadius = 22;
 
@@ -79,16 +102,28 @@ abstract final class AppSpacing {
 
   static const double homeCardPaddingCompact = 12;
 
-  /// Cabeceras de tarjetas Home — **SUGERENCIA**, **HOY**, **CHAT CON ARIS** (v0.48.24).
-  /// Misma forma de cajetín hover/pressed: padding, radio, icono, gap y chevron.
+  /// Cabeceras de tarjetas Home — **HOY**, **CHAT CON ARIS** (v0.48.29 compacto real).
+  /// Altura visual ~34 px: padding 4 + fila ~26 (sin `minHeight` que fuerce 38–44 px).
   static const double homeCardHeaderInkPaddingH = 10;
-  static const double homeCardHeaderInkPaddingV = 7;
-  static const double homeCardHeaderInkBorderRadius = 14;
+  static const double homeCardHeaderInkPaddingV = 4;
+  static const double homeCardHeaderInkBorderRadius = 13;
   static const double homeCardHeaderIconSize = 22;
   static const double homeCardHeaderIconTitleGap = 8;
-  static const double homeCardHeaderMinHeight = 44;
-  static const double homeCardHeaderChevronSize = 26;
-  static const double homeCardHeaderChevronBox = 44;
+  /// Referencia documental; la fila usa altura intrínseca (no `ConstrainedBox` con este valor).
+  static const double homeCardHeaderVisualHeight = 34;
+  static const double homeCardHeaderChevronSize = 22;
+  static const double homeCardHeaderChevronBox = 26;
+
+  /// Distancia cabecera → contenido en tarjetas Home (HOY, CHAT CON ARIS; v0.48.29).
+  static const double homeCardHeaderToContentGap = 5;
+
+  /// Microencabezado **TAREAS** dentro de [TodaySummaryCard] (v0.48.28).
+  static const double homeTasksSectionIconSize = 19;
+  static const double homeTasksSectionIconTitleGap = 8;
+  static const double homeTasksSectionHeaderLeftInset = 12;
+  static const double homeTasksSectionDividerToHeaderGap = 8;
+  static const double homeTasksSectionHeaderToFirstTaskGap = 6;
+  static const double homeTasksSectionNoDividerToHeaderGap = 8;
 
   /// Barra inferior tipo cápsula (v0.48.4: ~56 px + padding interno → ~60 px visuales).
   static const double homeNavBarHeight = 56;

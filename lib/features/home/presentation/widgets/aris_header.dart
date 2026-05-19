@@ -1,80 +1,104 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/services/user_service.dart';
+import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 
-/// Cabecera Home — marca textual Nunito Sans ExtraBold (v0.48.23) + avatar; oscuro v0.48.16.
+/// Cabecera Home diario — fecha + saludo + insight opcional + avatar (sin wordmark «aris»).
 class ArisHeader extends StatelessWidget {
   const ArisHeader({
     super.key,
     this.onAssistantTap,
+    this.contextualInsight,
+    this.showDateAndGreeting = true,
+    this.compactTrailingOnly = false,
   });
 
-  /// Conserva el gesto previo (p. ej. abrir asistente). Sin rutas nuevas.
+  /// Conserva el gesto previo (p. ej. abrir asistente / perfil).
   final VoidCallback? onAssistantTap;
 
-  /// Ritmo vertical superior (SafeArea ya está en [HomeScreen]).
-  static const double _paddingTop = 18;
+  /// Solo si hay sugerencia real (eventos/tareas); null = sin texto de relleno.
+  final String? contextualInsight;
 
-  /// Alineación con contenido interno de tarjetas (~18 margen + ~14 padding).
-  static const double _contentPaddingLeft = 30;
-  static const double _paddingRight = AppSpacing.homePageMarginH;
+  /// Si false, solo avatar (insight en tarjeta superior descartable; v0.48.32).
+  final bool showDateAndGreeting;
 
-  static const double _subtitleSize = 14;
-  static const double _titleSubtitleGap = 4;
+  /// Solo avatar, sin padding exterior (fila fecha+avatar en Home; v0.48.37).
+  final bool compactTrailingOnly;
 
+  static const double _paddingTop = 12;
+  static const double _dateGreetingGap = 4;
+  static const double _greetingInsightGap = 6;
   static const double _avatarSize = 40;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final user = UserService.getCurrentUser();
 
-    const kLightArisWordmark = Color(0xFF071B3F);
-    /// Modo oscuro: azul claro legible (referencia #DCE8FF).
-    const kDarkArisWordmark = Color(0xFFDCE8FF);
-
-    final arisStyle = GoogleFonts.nunitoSans(
-      fontSize: 34,
-      fontWeight: FontWeight.w800,
-      letterSpacing: -1.1,
-      height: 1.0,
-      color: isDark ? kDarkArisWordmark : kLightArisWordmark,
+    final dateStyle = TextStyle(
+      fontSize: 13.5,
+      height: 1.2,
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.1,
+      color: isDark
+          ? const Color(0xFFC3CAD6)
+          : AppColors.textSecondaryLight,
     );
 
-    final column = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text('aris', style: arisStyle),
-        const SizedBox(height: _titleSubtitleGap),
-        Text(
-          'Una forma más inteligente de organizar tu día.',
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: _subtitleSize,
-            height: 1.28,
-            fontWeight: FontWeight.w400,
-            color: isDark
-                ? const Color(0xFFC3CAD6)
-                : scheme.onSurfaceVariant,
-          ),
-        ),
-      ],
+    final greetingStyle = TextStyle(
+      fontSize: 28,
+      height: 1.08,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.4,
+      color: isDark ? const Color(0xFFE8ECF4) : AppColors.primaryDeep,
     );
 
-    /// Mismo azul de contenedor que [ProfileScreen] (`primaryContainer` / `onPrimaryContainer`).
+    final insightStyle = TextStyle(
+      fontSize: 14,
+      height: 1.35,
+      fontWeight: FontWeight.w400,
+      color: isDark
+          ? const Color(0xFFC3CAD6)
+          : scheme.onSurfaceVariant,
+    );
+
+    final column = showDateAndGreeting
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(UserService.getHomeDateLine(), style: dateStyle),
+              const SizedBox(height: _dateGreetingGap),
+              Text(UserService.getHomeGreetingShort(), style: greetingStyle),
+              if (contextualInsight != null &&
+                  contextualInsight!.trim().isNotEmpty) ...[
+                const SizedBox(height: _greetingInsightGap),
+                Text(
+                  contextualInsight!.trim(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: insightStyle,
+                ),
+              ],
+            ],
+          )
+        : const SizedBox.shrink();
+
     final avatar = Container(
       width: _avatarSize,
       height: _avatarSize,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: scheme.primaryContainer,
+        border: Border.all(
+          color: scheme.outline.withValues(alpha: isDark ? 0.28 : 0.14),
+        ),
       ),
       alignment: Alignment.center,
       child: Text(
-        'J',
+        user.primaryInitial.toUpperCase(),
         style: TextStyle(
           fontSize: 17,
           fontWeight: FontWeight.w700,
@@ -83,33 +107,39 @@ class ArisHeader extends StatelessWidget {
       ),
     );
 
+    if (compactTrailingOnly) {
+      return _buildAvatarTapTarget(avatar);
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        _contentPaddingLeft,
+        AppSpacing.homePageMarginH,
         _paddingTop,
-        _paddingRight,
+        AppSpacing.homePageMarginH,
         0,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(child: column),
-          if (onAssistantTap != null) ...[
-            const SizedBox(width: 8),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: onAssistantTap,
-                customBorder: const CircleBorder(),
-                child: avatar,
-              ),
-            ),
-          ] else ...[
-            const SizedBox(width: 8),
-            avatar,
-          ],
+          const SizedBox(width: 12),
+          _buildAvatarTapTarget(avatar),
         ],
       ),
     );
+  }
+
+  Widget _buildAvatarTapTarget(Widget avatar) {
+    if (onAssistantTap != null) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onAssistantTap,
+          customBorder: const CircleBorder(),
+          child: avatar,
+        ),
+      );
+    }
+    return avatar;
   }
 }

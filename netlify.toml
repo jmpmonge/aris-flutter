@@ -1,0 +1,25 @@
+# Netlify — Flutter web (Aris)
+# En el panel: Base directory = aris_flutter_v0.22 (si el repo es el monorepo raíz).
+
+[build]
+  publish = "build/web"
+  command = "bash scripts/netlify-build.sh"
+
+[build.environment]
+  FLUTTER_VERSION = "stable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
