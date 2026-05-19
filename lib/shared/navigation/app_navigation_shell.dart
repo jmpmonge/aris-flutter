@@ -6,6 +6,7 @@ import '../../core/repositories/repositories.dart';
 import '../../features/assistant/presentation/assistant_screen.dart';
 import '../../features/calendar/presentation/calendar_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/mail/presentation/mail_screen.dart';
 import '../../features/notes/presentation/notes_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
@@ -13,9 +14,8 @@ import '../layout/app_scaffold.dart';
 import '../../theme/app_spacing.dart';
 import 'app_bottom_navigation.dart';
 import '../widgets/app_floating_action_button.dart';
-import '../widgets/chat_input_bar.dart';
 
-/// Shell: **Inicio · Calendario · Notas · Tareas · Perfil** + barra de chat fija en Inicio.
+/// Shell: **Inicio · Calendario · Notas · Tareas · Perfil** (input Aris en Home v0.48.43).
 class AppNavigationShell extends StatefulWidget {
   const AppNavigationShell({super.key});
 
@@ -25,8 +25,6 @@ class AppNavigationShell extends StatefulWidget {
 
 class _AppNavigationShellState extends State<AppNavigationShell> {
   int _tabIndex = 0;
-  final _chatController = TextEditingController();
-  bool _chatSending = false;
   final _homeKey = GlobalKey<HomeScreenState>();
 
   late final List<Widget> _pages;
@@ -39,6 +37,7 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
         key: _homeKey,
         onOpenCalendar: _goToCalendarTab,
         onOpenTasks: _goToTasksTab,
+        onOpenMail: _openMailScreen,
       ),
       const CalendarScreen(),
       const NotesScreen(),
@@ -53,6 +52,12 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
   void _goToCalendarTab() => _onTabSelected(1);
 
   void _goToTasksTab() => _onTabSelected(3);
+
+  void _openMailScreen() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(builder: (_) => const MailScreen()),
+    );
+  }
 
   void _onTabSelected(int index) {
     setState(() => _tabIndex = index);
@@ -91,30 +96,10 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
     ),
   ];
 
-  @override
-  void dispose() {
-    _chatController.dispose();
-    super.dispose();
-  }
-
   void _openAssistant() {
     Navigator.of(context).push<void>(
       MaterialPageRoute<void>(builder: (_) => const AssistantScreen()),
     );
-  }
-
-  Future<void> _onChatSend(String text) async {
-    final t = text.trim();
-    if (t.isEmpty) return;
-    _chatController.clear();
-    setState(() => _chatSending = true);
-    await Repositories.assistant.sendMessage(t);
-    if (!mounted) return;
-    setState(() => _chatSending = false);
-  }
-
-  void _onMicTap() {
-    Repositories.assistant.sendVoicePendingNotice();
   }
 
   @override
@@ -126,14 +111,6 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (_tabIndex == 0)
-            ChatInputBar(
-              controller: _chatController,
-              hintText: 'Escribe a Aris…',
-              isSending: _chatSending,
-              onSend: _onChatSend,
-              onMicTap: _onMicTap,
-            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
               14,
