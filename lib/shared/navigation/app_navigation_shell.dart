@@ -28,21 +28,29 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
   final _chatController = TextEditingController();
   bool _chatSending = false;
 
+  late final List<Widget> _pages;
+
   @override
   void initState() {
     super.initState();
+    _pages = [
+      HomeScreen(
+        onOpenCalendar: _goToCalendarTab,
+        onOpenTasks: _goToTasksTab,
+      ),
+      const CalendarScreen(),
+      const NotesScreen(),
+      const TasksScreen(),
+      const ProfileScreen(),
+    ];
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(Repositories.prefetchBackendReads());
     });
   }
 
-  static const List<Widget> _pages = [
-    HomeScreen(),
-    CalendarScreen(),
-    NotesScreen(),
-    TasksScreen(),
-    ProfileScreen(),
-  ];
+  void _goToCalendarTab() => setState(() => _tabIndex = 1);
+
+  void _goToTasksTab() => setState(() => _tabIndex = 3);
 
   static const List<AppNavDestination> _destinations = [
     AppNavDestination(
@@ -117,19 +125,20 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
             ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.homePageMarginH,
-              6,
-              AppSpacing.homePageMarginH,
-              10,
+              14,
+              4,
+              14,
+              8,
             ),
             child: Material(
               color: scheme.surface,
-              elevation: 4,
-              shadowColor: scheme.shadow.withValues(alpha: 0.16),
+              elevation: 1,
+              shadowColor: scheme.shadow.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(AppSpacing.homeNavBarRadius),
               clipBehavior: Clip.antiAlias,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
+                  vertical: 2,
                   horizontal: AppSpacing.homeNavBarHorizontalPadding,
                 ),
                 child: AppBottomNavigation(

@@ -31,6 +31,7 @@ class AppBottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return NavigationBar(
       height: AppSpacing.homeNavBarHeight,
@@ -38,11 +39,13 @@ class AppBottomNavigation extends StatelessWidget {
       surfaceTintColor: Colors.transparent,
       shadowColor: Colors.transparent,
       elevation: 0,
-      labelPadding: const EdgeInsets.only(top: 4),
+      labelPadding: const EdgeInsets.only(top: 3),
       selectedIndex: currentIndex,
       onDestinationSelected: onDestinationSelected,
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      indicatorColor: scheme.secondaryContainer.withValues(alpha: 0.75),
+      indicatorColor: isDark
+          ? const Color(0xFF303746).withValues(alpha: 0.92)
+          : scheme.secondaryContainer.withValues(alpha: 0.75),
       destinations: [
         for (final d in destinations)
           NavigationDestination(

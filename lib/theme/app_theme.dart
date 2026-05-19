@@ -93,10 +93,17 @@ abstract final class AppTheme {
         height: AppSpacing.homeNavBarHeight,
         elevation: 0,
         backgroundColor: scheme.surface,
-        indicatorColor: scheme.secondaryContainer.withValues(
-          alpha: isLight ? 0.88 : 0.5,
-        ),
+        indicatorColor: isLight
+            ? scheme.secondaryContainer.withValues(alpha: 0.88)
+            : const Color(0xFF303746).withValues(alpha: 0.88),
         surfaceTintColor: Colors.transparent,
+        overlayColor: WidgetStateProperty.resolveWith((states) {
+          if (isLight) return null;
+          if (states.contains(WidgetState.pressed)) {
+            return const Color(0xFF303746).withValues(alpha: 0.45);
+          }
+          return null;
+        }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return text.labelSmall?.copyWith(
@@ -142,7 +149,29 @@ abstract final class AppTheme {
             }
             return scheme.onSurfaceVariant;
           }),
+          overlayColor: isLight
+              ? null
+              : WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.pressed)) {
+                    return const Color(0xFF303746).withValues(alpha: 0.5);
+                  }
+                  return null;
+                }),
         ),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: isLight
+            ? null
+            : SegmentedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                foregroundColor: const Color(0xFFC3CAD6),
+                selectedForegroundColor: const Color(0xFFE8ECF4),
+                selectedBackgroundColor: const Color(0xFF263044),
+                side: const BorderSide(
+                  color: Color(0xFF3A4354),
+                  width: 1,
+                ),
+              ),
       ),
     );
   }

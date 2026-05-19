@@ -79,14 +79,25 @@ abstract final class AppSpacing {
 
   static const double homeCardPaddingCompact = 12;
 
-  /// Barra inferior tipo cápsula.
-  static const double homeNavBarHeight = 76;
+  /// Cabeceras de tarjetas Home — **SUGERENCIA**, **HOY**, **CHAT CON ARIS** (v0.48.24).
+  /// Misma forma de cajetín hover/pressed: padding, radio, icono, gap y chevron.
+  static const double homeCardHeaderInkPaddingH = 10;
+  static const double homeCardHeaderInkPaddingV = 7;
+  static const double homeCardHeaderInkBorderRadius = 14;
+  static const double homeCardHeaderIconSize = 22;
+  static const double homeCardHeaderIconTitleGap = 8;
+  static const double homeCardHeaderMinHeight = 44;
+  static const double homeCardHeaderChevronSize = 26;
+  static const double homeCardHeaderChevronBox = 44;
 
-  static const double homeNavBarRadius = 34;
+  /// Barra inferior tipo cápsula (v0.48.4: ~56 px + padding interno → ~60 px visuales).
+  static const double homeNavBarHeight = 56;
+
+  static const double homeNavBarRadius = 26;
 
   static const double homeNavBarHorizontalPadding = 12;
 
-  static const double homeNavIconSize = 26;
+  static const double homeNavIconSize = 23;
 
   /// Altura fila barra “Escribe a Aris…”.
   static const double homeChatInputHeight = 52;
