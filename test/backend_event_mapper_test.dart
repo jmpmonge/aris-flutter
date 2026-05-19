@@ -33,6 +33,33 @@ void main() {
     expect(e.start.hour, 17);
     expect(e.start.minute, 0);
   });
+
+  test('BackendEventMapper: date_iso con date_text texto ancla día civil', () {
+    final fallback = DateTime(2026, 5, 17, 12, 0);
+    final rows = BackendEventMapper.parseAll(
+      [
+        <String, dynamic>{
+          'id': '1',
+          'title': 'cita',
+          'date_text': 'lunes',
+          'date_iso': '2026-05-18',
+          'time_text': '20:00',
+        },
+      ],
+      fallbackDay: fallback,
+    );
+
+    expect(rows.length, 1);
+    final e = rows.single;
+    expect(e.dateText, 'lunes');
+    expect(e.dateIso, '2026-05-18');
+    expect(e.hasCivilCalendarDate, isTrue);
+    expect(
+      calendarSameLocalDay(e.start, DateTime(2026, 5, 18)),
+      isTrue,
+    );
+    expect(e.timeHm, '20:00');
+  });
 }
 
 /// Copia estable de la heurística UI (solo test): mismos día/mes/año locales.
