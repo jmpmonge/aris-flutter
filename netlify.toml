@@ -1,5 +1,10 @@
 # Netlify — Flutter web (Aris)
-# En el panel: Base directory = aris_flutter_v0.22 (si el repo es el monorepo raíz).
+#
+# Repo = aris-flutter (esta carpeta es la raíz): Base directory en el panel = vacío o "."
+# Repo = monorepo aris_flutter_backend: Base directory en el panel = aris_flutter_v0.22
+#
+# Deploy manual (tras flutter build web --release):
+#   npx netlify-cli deploy --prod --dir=build/web --no-build
 
 [build]
   publish = "build/web"
@@ -23,3 +28,8 @@
   for = "/*.js"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

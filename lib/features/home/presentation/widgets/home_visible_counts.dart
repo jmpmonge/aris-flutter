@@ -100,11 +100,15 @@ abstract final class HomeSummaryLayoutMetrics {
   static const double _emptyLineHeight = 13.5 * 1.3;
   static const double _greetingBlockHeight = 52;
 
-  /// Chrome fijo dentro del ListView excepto la tarjeta HOY (Aris va fuera del scroll).
+  static const double _arisCompactHeight =
+      15 * 2 + 36 + 12 + 58; // HomeArisReplyCard cuerpo mínimo
+
+  /// Chrome fijo dentro del ListView excepto la tarjeta HOY.
   static const double scrollChromeExcludingSummaryCard =
       AppSpacing.homeFixedDateToEphemeralGap +
       _greetingBlockHeight +
       AppSpacing.homeGreetingToHoyGap +
+      _arisCompactHeight +
       AppSpacing.homeSectionGapMax;
 
   static double incrementalHeightForSection(int section) {
