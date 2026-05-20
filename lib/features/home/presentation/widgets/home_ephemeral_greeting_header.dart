@@ -13,7 +13,8 @@ class HomeEphemeralGreetingHeader extends StatelessWidget {
   static const String _mockTemperature = '21°';
   static const String _mockCity = 'Madrid';
 
-  static const double _weatherIconSize = 42;
+  static const double _weatherIconSize = 38;
+  /// Desplazamiento suave del bloque clima hacia la izquierda.
   static const double _weatherBlockShiftLeft = 5;
   static const double _weatherIconTextGap = 8;
   static const double _weatherTempCityGap = 3;
@@ -46,10 +47,7 @@ class HomeEphemeralGreetingHeader extends StatelessWidget {
       color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.70 : 0.65),
     );
 
-    final cloudColor = scheme.onSurfaceVariant.withValues(
-      alpha: isDark ? 0.88 : 0.78,
-    );
-    final sunColor = isDark ? _sunTintDark : _sunTintLight;
+    final weatherSunColor = isDark ? _sunTintDark : _sunTintLight;
 
     final inner = Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -73,8 +71,7 @@ class HomeEphemeralGreetingHeader extends StatelessWidget {
             tempCityGap: _weatherTempCityGap,
             tempStyle: tempStyle,
             cityStyle: cityStyle,
-            cloudColor: cloudColor,
-            sunColor: sunColor,
+            sunColor: weatherSunColor,
           ),
         ),
       ],
@@ -104,7 +101,6 @@ class _WeatherGreetingBlock extends StatelessWidget {
     required this.tempCityGap,
     required this.tempStyle,
     required this.cityStyle,
-    required this.cloudColor,
     required this.sunColor,
   });
 
@@ -115,7 +111,6 @@ class _WeatherGreetingBlock extends StatelessWidget {
   final double tempCityGap;
   final TextStyle tempStyle;
   final TextStyle cityStyle;
-  final Color cloudColor;
   final Color sunColor;
 
   @override
@@ -124,11 +119,7 @@ class _WeatherGreetingBlock extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        HomeWeatherIcon(
-          size: iconSize,
-          cloudColor: cloudColor,
-          sunColor: sunColor,
-        ),
+        HomeWeatherIcon(size: iconSize, sunColor: sunColor),
         SizedBox(width: iconTextGap),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
