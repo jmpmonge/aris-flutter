@@ -19,7 +19,7 @@ class HomeVisibleCounts {
   final int taskItems;
   final int mailItems;
 
-  /// Resuelve conteos: HOY solo crece si Aris sigue cabiendo en pantalla (v0.48.52).
+  /// Resuelve conteos: HOY crece con el viewport si Aris cabe (v0.48.54).
   static HomeVisibleCounts forListViewport({
     required double listViewportHeight,
     required BuildContext context,
@@ -102,13 +102,15 @@ abstract final class HomeSummaryLayoutMetrics {
       AppSpacing.homeCardHeaderInkPaddingV * 2 + 12;
   static const double _dividerBlockHeight = 14 * 2 + 1;
   static const double _emptyLineHeight = 13.5 * 1.3;
-  static const double greetingBlockHeight = 52;
+
+  /// Pequeño extra por fila para no sobrepasar el viewport (v0.48.53).
+  static const double _rowEstimateSlack = 2;
 
   static double incrementalHeightForSection(int section) {
     return switch (section) {
-      0 => eventRowHeight + eventRowGap,
-      1 => taskRowHeight + taskRowGap,
-      2 => mailExtraBlockHeight,
+      0 => eventRowHeight + eventRowGap + _rowEstimateSlack,
+      1 => taskRowHeight + taskRowGap + _rowEstimateSlack,
+      2 => mailExtraBlockHeight + _rowEstimateSlack,
       _ => 0,
     };
   }
@@ -146,6 +148,38 @@ abstract final class HomeSummaryLayoutMetrics {
           (mailItems - 1) * mailExtraBlockHeight;
     }
 
-    return h;
+    return h + 12;
+  }
+}
+
+/// Ajuste fino si Aris sigue quedando cortada tras el layout (v0.48.53).
+extension HomeVisibleCountsTighten on HomeVisibleCounts {
+  /// Quita filas de HOY (agenda → tareas → mail) hasta [steps] pasos.
+  HomeVisibleCounts tightened(int steps) {
+    var agenda = agendaItems;
+    var tasks = taskItems;
+    var mail = mailItems;
+
+    for (var i = 0; i < steps; i++) {
+      if (agenda > HomeVisibleCounts.agendaMin) {
+        agenda--;
+        continue;
+      }
+      if (tasks > HomeVisibleCounts.taskMin) {
+        tasks--;
+        continue;
+      }
+      if (mail > HomeVisibleCounts.mailMin) {
+        mail--;
+        continue;
+      }
+      break;
+    }
+
+    return HomeVisibleCounts(
+      agendaItems: agenda,
+      taskItems: tasks,
+      mailItems: mail,
+    );
   }
 }

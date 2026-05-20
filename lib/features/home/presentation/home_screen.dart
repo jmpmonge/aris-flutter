@@ -15,7 +15,7 @@ import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../shared/widgets/today_summary_card.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Inicio — Aris en scroll, visible por defecto; input fijo (v0.48.52).
+/// Inicio — Aris en scroll, HOY crece si alarga el viewport (v0.48.54).
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -39,6 +39,14 @@ class HomeScreenState extends State<HomeScreen> {
 
   int _homeArisInstructionCount = 0;
   bool _arisSending = false;
+  int _layoutTightenSteps = 0;
+  bool _arisGuardScheduled = false;
+  bool _viewportSyncScheduled = false;
+  double? _lastListViewportHeight;
+  double? _viewportSyncScheduledHeight;
+
+  static const double _viewportGrowResetThreshold = 10;
+  static const double _arisRelaxMarginBelow = 40;
 
   @override
   void initState() {
@@ -50,7 +58,10 @@ class HomeScreenState extends State<HomeScreen> {
     ChatService.revision.addListener(_onConversationRevision);
     Repositories.history.revision.addListener(_onConversationRevision);
     _scrollController.addListener(_onScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _ensureScrollAtTop());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ensureScrollAtTop();
+      _guardArisVisibleInViewport();
+    });
   }
 
   void scrollToTop() => _ensureScrollAtTop();
@@ -129,19 +140,113 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _scheduleArisVisibilityGuard() {
+    if (_arisGuardScheduled) return;
+    _arisGuardScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _arisGuardScheduled = false;
+      _guardArisVisibleInViewport();
+    });
+  }
+
+  void _scheduleViewportHeightSync(double listViewportHeight) {
+    _viewportSyncScheduledHeight = listViewportHeight;
+    if (_viewportSyncScheduled) return;
+    _viewportSyncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _viewportSyncScheduled = false;
+      final height = _viewportSyncScheduledHeight;
+      if (!mounted || height == null) return;
+      _onListViewportHeightChanged(height);
+    });
+  }
+
+  /// Al alargar la pantalla, libera el recorte de HOY para volver a crecer.
+  void _onListViewportHeightChanged(double height) {
+    final previous = _lastListViewportHeight;
+    _lastListViewportHeight = height;
+
+    if (previous == null) return;
+
+    if (height > previous + _viewportGrowResetThreshold &&
+        _layoutTightenSteps > 0) {
+      setState(() => _layoutTightenSteps = 0);
+      _scheduleArisVisibilityGuard();
+      return;
+    }
+
+    if (height < previous - _viewportGrowResetThreshold) {
+      _scheduleArisVisibilityGuard();
+    }
+  }
+
+  /// Aprieta o afloja HOY según si Aris cabe en el viewport del scroll.
+  void _guardArisVisibleInViewport() {
+    if (!mounted) return;
+
+    final arisContext = _arisCardKey.currentContext;
+    if (arisContext == null) return;
+
+    final scrollable = Scrollable.maybeOf(arisContext);
+    if (scrollable == null) return;
+
+    final scrollableBox =
+        scrollable.context.findRenderObject() as RenderBox?;
+    final arisBox = arisContext.findRenderObject() as RenderBox?;
+    if (scrollableBox == null ||
+        arisBox == null ||
+        !scrollableBox.hasSize ||
+        !arisBox.hasSize) {
+      return;
+    }
+
+    final arisBottom = arisBox
+        .localToGlobal(
+          Offset(0, arisBox.size.height),
+          ancestor: scrollableBox,
+        )
+        .dy;
+    const epsilon = 2;
+
+    final viewportH = scrollableBox.size.height;
+
+    if (arisBottom > viewportH - epsilon) {
+      if (_layoutTightenSteps < 9) {
+        setState(() => _layoutTightenSteps++);
+        _scheduleArisVisibilityGuard();
+      }
+      return;
+    }
+
+    if (_layoutTightenSteps > 0 &&
+        arisBottom < viewportH - _arisRelaxMarginBelow) {
+      setState(() => _layoutTightenSteps--);
+      _scheduleArisVisibilityGuard();
+    }
+  }
+
   void _onHomeDataRevision() {
     if (!mounted) return;
-    setState(() {});
+    setState(() {
+      _layoutTightenSteps = 0;
+    });
+    _scheduleArisVisibilityGuard();
   }
 
   void _onLocalActions() {
     if (!mounted) return;
-    setState(() {});
+    setState(() {
+      _layoutTightenSteps = 0;
+    });
+    _scheduleArisVisibilityGuard();
   }
 
   void _onConversationRevision() {
     if (!mounted) return;
-    setState(() {});
+    setState(() {
+      _layoutTightenSteps = 0;
+    });
+    _scheduleArisVisibilityGuard();
   }
 
   List<ChatMessageModel> get _homeConversation =>
@@ -206,13 +311,19 @@ class HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final visibleCounts = HomeVisibleCounts.forListViewport(
+                _scheduleViewportHeightSync(constraints.maxHeight);
+
+                final baseCounts = HomeVisibleCounts.forListViewport(
                   listViewportHeight: constraints.maxHeight,
                   context: context,
                   availableEvents: homeEvents.length,
                   availableTasks: homeTasks.length,
                   availableMails: TodaySummaryCard.demoMailCatalogLength,
                 );
+                final visibleCounts =
+                    baseCounts.tightened(_layoutTightenSteps);
+
+                _scheduleArisVisibilityGuard();
 
                 return ListView(
                   controller: _scrollController,
