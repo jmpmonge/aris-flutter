@@ -15,7 +15,7 @@ import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../shared/widgets/today_summary_card.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Inicio — tarjeta Aris libre en scroll + input fijo + espaciador útil (v0.48.51).
+/// Inicio — Aris en scroll, visible por defecto; input fijo (v0.48.52).
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -39,8 +39,6 @@ class HomeScreenState extends State<HomeScreen> {
 
   int _homeArisInstructionCount = 0;
   bool _arisSending = false;
-  double _scrollViewportHeight = 0;
-  double _flexSpacerHeight = 0;
 
   @override
   void initState() {
@@ -52,10 +50,7 @@ class HomeScreenState extends State<HomeScreen> {
     ChatService.revision.addListener(_onConversationRevision);
     Repositories.history.revision.addListener(_onConversationRevision);
     _scrollController.addListener(_onScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _ensureScrollAtTop();
-      _remeasureFlexSpacer();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _ensureScrollAtTop());
   }
 
   void scrollToTop() => _ensureScrollAtTop();
@@ -134,44 +129,19 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _scheduleFlexSpacerRemeasure() {
-    WidgetsBinding.instance.addPostFrameCallback((_) => _remeasureFlexSpacer());
-  }
-
-  void _remeasureFlexSpacer() {
-    if (!mounted || _scrollViewportHeight <= 0) return;
-
-    final todayBox =
-        _todaySummaryKey.currentContext?.findRenderObject() as RenderBox?;
-    if (todayBox == null || !todayBox.hasSize) return;
-
-    final spacer = HomeScrollLayout.flexSpacerFromMeasuredHoy(
-      viewportHeight: _scrollViewportHeight,
-      measuredHoyHeight: todayBox.size.height,
-      context: context,
-    );
-
-    if ((spacer - _flexSpacerHeight).abs() > 0.5) {
-      setState(() => _flexSpacerHeight = spacer);
-    }
-  }
-
   void _onHomeDataRevision() {
     if (!mounted) return;
     setState(() {});
-    _scheduleFlexSpacerRemeasure();
   }
 
   void _onLocalActions() {
     if (!mounted) return;
     setState(() {});
-    _scheduleFlexSpacerRemeasure();
   }
 
   void _onConversationRevision() {
     if (!mounted) return;
     setState(() {});
-    _scheduleFlexSpacerRemeasure();
   }
 
   List<ChatMessageModel> get _homeConversation =>
@@ -236,38 +206,22 @@ class HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                _scrollViewportHeight = constraints.maxHeight;
-
-                final scrollBottomPad =
-                    HomeScrollLayout.scrollContentBottomPadding(context);
-
-                // Presupuesto HOY sin reservar altura de Aris (v0.48.51).
                 final visibleCounts = HomeVisibleCounts.forListViewport(
                   listViewportHeight: constraints.maxHeight,
+                  context: context,
                   availableEvents: homeEvents.length,
                   availableTasks: homeTasks.length,
                   availableMails: TodaySummaryCard.demoMailCatalogLength,
                 );
 
-                final flexSpacer = _flexSpacerHeight > 0
-                    ? _flexSpacerHeight
-                    : HomeScrollLayout.flexSpacerHeight(
-                        viewportHeight: constraints.maxHeight,
-                        counts: visibleCounts,
-                        context: context,
-                      );
-
-                final sectionGap =
-                    HomeScrollLayout.sectionGapBeforeAris(context);
-
-                if (_flexSpacerHeight == 0) {
-                  _scheduleFlexSpacerRemeasure();
-                }
-
                 return ListView(
                   controller: _scrollController,
                   physics: const ClampingScrollPhysics(),
-                  padding: EdgeInsets.only(bottom: scrollBottomPad),
+                  padding: EdgeInsets.only(
+                    bottom: HomeScrollLayout.scrollContentBottomPadding(
+                      context,
+                    ),
+                  ),
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(
@@ -287,8 +241,9 @@ class HomeScreenState extends State<HomeScreen> {
                       onOpenTasks: widget.onOpenTasks,
                       onOpenMail: widget.onOpenMail,
                     ),
-                    SizedBox(height: flexSpacer, key: const ValueKey('aris_flex_spacer')),
-                    SizedBox(height: sectionGap),
+                    SizedBox(
+                      height: HomeScrollLayout.sectionGapBeforeAris(context),
+                    ),
                     HomeArisReplyCard(
                       key: _arisCardKey,
                       activeMessage: arisDisplayMessage,

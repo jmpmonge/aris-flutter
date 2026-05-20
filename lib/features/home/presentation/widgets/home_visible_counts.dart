@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+
+import 'home_scroll_layout.dart';
 import '../../../../theme/app_spacing.dart';
 
 /// Conteos visibles de HOY según altura útil (v0.48.47).
@@ -16,9 +19,10 @@ class HomeVisibleCounts {
   final int taskItems;
   final int mailItems;
 
-  /// Resuelve conteos a partir del alto del área scrollable de Inicio.
+  /// Resuelve conteos: HOY solo crece si Aris sigue cabiendo en pantalla (v0.48.52).
   static HomeVisibleCounts forListViewport({
     required double listViewportHeight,
+    required BuildContext context,
     required int availableEvents,
     required int availableTasks,
     required int availableMails,
@@ -34,7 +38,7 @@ class HomeVisibleCounts {
     );
 
     final budget = listViewportHeight -
-        HomeSummaryLayoutMetrics.scrollChromeExcludingSummaryCard;
+        HomeScrollLayout.scrollChromeExcludingSummaryCard(context);
 
     if (budget <= usedHeight) {
       return HomeVisibleCounts(
@@ -99,12 +103,6 @@ abstract final class HomeSummaryLayoutMetrics {
   static const double _dividerBlockHeight = 14 * 2 + 1;
   static const double _emptyLineHeight = 13.5 * 1.3;
   static const double greetingBlockHeight = 52;
-
-  /// Chrome fijo antes de HOY (Aris va en espaciador aparte; v0.48.51).
-  static const double scrollChromeExcludingSummaryCard =
-      AppSpacing.homeFixedDateToEphemeralGap +
-      greetingBlockHeight +
-      AppSpacing.homeGreetingToHoyGap;
 
   static double incrementalHeightForSection(int section) {
     return switch (section) {
