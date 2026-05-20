@@ -1,50 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/services/user_service.dart';
+import '../../../../shared/widgets/home_weather_icon.dart';
+import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 
-/// Resumen «N eventos · M tareas pendientes» para el saludo temporal (v0.48.41).
-String homeEphemeralGreetingSummary({
-  required int eventCount,
-  required int taskCount,
-}) {
-  if (eventCount == 0 && taskCount == 0) {
-    return 'Nada pendiente para hoy';
-  }
-
-  final parts = <String>[];
-  if (eventCount > 0) {
-    parts.add(
-      eventCount == 1 ? '1 evento' : '$eventCount eventos',
-    );
-  }
-  if (taskCount > 0) {
-    parts.add(
-      taskCount == 1
-          ? '1 tarea pendiente'
-          : '$taskCount tareas pendientes',
-    );
-  }
-  return parts.join(' · ');
-}
-
-/// Bloque temporal: saludo, resumen y clima (sin fecha; v0.48.41).
+/// Bloque superior: saludo + clima (sin resumen dinámico; v0.48.45 → Aris).
 class HomeEphemeralGreetingHeader extends StatelessWidget {
-  const HomeEphemeralGreetingHeader({
-    super.key,
-    required this.eventCount,
-    required this.taskCount,
-  });
-
-  final int eventCount;
-  final int taskCount;
+  const HomeEphemeralGreetingHeader({super.key});
 
   // TODO: conectar clima real en una versión posterior.
   static const String _mockTemperature = '21°';
   static const String _mockCity = 'Madrid';
 
-  static const double _greetingToSummaryGap = 4;
-  static const double _weatherIconSize = 28;
+  static const double _weatherIconSize = 42;
+  static const double _weatherBlockShiftLeft = 5;
   static const double _weatherIconTextGap = 8;
   static const double _weatherTempCityGap = 3;
 
@@ -56,18 +26,12 @@ class HomeEphemeralGreetingHeader extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final summaryStyle = TextStyle(
-      fontSize: 13.5,
-      height: 1.2,
-      fontWeight: FontWeight.w400,
-      color: scheme.onSurfaceVariant,
-    );
     final greetingStyle = TextStyle(
       fontSize: 26,
-      height: 1.08,
-      fontWeight: FontWeight.w600,
-      letterSpacing: -0.3,
-      color: scheme.onSurface,
+      height: 1.06,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.35,
+      color: isDark ? AppColors.textPrimaryDark : scheme.onSurface,
     );
     final tempStyle = TextStyle(
       fontSize: 17.5,
@@ -87,42 +51,31 @@ class HomeEphemeralGreetingHeader extends StatelessWidget {
     );
     final sunColor = isDark ? _sunTintDark : _sunTintLight;
 
-    final inner = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
+    final inner = Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: Text(
-                UserService.getHomeGreetingShort(),
-                style: greetingStyle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 6),
-            _WeatherGreetingBlock(
-              temperature: _mockTemperature,
-              city: _mockCity,
-              iconSize: _weatherIconSize,
-              iconTextGap: _weatherIconTextGap,
-              tempCityGap: _weatherTempCityGap,
-              tempStyle: tempStyle,
-              cityStyle: cityStyle,
-              cloudColor: cloudColor,
-              sunColor: sunColor,
-            ),
-          ],
-        ),
-        const SizedBox(height: _greetingToSummaryGap),
-        Text(
-          homeEphemeralGreetingSummary(
-            eventCount: eventCount,
-            taskCount: taskCount,
+        Expanded(
+          child: Text(
+            UserService.getHomeGreetingShort(),
+            style: greetingStyle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          style: summaryStyle,
+        ),
+        const SizedBox(width: 8),
+        Transform.translate(
+          offset: const Offset(-_weatherBlockShiftLeft, 0),
+          child: _WeatherGreetingBlock(
+            temperature: _mockTemperature,
+            city: _mockCity,
+            iconSize: _weatherIconSize,
+            iconTextGap: _weatherIconTextGap,
+            tempCityGap: _weatherTempCityGap,
+            tempStyle: tempStyle,
+            cityStyle: cityStyle,
+            cloudColor: cloudColor,
+            sunColor: sunColor,
+          ),
         ),
       ],
     );
@@ -171,29 +124,10 @@ class _WeatherGreetingBlock extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        SizedBox(
-          width: iconSize,
-          height: iconSize,
-          child: Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.bottomLeft,
-            children: [
-              Icon(
-                Icons.wb_cloudy_rounded,
-                size: iconSize,
-                color: cloudColor,
-              ),
-              Positioned(
-                right: -2,
-                top: 0,
-                child: Icon(
-                  Icons.wb_sunny_rounded,
-                  size: iconSize * 0.56,
-                  color: sunColor,
-                ),
-              ),
-            ],
-          ),
+        HomeWeatherIcon(
+          size: iconSize,
+          cloudColor: cloudColor,
+          sunColor: sunColor,
         ),
         SizedBox(width: iconTextGap),
         Column(

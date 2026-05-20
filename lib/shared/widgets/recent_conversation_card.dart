@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/models/chat_message_model.dart';
 import '../../core/models/intent_model.dart';
+import 'aris_thinking_indicator.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 
@@ -47,14 +48,16 @@ const Color _chatDarkAccentLavender = AppColors.chatAccentLavenderDark;
 
 /// Bloque **CHAT CON ARIS** con burbujas tipo chat (histórico reciente).
 ///
-/// La lista de mensajes tiene [AppSpacing.recentConversationBodyMaxHeight] como
-/// altura máxima y hace scroll interno para no desbordar la pantalla de Inicio.
+/// La lista usa [AppSpacing.recentConversationBodyMaxHeight] en Inicio o
+/// [expandBody] para ocupar el contenedor padre (p. ej. panel inside).
 class RecentConversationCard extends StatefulWidget {
   const RecentConversationCard({
     super.key,
     required this.messages,
     this.onFollowUpMessage,
     this.onOpenFullChat,
+    this.expandBody = false,
+    this.embeddedInPanel = false,
   });
 
   final List<ChatMessageModel> messages;
@@ -64,6 +67,12 @@ class RecentConversationCard extends StatefulWidget {
 
   /// Abre el chat a pantalla completa (p. ej. [AssistantScreen]) desde el título.
   final VoidCallback? onOpenFullChat;
+
+  /// Si true, el listado ocupa todo el alto disponible del padre (sin tope 220 px).
+  final bool expandBody;
+
+  /// Panel inside: sin tarjeta exterior duplicada ni cabecera «CHAT CON ARIS».
+  final bool embeddedInPanel;
 
   @override
   State<RecentConversationCard> createState() => _RecentConversationCardState();
@@ -75,9 +84,22 @@ class _RecentConversationCardState extends State<RecentConversationCard> {
   @override
   void didUpdateWidget(covariant RecentConversationCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.messages.length != oldWidget.messages.length) {
+    if (_shouldScrollAfterUpdate(oldWidget.messages, widget.messages)) {
       _scrollMessagesToEnd();
     }
+  }
+
+  bool _shouldScrollAfterUpdate(
+    List<ChatMessageModel> oldMessages,
+    List<ChatMessageModel> newMessages,
+  ) {
+    if (newMessages.length != oldMessages.length) return true;
+    if (newMessages.isEmpty) return false;
+    final oldLast = oldMessages.last;
+    final newLast = newMessages.last;
+    return oldLast.id != newLast.id ||
+        oldLast.text != newLast.text ||
+        oldLast.awaitingBackend != newLast.awaitingBackend;
   }
 
   @override
@@ -100,11 +122,74 @@ class _RecentConversationCardState extends State<RecentConversationCard> {
     });
   }
 
+  Widget _buildMessageList(TextTheme text, ColorScheme scheme) {
+    final listView = ListView.separated(
+      controller: _listController,
+      padding: EdgeInsets.symmetric(
+        horizontal: widget.embeddedInPanel ? AppSpacing.sm : 0,
+      ),
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
+      itemCount: widget.messages.length,
+      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xs),
+      itemBuilder: (context, i) {
+        final m = widget.messages[i];
+        return _Bubble(
+          alignLeft: m.isAris,
+          label: m.isAris ? 'ARIS' : 'TÚ',
+          text: m.text,
+          intent: m.detectedIntent,
+          backendUiHint: m.backendUiHint,
+          awaitingBackend: m.awaitingBackend,
+          scheme: scheme,
+          textTheme: text,
+          onFollowUpMessage: widget.onFollowUpMessage,
+        );
+      },
+    );
+
+    if (widget.expandBody) {
+      return Expanded(child: listView);
+    }
+
+    return SizedBox(
+      height: AppSpacing.recentConversationBodyMaxHeight,
+      child: listView,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final column = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize:
+          widget.expandBody ? MainAxisSize.max : MainAxisSize.min,
+      children: [
+        if (!widget.embeddedInPanel) ...[
+          _ChatWithArisHeader(
+            scheme: scheme,
+            isDark: isDark,
+            onOpenFullChat: widget.onOpenFullChat,
+          ),
+          const SizedBox(height: AppSpacing.homeCardHeaderToContentGap),
+        ],
+        _buildMessageList(text, scheme),
+      ],
+    );
+
+    if (widget.embeddedInPanel) {
+      return column;
+    }
+
+    final cardChild = Padding(
+      padding: const EdgeInsets.all(AppSpacing.homeCardPadding),
+      child: column,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.homePageMarginH),
@@ -131,48 +216,7 @@ class _RecentConversationCardState extends State<RecentConversationCard> {
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.homeCardPadding),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _ChatWithArisHeader(
-                scheme: scheme,
-                isDark: isDark,
-                onOpenFullChat: widget.onOpenFullChat,
-              ),
-              const SizedBox(height: AppSpacing.homeCardHeaderToContentGap),
-              SizedBox(
-                height: AppSpacing.recentConversationBodyMaxHeight,
-                child: ListView.separated(
-                  controller: _listController,
-                  padding: EdgeInsets.zero,
-                  physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics(),
-                  ),
-                  itemCount: widget.messages.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(height: AppSpacing.xs),
-                  itemBuilder: (context, i) {
-                    final m = widget.messages[i];
-                    return _Bubble(
-                      alignLeft: m.isAris,
-                      label: m.isAris ? 'ARIS' : 'TÚ',
-                      text: m.text,
-                      intent: m.detectedIntent,
-                      backendUiHint: m.backendUiHint,
-                      awaitingBackend: m.awaitingBackend,
-                      scheme: scheme,
-                      textTheme: text,
-                      onFollowUpMessage: widget.onFollowUpMessage,
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
+        child: cardChild,
       ),
     );
   }
@@ -390,32 +434,20 @@ class _Bubble extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xxs),
           if (awaitingBackend && alignLeft)
-            Row(
-              children: [
-                SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 1.5,
+            ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 36),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: ArisThinkingIndicator(
+                  textStyle: textTheme.bodyMedium?.copyWith(
                     color: isDark
-                        ? _chatDarkAccentLavender.withValues(alpha: 0.88)
-                        : scheme.secondary.withValues(alpha: 0.85),
+                        ? _chatDarkSecondaryText
+                        : scheme.onSurfaceVariant,
+                    height: 1.35,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    text,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: isDark
-                          ? _chatDarkSecondaryText
-                          : scheme.onSurfaceVariant,
-                      height: 1.35,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             )
           else ...[
             Text(

@@ -51,6 +51,9 @@ abstract final class ChatService {
     revision.value++;
   }
 
+  /// Texto de la burbuja temporal hasta recibir respuesta HTTP.
+  static const String thinkingMessage = 'Aris está pensando…';
+
   /// Indicador discreto hasta recibir respuesta HTTP.
   static String appendPendingBackendBubble() {
     _ensureInitialized();
@@ -59,7 +62,7 @@ abstract final class ChatService {
       ChatMessageModel(
         id: id,
         sender: ChatMessageSender.aris,
-        text: 'Consultando…',
+        text: thinkingMessage,
         createdAt: DateTime.now(),
         kind: ChatMessageKind.suggestion,
         awaitingBackend: true,

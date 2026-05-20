@@ -86,6 +86,11 @@ abstract final class AppColors {
   /// Acentos modo oscuro (solo iconos / detalle, no fondos dominantes).
   static const Color calendarBlueDark = Color(0xFF7DB7FF);
   static const Color suggestionGreenDark = Color(0xFF5EE0A0);
+
+  /// Módulo MAIL en Home (icono; no morado).
+  static const Color mailModuleGreen = suggestionGreen;
+  static const Color mailModuleGreenDark = suggestionGreenDark;
+
   static const Color chatAccentLavenderDark = Color(0xFFB8A7FF);
   static const Color tasksOrangeDark = Color(0xFFFDBA74);
 

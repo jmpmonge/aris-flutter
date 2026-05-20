@@ -5,6 +5,7 @@ import '../../core/models/task_model.dart';
 import '../../core/repositories/repositories.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
+import '../../theme/home_card_theme.dart';
 import '../navigation/app_bottom_navigation.dart';
 
 /// Azul calendario HOY — v0.48.17 contraste reforzado (claro/oscuro).
@@ -19,9 +20,9 @@ const Color _kTimelineSpineDark = Color(0xFF416A98);
 const Color _kTasksSectionIconLight = Color(0xFFF59E0B);
 const Color _kTasksSectionIconDark = AppColors.tasksOrangeDark;
 
-/// Icono sección MAIL — demo (v0.48.42).
-const Color _kMailSectionIconLight = Color(0xFF7C5CDB);
-const Color _kMailSectionIconDark = AppColors.chatAccentLavenderDark;
+/// Icono sección MAIL — verde (v0.48.44).
+const Color _kMailSectionIconLight = AppColors.mailModuleGreen;
+const Color _kMailSectionIconDark = AppColors.mailModuleGreenDark;
 
 /// Vista previa mail Home — mock hasta API real (v0.48.42).
 class _HomeMailPreview {
@@ -263,7 +264,6 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
     }
   }
 
-  static const double _radius = AppSpacing.homeCardRadius;
   static const double _pad = AppSpacing.homeCardPadding;
 
   static const double _eventTimeColWidth = 52;
@@ -313,20 +313,14 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
 
   /// Línea vertical timeline (v0.48.27): azul muy suave, no compite con los puntos.
   static Color _eventTimelineLineColor(bool isDark) => isDark
-      ? _kTimelineSpineDark.withValues(alpha: 0.62)
-      : _kTimelineSpineLight.withValues(alpha: 0.70);
+      ? _kTimelineSpineDark.withValues(alpha: 0.34)
+      : _kTimelineSpineLight.withValues(alpha: 0.42);
 
-  /// Grosor spine vertical (1.2 px para legibilidad sin dominar).
-  static const double _eventTimelineLineWidth = 1.2;
+  /// Grosor spine vertical — muy fino, no compite con los puntos.
+  static const double _eventTimelineLineWidth = 1.0;
 
   static TextStyle _hoyLabelStyle(ColorScheme scheme, bool isDark) =>
-      TextStyle(
-        fontSize: 11.5,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.7,
-        height: 1.0,
-        color: isDark ? scheme.onSurface : AppColors.primaryDeep,
-      );
+      HomeCardTheme.sectionTitleStyle(scheme, isDark ? Brightness.dark : Brightness.light);
 
   static const double _labelToContentGap =
       AppSpacing.homeCardHeaderToContentGap;
@@ -344,15 +338,13 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
   static const String _emptyTasksLine = 'Sin tareas pendientes';
 
   static Widget _thinGroupDivider(ColorScheme scheme, bool isDark) {
-    final lineColor = isDark
-        ? scheme.outlineVariant.withValues(alpha: 0.28)
-        : scheme.outline.withValues(alpha: 0.15);
+    final brightness = isDark ? Brightness.dark : Brightness.light;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 13),
+      padding: const EdgeInsets.symmetric(vertical: 14),
       child: Divider(
         height: 1,
         thickness: 1,
-        color: lineColor,
+        color: HomeCardTheme.sectionDivider(scheme, brightness),
       ),
     );
   }
@@ -387,17 +379,16 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
   Widget _buildMoreLink({
     required String label,
     required VoidCallback? onTap,
-    required Color sectionColor,
     required ColorScheme scheme,
     required bool isDark,
     double contentLeftInset = 0,
   }) {
-    final linkTint = sectionColor.withValues(alpha: 0.75);
+    final brightness = isDark ? Brightness.dark : Brightness.light;
     final style = TextStyle(
       fontSize: 13,
       height: 1.2,
       fontWeight: FontWeight.w500,
-      color: linkTint,
+      color: HomeCardTheme.moreLinkText(scheme, brightness),
     );
 
     return Padding(
@@ -533,8 +524,6 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
   }
 
   Widget _buildMailBody(ColorScheme scheme, bool isDark) {
-    final mailLinkColor =
-        isDark ? _kMailSectionIconDark : _kMailSectionIconLight;
     final moreMails = _demoMailTotalCount - 1;
 
     return Column(
@@ -557,7 +546,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
             fontSize: 12.75,
             height: 1.3,
             fontWeight: FontWeight.w400,
-            color: scheme.onSurfaceVariant,
+            color: homeCardSecondaryText(scheme, isDark),
           ),
         ),
         if (moreMails > 0) ...[
@@ -565,7 +554,6 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
           _buildMoreLink(
             label: _moreMailsLabel(moreMails),
             onTap: widget.onOpenMail,
-            sectionColor: mailLinkColor,
             scheme: scheme,
             isDark: isDark,
           ),
@@ -579,11 +567,14 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final brightness = isDark ? Brightness.dark : Brightness.light;
+    final neutralChevron = HomeCardTheme.neutralChevron(scheme, brightness);
+
     final calendarBlue =
         isDark ? _kCalendarBlueDark : _kCalendarBlueLight;
     final tasksOrange =
         isDark ? _kTasksSectionIconDark : _kTasksSectionIconLight;
-    final mailPurple =
+    final mailGreen =
         isDark ? _kMailSectionIconDark : _kMailSectionIconLight;
 
     final visibleEvents = widget.events.take(_maxHomeEvents).toList();
@@ -597,7 +588,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
       fontSize: 13.5,
       height: 1.3,
       fontWeight: FontWeight.w400,
-      color: scheme.onSurfaceVariant,
+      color: homeCardSecondaryText(scheme, isDark),
     );
 
     final hoyHeader = widget.onOpenCalendar != null
@@ -615,7 +606,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
                   scheme: scheme,
                   isDark: isDark,
                   calendarIconColor: calendarBlue,
-                  chevronColor: calendarBlue,
+                  chevronColor: neutralChevron,
                 ),
               ),
             ),
@@ -646,7 +637,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
                   scheme: scheme,
                   isDark: isDark,
                   iconColor: tasksOrange,
-                  chevronColor: tasksOrange,
+                  chevronColor: neutralChevron,
                 ),
               ),
             ),
@@ -657,7 +648,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
               scheme: scheme,
               isDark: isDark,
               iconColor: tasksOrange,
-              chevronColor: tasksOrange,
+              chevronColor: neutralChevron,
               showChevron: false,
             ),
           );
@@ -676,8 +667,8 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
                 child: _buildMailHeaderRow(
                   scheme: scheme,
                   isDark: isDark,
-                  mailIconColor: mailPurple,
-                  chevronColor: mailPurple,
+                  mailIconColor: mailGreen,
+                  chevronColor: neutralChevron,
                 ),
               ),
             ),
@@ -687,8 +678,8 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
             child: _buildMailHeaderRow(
               scheme: scheme,
               isDark: isDark,
-              mailIconColor: mailPurple,
-              chevronColor: mailPurple,
+              mailIconColor: mailGreen,
+              chevronColor: neutralChevron,
               showChevron: false,
             ),
           );
@@ -734,7 +725,6 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
         _buildMoreLink(
           label: _moreTasksLabel(moreTasks),
           onTap: widget.onOpenTasks,
-          sectionColor: tasksOrange,
           scheme: scheme,
           isDark: isDark,
         ),
@@ -761,7 +751,6 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
           child: _buildMoreLink(
             label: _moreEventsLabel(moreEvents),
             onTap: widget.onOpenCalendar,
-            sectionColor: calendarBlue,
             scheme: scheme,
             isDark: isDark,
           ),
@@ -786,27 +775,9 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.homePageMarginH),
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: scheme.surface,
-          borderRadius: BorderRadius.circular(_radius),
-          border: Border.all(
-            color: scheme.outline.withValues(
-              alpha: AppColors.homeCardBorderAlpha(
-                isDark ? Brightness.dark : Brightness.light,
-              ),
-            ),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: scheme.shadow.withValues(
-                alpha: AppColors.homeCardShadowAlpha(
-                  isDark ? Brightness.dark : Brightness.light,
-                ),
-              ),
-              blurRadius: AppSpacing.shadowBlurHomeCard,
-              offset: AppSpacing.shadowOffsetHomeCard,
-            ),
-          ],
+        decoration: HomeCardTheme.cardDecoration(
+          scheme: scheme,
+          brightness: brightness,
         ),
         child: Padding(
           padding: const EdgeInsets.all(_pad),

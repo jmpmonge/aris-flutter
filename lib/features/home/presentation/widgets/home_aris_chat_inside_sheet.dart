@@ -6,7 +6,7 @@ import '../../../../shared/widgets/chat_input_bar.dart';
 import '../../../../shared/widgets/recent_conversation_card.dart';
 import '../../../../theme/app_spacing.dart';
 
-/// Panel inside (~88 % pantalla) con conversación completa (v0.48.43).
+/// Panel inside con conversación completa — ocupa el alto disponible (v0.48.44).
 class HomeArisChatInsideSheet extends StatefulWidget {
   const HomeArisChatInsideSheet({
     super.key,
@@ -25,7 +25,7 @@ class HomeArisChatInsideSheet extends StatefulWidget {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
+      useSafeArea: false,
       backgroundColor: Colors.transparent,
       builder: (ctx) => HomeArisChatInsideSheet(
         onSend: onSend,
@@ -74,68 +74,77 @@ class _HomeArisChatInsideSheetState extends State<HomeArisChatInsideSheet> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final height = MediaQuery.sizeOf(context).height * 0.88;
+    final mq = MediaQuery.of(context);
+    final topInset = mq.padding.top;
+    final bottomInset = mq.viewInsets.bottom;
+    final sheetHeight = mq.size.height - topInset - 12;
 
     final messages = Repositories.history.conversationForHome();
 
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Material(
-        color: scheme.surface,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppSpacing.homeCardRadius),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: SizedBox(
-          height: height,
-          child: Column(
-            children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: scheme.outlineVariant.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(999),
+    return Padding(
+      padding: EdgeInsets.only(top: topInset + 12, bottom: bottomInset),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Material(
+          color: scheme.surface,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppSpacing.homeCardRadius),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: SizedBox(
+            height: sheetHeight,
+            width: mq.size.width,
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: scheme.outlineVariant.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 4, 4),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 8),
-                    Text(
-                      'Conversación con Aris',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: scheme.onSurface,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 4, 4),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 8),
+                      Text(
+                        'Conversación con Aris',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: scheme.onSurface,
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close_rounded),
-                      tooltip: 'Cerrar',
-                    ),
-                  ],
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close_rounded),
+                        tooltip: 'Cerrar',
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Expanded(
-                child: RecentConversationCard(
-                  messages: messages,
-                  onFollowUpMessage: _handleSend,
-                  onOpenFullChat: null,
+                Expanded(
+                  child: RecentConversationCard(
+                    messages: messages,
+                    onFollowUpMessage: _handleSend,
+                    onOpenFullChat: null,
+                    expandBody: true,
+                    embeddedInPanel: true,
+                  ),
                 ),
-              ),
-              ChatInputBar(
-                controller: _inputController,
-                hintText: 'Escribe a Aris…',
-                isSending: _sending,
-                onSend: _handleSend,
-                onMicTap: widget.onMicTap,
-              ),
-            ],
+                ChatInputBar(
+                  controller: _inputController,
+                  hintText: 'Escribe a Aris…',
+                  isSending: _sending,
+                  onSend: _handleSend,
+                  onMicTap: widget.onMicTap,
+                ),
+              ],
+            ),
           ),
         ),
       ),

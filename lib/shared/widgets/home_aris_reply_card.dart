@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'aris_thinking_indicator.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
+import '../../theme/home_card_theme.dart';
 
 /// Overlay cabecera ARIS — igual que CHAT CON ARIS (v0.48.43).
 WidgetStateProperty<Color?> _arisHeaderOverlayColor(bool isDark) {
@@ -53,7 +55,6 @@ class HomeArisReplyCard extends StatefulWidget {
 class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
   final _controller = TextEditingController();
 
-  static const double _cardRadius = AppSpacing.homeCardRadius;
   static const double _padH = 16;
   static const double _padV = 15;
   static const double _inputHeight = 42;
@@ -62,7 +63,6 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
   static const double _micSize = 36;
   static const double _micIconSize = 21;
 
-  static const Color _kArisTitleLight = Color(0xFF6B4FCF);
   static const Color _kArisTitleDark = AppColors.chatAccentLavenderDark;
 
   @override
@@ -98,20 +98,15 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
     required bool isDark,
     required Color arisIconColor,
   }) {
-    final titleStyle = TextStyle(
-      fontSize: 11.5,
-      fontWeight: FontWeight.w700,
-      letterSpacing: 0.7,
-      height: 1.0,
-      color: isDark ? scheme.onSurface : AppColors.primaryDeep,
+    final titleStyle = HomeCardTheme.sectionTitleStyle(
+      scheme,
+      isDark ? Brightness.dark : Brightness.light,
     );
 
-    final activePillBg = isDark
-        ? AppColors.suggestionGreenDark.withValues(alpha: 0.14)
-        : AppColors.success.withValues(alpha: 0.12);
-    final activePillFg = isDark
-        ? AppColors.suggestionGreenDark.withValues(alpha: 0.92)
-        : AppColors.success.withValues(alpha: 0.88);
+    final chevronColor = HomeCardTheme.neutralChevron(
+      scheme,
+      isDark ? Brightness.dark : Brightness.light,
+    );
 
     final row = Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -122,26 +117,19 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
           color: arisIconColor,
         ),
         const SizedBox(width: AppSpacing.homeCardHeaderIconTitleGap),
-        Text('ARIS', style: titleStyle),
-        const Spacer(),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: activePillBg,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-            child: Text(
-              'Activo',
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
-                height: 1.0,
-                color: activePillFg,
+        Expanded(child: Text('ARIS', style: titleStyle)),
+        if (widget.onOpenFullConversation != null)
+          SizedBox(
+            width: AppSpacing.homeCardHeaderChevronBox,
+            height: AppSpacing.homeCardHeaderChevronBox,
+            child: Center(
+              child: Icon(
+                Icons.chevron_right_rounded,
+                size: AppSpacing.homeCardHeaderChevronSize,
+                color: chevronColor,
               ),
             ),
           ),
-        ),
       ],
     );
 
@@ -172,13 +160,11 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final arisTitleColor = isDark ? _kArisTitleDark : _kArisTitleLight;
+    final brightness = isDark ? Brightness.dark : Brightness.light;
     final arisIconColor =
         isDark ? _kArisTitleDark : AppColors.secondaryViolet;
 
-    final dividerColor = isDark
-        ? scheme.outlineVariant.withValues(alpha: 0.28)
-        : scheme.outline.withValues(alpha: 0.15);
+    final dividerColor = HomeCardTheme.sectionDivider(scheme, brightness);
 
     final inputBg = isDark
         ? scheme.surfaceContainerHighest.withValues(alpha: 0.55)
@@ -187,27 +173,9 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.homePageMarginH),
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: scheme.surface,
-          borderRadius: BorderRadius.circular(_cardRadius),
-          border: Border.all(
-            color: scheme.outline.withValues(
-              alpha: AppColors.homeCardBorderAlpha(
-                isDark ? Brightness.dark : Brightness.light,
-              ),
-            ),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: scheme.shadow.withValues(
-                alpha: AppColors.homeCardShadowAlpha(
-                  isDark ? Brightness.dark : Brightness.light,
-                ),
-              ),
-              blurRadius: AppSpacing.shadowBlurHomeCard,
-              offset: AppSpacing.shadowOffsetHomeCard,
-            ),
-          ],
+        decoration: HomeCardTheme.cardDecoration(
+          scheme: scheme,
+          brightness: brightness,
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -224,15 +192,39 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
                 arisIconColor: arisIconColor,
               ),
               const SizedBox(height: 12),
-              Text(
-                widget.activeMessage,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 14.5,
-                  height: 1.32,
-                  fontWeight: FontWeight.w400,
-                  color: scheme.onSurface,
+              SizedBox(
+                height: 58,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: widget.isSending
+                      ? ArisThinkingIndicator(
+                          compact: true,
+                          dotColor: HomeCardTheme.thinkingDot(
+                            scheme,
+                            brightness,
+                          ),
+                          textStyle: TextStyle(
+                            fontSize: 14.5,
+                            height: 1.32,
+                            fontWeight: FontWeight.w400,
+                            fontStyle: FontStyle.italic,
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                    .withValues(alpha: 0.92)
+                                : AppColors.textSecondaryLight,
+                          ),
+                        )
+                      : Text(
+                          widget.activeMessage,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            height: 1.32,
+                            fontWeight: FontWeight.w400,
+                            color: scheme.onSurface,
+                          ),
+                        ),
                 ),
               ),
               Padding(
@@ -284,7 +276,7 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    _buildTrailingAction(scheme, isDark, arisTitleColor),
+                    _buildTrailingAction(scheme, isDark, arisIconColor),
                   ],
                 ),
               ),
@@ -315,20 +307,13 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
             maximumSize: const Size(_micSize, _micSize),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: widget.isSending
-              ? SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: scheme.onPrimary,
-                  ),
-                )
-              : Icon(
-                  Icons.send_rounded,
-                  size: 20,
-                  color: scheme.onPrimary,
-                ),
+          child: Icon(
+            Icons.send_rounded,
+            size: 20,
+            color: scheme.onPrimary.withValues(
+              alpha: widget.isSending ? 0.45 : 1,
+            ),
+          ),
         ),
       );
     }

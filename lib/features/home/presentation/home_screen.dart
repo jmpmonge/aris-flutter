@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/models/chat_message_model.dart';
 import '../../../core/repositories/repositories.dart';
 import '../../../core/services/chat_service.dart';
 import '../../../core/services/local_action_service.dart';
@@ -88,9 +89,14 @@ class HomeScreenState extends State<HomeScreen> {
     setState(() {});
   }
 
-  String get _lastArisMessage => homeLastArisMessageText(
-        Repositories.history.conversationForHome(),
-      );
+  List<ChatMessageModel> get _homeConversation =>
+      Repositories.history.conversationForHome();
+
+  String get _lastArisMessage => homeLastArisMessageText(_homeConversation);
+
+  bool get _arisIsThinking =>
+      _arisSending ||
+      _homeConversation.any((m) => m.awaitingBackend);
 
   Future<void> _sendArisMessage(String text) async {
     final t = text.trim();
@@ -128,6 +134,13 @@ class HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final homeEvents = Repositories.calendar.getHomeHighlightEvents();
     final homeTasks = Repositories.task.getHomeHighlightTasks();
+    final pendingTaskCount =
+        homeTasks.where((t) => !t.completed).length;
+    final arisDisplayMessage = homeArisCardDisplayMessage(
+      messages: _homeConversation,
+      eventCount: homeEvents.length,
+      taskCount: pendingTaskCount,
+    );
 
     return SafeArea(
       top: true,
@@ -144,10 +157,7 @@ class HomeScreenState extends State<HomeScreen> {
               top: AppSpacing.homeFixedDateToEphemeralGap,
               bottom: AppSpacing.homeGreetingToHoyGap,
             ),
-            child: HomeEphemeralGreetingHeader(
-              eventCount: homeEvents.length,
-              taskCount: homeTasks.length,
-            ),
+            child: const HomeEphemeralGreetingHeader(),
           ),
           TodaySummaryCard(
             events: homeEvents,
@@ -158,8 +168,8 @@ class HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: AppSpacing.homeSectionGapMax),
           HomeArisReplyCard(
-            activeMessage: _lastArisMessage,
-            isSending: _arisSending,
+            activeMessage: arisDisplayMessage,
+            isSending: _arisIsThinking,
             onOpenFullConversation: () => HomeArisChatInsideSheet.show(
               context,
               onSend: _sendArisMessage,
