@@ -9,12 +9,13 @@ import 'widgets/home_aris_chat_inside_sheet.dart';
 import 'widgets/home_aris_conversation_utils.dart';
 import 'widgets/home_ephemeral_greeting_header.dart';
 import 'widgets/home_fixed_date_header.dart';
+import 'widgets/home_scroll_layout.dart';
 import 'widgets/home_visible_counts.dart';
 import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../shared/widgets/today_summary_card.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Inicio — tarjeta Aris en scroll + input fijo separado (v0.48.49).
+/// Inicio — tarjeta Aris libre en scroll + input fijo + alto útil (v0.48.50).
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -76,7 +77,6 @@ class HomeScreenState extends State<HomeScreen> {
 
   void _onScroll() => _preventArisScrollPastTop();
 
-  /// Evita hueco vacío por sobre-scroll cuando Aris es el bloque superior visible.
   void _preventArisScrollPastTop() {
     if (!_scrollController.hasClients) return;
 
@@ -127,13 +127,6 @@ class HomeScreenState extends State<HomeScreen> {
         }
       }
     });
-  }
-
-  /// Reserva espacio bajo el scroll: aire tarjeta→input + respiro + safe area.
-  static double _listBottomPadding(BuildContext context) {
-    return AppSpacing.homeArisCardToInputGap +
-        AppSpacing.homeScrollBottomBreathing +
-        MediaQuery.paddingOf(context).bottom;
   }
 
   void _onHomeDataRevision() {
@@ -213,6 +206,9 @@ class HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
+                final scrollBottomPad =
+                    HomeScrollLayout.scrollContentBottomPadding(context);
+
                 final visibleCounts = HomeVisibleCounts.forListViewport(
                   listViewportHeight: constraints.maxHeight,
                   availableEvents: homeEvents.length,
@@ -220,57 +216,72 @@ class HomeScreenState extends State<HomeScreen> {
                   availableMails: TodaySummaryCard.demoMailCatalogLength,
                 );
 
-                return ListView(
+                final sectionGap =
+                    HomeScrollLayout.sectionGapBeforeAris(context);
+
+                return CustomScrollView(
                   controller: _scrollController,
                   physics: const ClampingScrollPhysics(),
-                  padding: EdgeInsets.only(
-                    bottom: _listBottomPadding(context),
-                  ),
-                  children: [
-                    Padding(
+                  slivers: [
+                    SliverPadding(
                       padding: const EdgeInsets.only(
                         top: AppSpacing.homeFixedDateToEphemeralGap,
                         bottom: AppSpacing.homeGreetingToHoyGap,
                       ),
-                      child: const HomeEphemeralGreetingHeader(),
-                    ),
-                    TodaySummaryCard(
-                      key: _todaySummaryKey,
-                      events: homeEvents,
-                      tasks: homeTasks,
-                      maxAgendaItems: visibleCounts.agendaItems,
-                      maxTaskItems: visibleCounts.taskItems,
-                      maxMailItems: visibleCounts.mailItems,
-                      onOpenCalendar: widget.onOpenCalendar,
-                      onOpenTasks: widget.onOpenTasks,
-                      onOpenMail: widget.onOpenMail,
-                    ),
-                    const SizedBox(height: AppSpacing.homeSectionGapMax),
-                    HomeArisReplyCard(
-                      key: _arisCardKey,
-                      activeMessage: arisDisplayMessage,
-                      isSending: _arisIsThinking,
-                      onOpenFullConversation: () =>
-                          HomeArisChatInsideSheet.show(
-                        context,
-                        onSend: _sendArisMessage,
-                        onMicTap: _onMicPressed,
+                      sliver: const SliverToBoxAdapter(
+                        child: HomeEphemeralGreetingHeader(),
                       ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: TodaySummaryCard(
+                        key: _todaySummaryKey,
+                        events: homeEvents,
+                        tasks: homeTasks,
+                        maxAgendaItems: visibleCounts.agendaItems,
+                        maxTaskItems: visibleCounts.taskItems,
+                        maxMailItems: visibleCounts.mailItems,
+                        onOpenCalendar: widget.onOpenCalendar,
+                        onOpenTasks: widget.onOpenTasks,
+                        onOpenMail: widget.onOpenMail,
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: EdgeInsets.only(bottom: scrollBottomPad),
+                      sliver: SliverFillRemaining(
+                      hasScrollBody: false,
+                      fillOverscroll: false,
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SizedBox(height: sectionGap),
+                            HomeArisReplyCard(
+                              key: _arisCardKey,
+                              activeMessage: arisDisplayMessage,
+                              isSending: _arisIsThinking,
+                              onOpenFullConversation: () =>
+                                  HomeArisChatInsideSheet.show(
+                                context,
+                                onSend: _sendArisMessage,
+                                onMicTap: _onMicPressed,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     ),
                   ],
                 );
               },
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(
-              top: AppSpacing.homeArisCardToInputGap,
-            ),
-            child: HomeArisFixedInputBar(
-              isSending: _arisIsThinking,
-              onSubmit: _sendArisMessage,
-              onMicPressed: _onMicPressed,
-            ),
+          HomeArisFixedInputBar(
+            isSending: _arisIsThinking,
+            onSubmit: _sendArisMessage,
+            onMicPressed: _onMicPressed,
           ),
         ],
       ),
