@@ -1,3 +1,4 @@
+import '../../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../../theme/app_spacing.dart';
 
 /// Conteos visibles de HOY según altura útil (v0.48.47).
@@ -100,11 +101,14 @@ abstract final class HomeSummaryLayoutMetrics {
   static const double _emptyLineHeight = 13.5 * 1.3;
   static const double _greetingBlockHeight = 52;
 
-  /// Chrome fijo dentro del ListView excepto la tarjeta HOY (Aris va fuera del scroll).
+  static const double _arisCompactHeight = HomeArisReplyCard.bodyHeight;
+
+  /// Chrome fijo dentro del ListView excepto la tarjeta HOY.
   static const double scrollChromeExcludingSummaryCard =
       AppSpacing.homeFixedDateToEphemeralGap +
       _greetingBlockHeight +
       AppSpacing.homeGreetingToHoyGap +
+      _arisCompactHeight +
       AppSpacing.homeSectionGapMax;
 
   static double incrementalHeightForSection(int section) {

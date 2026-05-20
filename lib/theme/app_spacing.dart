@@ -92,6 +92,9 @@ abstract final class AppSpacing {
   /// Respiro bajo el último ítem del ListView (encima del dock fijo).
   static const double homeScrollBottomBreathing = 12;
 
+  /// Aire entre la tarjeta Aris (scroll) y el input fijo (v0.48.49).
+  static const double homeArisCardToInputGap = 16;
+
   /// Tras cabecera → primera tarjeta (Greeting).
   static const double homeHeaderToGreetingGap = 14;
 

@@ -14,7 +14,7 @@ import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../shared/widgets/today_summary_card.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Inicio — HOY scrollable + tarjeta Aris acordeón fija (v0.48.48).
+/// Inicio — tarjeta Aris en scroll + input fijo separado (v0.48.49).
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -34,10 +34,10 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   final _scrollController = ScrollController();
   final _todaySummaryKey = GlobalKey();
+  final _arisCardKey = GlobalKey();
 
   int _homeArisInstructionCount = 0;
   bool _arisSending = false;
-  bool _arisMessageExpanded = true;
 
   @override
   void initState() {
@@ -49,10 +49,7 @@ class HomeScreenState extends State<HomeScreen> {
     ChatService.revision.addListener(_onConversationRevision);
     Repositories.history.revision.addListener(_onConversationRevision);
     _scrollController.addListener(_onScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _ensureScrollAtTop();
-      _syncArisMessageExpanded();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _ensureScrollAtTop());
   }
 
   void scrollToTop() => _ensureScrollAtTop();
@@ -77,43 +74,66 @@ class HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void _onScroll() => _syncArisMessageExpanded();
+  void _onScroll() => _preventArisScrollPastTop();
 
-  /// Expande el mensaje mientras HOY sigue visible; colapsa al salir del viewport.
-  void _syncArisMessageExpanded() {
+  /// Evita hueco vacío por sobre-scroll cuando Aris es el bloque superior visible.
+  void _preventArisScrollPastTop() {
     if (!_scrollController.hasClients) return;
 
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !_scrollController.hasClients) return;
 
+      final arisContext = _arisCardKey.currentContext;
       final todayContext = _todaySummaryKey.currentContext;
-      if (todayContext == null) return;
+      if (arisContext == null) return;
 
-      final scrollable = Scrollable.maybeOf(todayContext);
+      final scrollable = Scrollable.maybeOf(arisContext);
       if (scrollable == null) return;
 
       final scrollableBox =
           scrollable.context.findRenderObject() as RenderBox?;
-      final todayBox = todayContext.findRenderObject() as RenderBox?;
+      final arisBox = arisContext.findRenderObject() as RenderBox?;
       if (scrollableBox == null ||
-          todayBox == null ||
+          arisBox == null ||
           !scrollableBox.hasSize ||
-          !todayBox.hasSize) {
+          !arisBox.hasSize) {
         return;
       }
 
-      final todayBottom = todayBox
-          .localToGlobal(
-            Offset(0, todayBox.size.height),
-            ancestor: scrollableBox,
-          )
-          .dy;
-      final expanded = todayBottom > 0;
+      if (todayContext != null) {
+        final todayBox = todayContext.findRenderObject() as RenderBox?;
+        if (todayBox != null && todayBox.hasSize) {
+          final todayBottom = todayBox
+              .localToGlobal(
+                Offset(0, todayBox.size.height),
+                ancestor: scrollableBox,
+              )
+              .dy;
+          if (todayBottom > 0) return;
+        }
+      }
 
-      if (expanded != _arisMessageExpanded) {
-        setState(() => _arisMessageExpanded = expanded);
+      final arisTop =
+          arisBox.localToGlobal(Offset.zero, ancestor: scrollableBox).dy;
+      const epsilon = 0.5;
+
+      if (arisTop < -epsilon) {
+        final target = (_scrollController.offset + arisTop).clamp(
+          0.0,
+          _scrollController.position.maxScrollExtent,
+        );
+        if ((target - _scrollController.offset).abs() > epsilon) {
+          _scrollController.jumpTo(target);
+        }
       }
     });
+  }
+
+  /// Reserva espacio bajo el scroll: aire tarjeta→input + respiro + safe area.
+  static double _listBottomPadding(BuildContext context) {
+    return AppSpacing.homeArisCardToInputGap +
+        AppSpacing.homeScrollBottomBreathing +
+        MediaQuery.paddingOf(context).bottom;
   }
 
   void _onHomeDataRevision() {
@@ -203,6 +223,9 @@ class HomeScreenState extends State<HomeScreen> {
                 return ListView(
                   controller: _scrollController,
                   physics: const ClampingScrollPhysics(),
+                  padding: EdgeInsets.only(
+                    bottom: _listBottomPadding(context),
+                  ),
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(
@@ -223,22 +246,31 @@ class HomeScreenState extends State<HomeScreen> {
                       onOpenMail: widget.onOpenMail,
                     ),
                     const SizedBox(height: AppSpacing.homeSectionGapMax),
+                    HomeArisReplyCard(
+                      key: _arisCardKey,
+                      activeMessage: arisDisplayMessage,
+                      isSending: _arisIsThinking,
+                      onOpenFullConversation: () =>
+                          HomeArisChatInsideSheet.show(
+                        context,
+                        onSend: _sendArisMessage,
+                        onMicTap: _onMicPressed,
+                      ),
+                    ),
                   ],
                 );
               },
             ),
           ),
-          HomeArisDockCard(
-            messageExpanded: _arisMessageExpanded,
-            activeMessage: arisDisplayMessage,
-            isSending: _arisIsThinking,
-            onOpenFullConversation: () => HomeArisChatInsideSheet.show(
-              context,
-              onSend: _sendArisMessage,
-              onMicTap: _onMicPressed,
+          Padding(
+            padding: const EdgeInsets.only(
+              top: AppSpacing.homeArisCardToInputGap,
             ),
-            onSubmit: _sendArisMessage,
-            onMicPressed: _onMicPressed,
+            child: HomeArisFixedInputBar(
+              isSending: _arisIsThinking,
+              onSubmit: _sendArisMessage,
+              onMicPressed: _onMicPressed,
+            ),
           ),
         ],
       ),
