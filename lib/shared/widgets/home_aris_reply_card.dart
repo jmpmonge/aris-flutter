@@ -188,10 +188,10 @@ class HomeArisReplyCard extends StatelessWidget {
   }
 }
 
-/// Input de Aris anclado al pie de Inicio (v0.48.45).
+/// Input de Aris anclado al pie de Inicio — barra compacta sin tarjeta (v0.48.49).
 class HomeArisFixedInputBar extends StatefulWidget {
-  /// Altura del dock: padding + divider + gap + campo + padding inferior.
-  static const double dockHeight = 10 + 1 + 9 + 42 + 12;
+  /// Altura de referencia: padding vertical + fila de campo.
+  static const double dockHeight = 6 + 40 + 6;
 
   const HomeArisFixedInputBar({
     super.key,
@@ -211,14 +211,12 @@ class HomeArisFixedInputBar extends StatefulWidget {
 class _HomeArisFixedInputBarState extends State<HomeArisFixedInputBar> {
   final _controller = TextEditingController();
 
-  static const double _padH = 16;
-  static const double _padTop = 10;
-  static const double _padBottom = 12;
-  static const double _inputHeight = 42;
-  static const double _inputRadius = 20;
-  static const double _inputPadH = 13;
-  static const double _micSize = 36;
-  static const double _micIconSize = 21;
+  static const double _padV = 6;
+  static const double _inputHeight = 40;
+  static const double _inputRadius = 22;
+  static const double _inputPadH = 14;
+  static const double _micSize = 34;
+  static const double _micIconSize = 20;
 
   static const Color _kArisTitleDark = AppColors.chatAccentLavenderDark;
 
@@ -304,82 +302,69 @@ class _HomeArisFixedInputBarState extends State<HomeArisFixedInputBar> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final brightness = isDark ? Brightness.dark : Brightness.light;
     final arisAccent =
         isDark ? _kArisTitleDark : AppColors.secondaryViolet;
 
-    final dividerColor = HomeCardTheme.sectionDivider(scheme, brightness);
-
     final inputBg = isDark
-        ? scheme.surfaceContainerHighest.withValues(alpha: 0.55)
-        : scheme.surfaceContainerHigh.withValues(alpha: 0.65);
+        ? scheme.surfaceContainerHighest.withValues(alpha: 0.62)
+        : scheme.surfaceContainerHigh.withValues(alpha: 0.72);
+
+    final borderColor = isDark
+        ? HomeCardTheme.panelBorder(scheme, Brightness.dark)
+            .withValues(alpha: 0.55)
+        : scheme.outline.withValues(alpha: 0.14);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.homePageMarginH),
-      child: DecoratedBox(
-        decoration: HomeCardTheme.arisCardInputDockDecoration(
-          scheme: scheme,
-          brightness: brightness,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(_padH, _padTop, _padH, _padBottom),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Divider(height: 1, thickness: 1, color: dividerColor),
-              const SizedBox(height: 9),
-              SizedBox(
-                height: _inputHeight,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: inputBg,
-                          borderRadius:
-                              BorderRadius.circular(_inputRadius),
-                          border: Border.all(
-                            color: scheme.outline.withValues(alpha: 0.12),
-                          ),
-                        ),
-                        child: TextField(
-                          controller: _controller,
-                          enabled: !widget.isSending,
-                          textInputAction: TextInputAction.send,
-                          maxLines: 1,
-                          style: TextStyle(
-                            fontSize: 14,
-                            height: 1.25,
-                            color: scheme.onSurface,
-                          ),
-                          onSubmitted: _handleSubmit,
-                          decoration: InputDecoration(
-                            hintText: 'Escribe a Aris…',
-                            hintStyle: TextStyle(
-                              fontSize: 14,
-                              height: 1.25,
-                              color: scheme.onSurfaceVariant.withValues(
-                                alpha: 0.72,
-                              ),
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: _inputPadH,
-                              vertical: 10,
-                            ),
-                            isDense: true,
-                          ),
-                        ),
-                      ),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.homePageMarginH,
+        _padV,
+        AppSpacing.homePageMarginH,
+        _padV,
+      ),
+      child: SizedBox(
+        height: _inputHeight,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: inputBg,
+                  borderRadius: BorderRadius.circular(_inputRadius),
+                  border: Border.all(color: borderColor, width: 1),
+                ),
+                child: TextField(
+                  controller: _controller,
+                  enabled: !widget.isSending,
+                  textInputAction: TextInputAction.send,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.2,
+                    color: scheme.onSurface,
+                  ),
+                  onSubmitted: _handleSubmit,
+                  decoration: InputDecoration(
+                    hintText: 'Escribe a Aris…',
+                    hintStyle: TextStyle(
+                      fontSize: 14,
+                      height: 1.2,
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.68),
                     ),
-                    const SizedBox(width: 8),
-                    _buildTrailingAction(scheme, isDark, arisAccent),
-                  ],
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: _inputPadH,
+                      vertical: 10,
+                    ),
+                    isDense: true,
+                    isCollapsed: true,
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 8),
+            _buildTrailingAction(scheme, isDark, arisAccent),
+          ],
         ),
       ),
     );
