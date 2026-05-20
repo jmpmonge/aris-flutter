@@ -65,69 +65,6 @@ abstract final class HomeCardTheme {
     );
   }
 
-  /// Cuerpo superior Aris (scrollable; v0.48.44).
-  static BoxDecoration arisCardBodyDecoration({
-    required ColorScheme scheme,
-    required Brightness brightness,
-  }) {
-    final border = panelBorder(scheme, brightness);
-    return BoxDecoration(
-      color: arisSurface(scheme, brightness),
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(AppSpacing.homeCardRadius),
-      ),
-      border: Border(
-        top: BorderSide(color: border, width: 1),
-        left: BorderSide(color: border, width: 1),
-        right: BorderSide(color: border, width: 1),
-        bottom: BorderSide(color: border, width: 1),
-      ),
-      boxShadow: brightness == Brightness.dark
-          ? const <BoxShadow>[]
-          : [
-              BoxShadow(
-                color: AppColors.shadowWarmLight.withValues(alpha: 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-    );
-  }
-
-  /// Puente scroll entre cuerpo e input (mismos laterales; v0.48.44).
-  static BoxDecoration arisCardBridgeDecoration({
-    required ColorScheme scheme,
-    required Brightness brightness,
-  }) {
-    final border = panelBorder(scheme, brightness);
-    return BoxDecoration(
-      color: arisSurface(scheme, brightness),
-      border: Border(
-        left: BorderSide(color: border, width: 1),
-        right: BorderSide(color: border, width: 1),
-      ),
-    );
-  }
-
-  /// Dock del input (fijo; sin borde superior — une al cuerpo; v0.48.44).
-  static BoxDecoration arisCardInputDockDecoration({
-    required ColorScheme scheme,
-    required Brightness brightness,
-  }) {
-    final border = panelBorder(scheme, brightness);
-    return BoxDecoration(
-      color: arisSurface(scheme, brightness),
-      borderRadius: const BorderRadius.vertical(
-        bottom: Radius.circular(AppSpacing.homeCardRadius),
-      ),
-      border: Border(
-        left: BorderSide(color: border, width: 1),
-        right: BorderSide(color: border, width: 1),
-        bottom: BorderSide(color: border, width: 1),
-      ),
-    );
-  }
-
   /// Puntos del estado «Aris está pensando» — neutros.
   static Color thinkingDot(ColorScheme scheme, Brightness brightness) {
     if (brightness == Brightness.dark) {

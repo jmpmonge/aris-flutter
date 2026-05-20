@@ -14,7 +14,7 @@ import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../shared/widgets/today_summary_card.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Inicio — scroll + Aris continuo (mensaje scroll, input fijo; v0.48.44).
+/// Inicio — scroll natural + tarjeta Aris acordeón unificada (v0.48.44-fix).
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -34,8 +34,7 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   final _scrollController = ScrollController();
   final _todaySummaryKey = GlobalKey();
-  final _arisBodyKey = GlobalKey();
-  final _arisInputKey = GlobalKey();
+  final _arisCardKey = GlobalKey();
 
   int _homeArisInstructionCount = 0;
   bool _arisSending = false;
@@ -50,10 +49,7 @@ class HomeScreenState extends State<HomeScreen> {
     ChatService.revision.addListener(_onConversationRevision);
     Repositories.history.revision.addListener(_onConversationRevision);
     _scrollController.addListener(_onScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _ensureScrollAtTop();
-      _glueArisBodyToInput();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _ensureScrollAtTop());
   }
 
   void scrollToTop() => _ensureScrollAtTop();
@@ -78,10 +74,7 @@ class HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void _onScroll() {
-    _clampArisCardTopGap();
-    _glueArisBodyToInput();
-  }
+  void _onScroll() => _clampArisCardTopGap();
 
   /// Hueco sobre la tarjeta Aris ≤ [AppSpacing.homeSectionGapMax].
   void _clampArisCardTopGap() {
@@ -90,7 +83,7 @@ class HomeScreenState extends State<HomeScreen> {
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !_scrollController.hasClients) return;
 
-      final arisContext = _arisBodyKey.currentContext;
+      final arisContext = _arisCardKey.currentContext;
       final todayContext = _todaySummaryKey.currentContext;
       if (arisContext == null) return;
 
@@ -139,50 +132,6 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  /// Sin hueco entre el borde inferior del cuerpo y el input fijo.
-  void _glueArisBodyToInput() {
-    if (!_scrollController.hasClients) return;
-
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_scrollController.hasClients) return;
-
-      final bodyBox =
-          _arisBodyKey.currentContext?.findRenderObject() as RenderBox?;
-      final inputBox =
-          _arisInputKey.currentContext?.findRenderObject() as RenderBox?;
-      if (bodyBox == null ||
-          inputBox == null ||
-          !bodyBox.hasSize ||
-          !inputBox.hasSize) {
-        return;
-      }
-
-      final bodyBottom = bodyBox.localToGlobal(Offset(0, bodyBox.size.height)).dy;
-      final inputTop = inputBox.localToGlobal(Offset.zero).dy;
-      const epsilon = 0.5;
-
-      if (bodyBottom < inputTop - epsilon) {
-        final gap = inputTop - bodyBottom;
-        final target = (_scrollController.offset - gap).clamp(
-          0.0,
-          _scrollController.position.maxScrollExtent,
-        );
-        if ((target - _scrollController.offset).abs() > epsilon) {
-          _scrollController.jumpTo(target);
-        }
-      } else if (bodyBottom > inputTop + epsilon) {
-        final overlap = bodyBottom - inputTop;
-        final target = (_scrollController.offset + overlap).clamp(
-          0.0,
-          _scrollController.position.maxScrollExtent,
-        );
-        if ((target - _scrollController.offset).abs() > epsilon) {
-          _scrollController.jumpTo(target);
-        }
-      }
-    });
-  }
-
   void _onHomeDataRevision() {
     if (!mounted) return;
     setState(() {});
@@ -196,7 +145,6 @@ class HomeScreenState extends State<HomeScreen> {
   void _onConversationRevision() {
     if (!mounted) return;
     setState(() {});
-    WidgetsBinding.instance.addPostFrameCallback((_) => _glueArisBodyToInput());
   }
 
   List<ChatMessageModel> get _homeConversation =>
@@ -254,63 +202,39 @@ class HomeScreenState extends State<HomeScreen> {
     return SafeArea(
       top: true,
       bottom: false,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: ListView(
+        controller: _scrollController,
+        physics: const ClampingScrollPhysics(),
+        padding: EdgeInsets.only(
+          bottom: HomeArisLayout.scrollBottomPadding(context),
+        ),
         children: [
-          Expanded(
-            child: CustomScrollView(
-              controller: _scrollController,
-              physics: const ClampingScrollPhysics(),
-              slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.only(
-                    bottom: HomeArisLayout.scrollBottomPadding,
-                  ),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      const HomeFixedDateHeader(),
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          top: AppSpacing.homeFixedDateToEphemeralGap,
-                          bottom: AppSpacing.homeGreetingToHoyGap,
-                        ),
-                        child: const HomeEphemeralGreetingHeader(),
-                      ),
-                      TodaySummaryCard(
-                        key: _todaySummaryKey,
-                        events: homeEvents,
-                        tasks: homeTasks,
-                        onOpenCalendar: widget.onOpenCalendar,
-                        onOpenTasks: widget.onOpenTasks,
-                        onOpenMail: widget.onOpenMail,
-                      ),
-                      const SizedBox(height: AppSpacing.homeSectionGapMax),
-                    ]),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: HomeArisReplyCard(
-                    key: _arisBodyKey,
-                    activeMessage: arisDisplayMessage,
-                    isSending: _arisIsThinking,
-                    onOpenFullConversation: () => HomeArisChatInsideSheet.show(
-                      context,
-                      onSend: _sendArisMessage,
-                      onMicTap: _onMicPressed,
-                    ),
-                  ),
-                ),
-                const SliverFillRemaining(
-                  hasScrollBody: false,
-                  fillOverscroll: false,
-                  child: HomeArisContinuityBridge(),
-                ),
-              ],
+          const HomeFixedDateHeader(),
+          Padding(
+            padding: const EdgeInsets.only(
+              top: AppSpacing.homeFixedDateToEphemeralGap,
+              bottom: AppSpacing.homeGreetingToHoyGap,
             ),
+            child: const HomeEphemeralGreetingHeader(),
           ),
-          HomeArisFixedInputBar(
-            key: _arisInputKey,
+          TodaySummaryCard(
+            key: _todaySummaryKey,
+            events: homeEvents,
+            tasks: homeTasks,
+            onOpenCalendar: widget.onOpenCalendar,
+            onOpenTasks: widget.onOpenTasks,
+            onOpenMail: widget.onOpenMail,
+          ),
+          const SizedBox(height: AppSpacing.homeSectionGapMax),
+          HomeArisReplyCard(
+            key: _arisCardKey,
+            activeMessage: arisDisplayMessage,
             isSending: _arisIsThinking,
+            onOpenFullConversation: () => HomeArisChatInsideSheet.show(
+              context,
+              onSend: _sendArisMessage,
+              onMicTap: _onMicPressed,
+            ),
             onSubmit: _sendArisMessage,
             onMicPressed: _onMicPressed,
           ),

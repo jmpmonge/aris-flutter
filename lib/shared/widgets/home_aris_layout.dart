@@ -1,17 +1,24 @@
-/// Medidas del bloque Aris fijo en Home (v0.48.44).
+import 'package:flutter/material.dart';
+
+/// Medidas de la tarjeta Aris acordeón en Home (v0.48.44-fix).
 abstract final class HomeArisLayout {
   HomeArisLayout._();
 
-  /// Separador 1 + padding 9 + input 42 + padding inferior 12.
-  static const double fixedInputBlockHeight = 64;
+  static const double messageMinHeight = 56;
+  static const double messageMaxHeight = 132;
+  static const int messageMaxLines = 3;
+  static const double inputHeight = 44;
 
-  /// Reserva visual barra de navegación inferior (~altura Material + padding).
+  /// Reserva barra de navegación inferior (~altura Material + padding).
   static const double bottomNavReserve = 56;
 
-  /// Respiro extra para que el scroll no tape contenido.
-  static const double scrollBottomExtra = 12;
+  /// Respiro final del scroll (no entre HOY y Aris).
+  static const double scrollBottomExtra = 16;
 
-  /// Padding inferior del scroll = input + nav + extra.
-  static const double scrollBottomPadding =
-      fixedInputBlockHeight + bottomNavReserve + scrollBottomExtra;
+  /// Solo al final del scroll: nav + safe area + extra.
+  static double scrollBottomPadding(BuildContext context) {
+    return bottomNavReserve +
+        MediaQuery.paddingOf(context).bottom +
+        scrollBottomExtra;
+  }
 }
