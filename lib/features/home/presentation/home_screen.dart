@@ -9,12 +9,12 @@ import 'widgets/home_aris_chat_inside_sheet.dart';
 import 'widgets/home_aris_conversation_utils.dart';
 import 'widgets/home_ephemeral_greeting_header.dart';
 import 'widgets/home_fixed_date_header.dart';
-import '../../../shared/widgets/home_aris_layout.dart';
+import 'widgets/home_visible_counts.dart';
 import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../shared/widgets/today_summary_card.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Inicio — scroll natural + tarjeta Aris acordeón unificada (v0.48.44-fix).
+/// Inicio — contenido scrollable + input Aris fijo (v0.48.47).
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -74,10 +74,10 @@ class HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void _onScroll() => _clampArisCardTopGap();
+  void _onScroll() => _preventArisScrollPastTop();
 
-  /// Hueco sobre la tarjeta Aris ≤ [AppSpacing.homeSectionGapMax].
-  void _clampArisCardTopGap() {
+  /// Evita pasar de scroll: no deja hueco vacío por encima de Aris ni la corta.
+  void _preventArisScrollPastTop() {
     if (!_scrollController.hasClients) return;
 
     SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -100,6 +100,7 @@ class HomeScreenState extends State<HomeScreen> {
         return;
       }
 
+      // Solo cuando HOY ya no ocupa el viewport (Aris es el bloque superior visible).
       if (todayContext != null) {
         final todayBox = todayContext.findRenderObject() as RenderBox?;
         if (todayBox != null && todayBox.hasSize) {
@@ -109,23 +110,21 @@ class HomeScreenState extends State<HomeScreen> {
                 ancestor: scrollableBox,
               )
               .dy;
-          if (todayBottom > AppSpacing.homeSectionGapMax) {
-            return;
-          }
+          if (todayBottom > 0) return;
         }
       }
 
       final arisTop =
           arisBox.localToGlobal(Offset.zero, ancestor: scrollableBox).dy;
-      final maxGap = AppSpacing.homeSectionGapMax;
+      const epsilon = 0.5;
 
-      if (arisTop > maxGap + 0.5) {
-        final correction = arisTop - maxGap;
-        final target = (_scrollController.offset + correction).clamp(
+      // Solo frena si la tarjeta se pasa por arriba (no empujar más hacia arriba).
+      if (arisTop < -epsilon) {
+        final target = (_scrollController.offset + arisTop).clamp(
           0.0,
           _scrollController.position.maxScrollExtent,
         );
-        if ((target - _scrollController.offset).abs() > 0.5) {
+        if ((target - _scrollController.offset).abs() > epsilon) {
           _scrollController.jumpTo(target);
         }
       }
@@ -202,39 +201,61 @@ class HomeScreenState extends State<HomeScreen> {
     return SafeArea(
       top: true,
       bottom: false,
-      child: ListView(
-        controller: _scrollController,
-        physics: const ClampingScrollPhysics(),
-        padding: EdgeInsets.only(
-          bottom: HomeArisLayout.scrollBottomPadding(context),
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const HomeFixedDateHeader(),
-          Padding(
-            padding: const EdgeInsets.only(
-              top: AppSpacing.homeFixedDateToEphemeralGap,
-              bottom: AppSpacing.homeGreetingToHoyGap,
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final visibleCounts = HomeVisibleCounts.forListViewport(
+                  listViewportHeight: constraints.maxHeight,
+                  availableEvents: homeEvents.length,
+                  availableTasks: homeTasks.length,
+                  availableMails: TodaySummaryCard.demoMailCatalogLength,
+                );
+
+                return ListView(
+                  controller: _scrollController,
+                  physics: const ClampingScrollPhysics(),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: AppSpacing.homeFixedDateToEphemeralGap,
+                        bottom: AppSpacing.homeGreetingToHoyGap,
+                      ),
+                      child: const HomeEphemeralGreetingHeader(),
+                    ),
+                    TodaySummaryCard(
+                      key: _todaySummaryKey,
+                      events: homeEvents,
+                      tasks: homeTasks,
+                      maxAgendaItems: visibleCounts.agendaItems,
+                      maxTaskItems: visibleCounts.taskItems,
+                      maxMailItems: visibleCounts.mailItems,
+                      onOpenCalendar: widget.onOpenCalendar,
+                      onOpenTasks: widget.onOpenTasks,
+                      onOpenMail: widget.onOpenMail,
+                    ),
+                    const SizedBox(height: AppSpacing.homeSectionGapMax),
+                    HomeArisReplyCard(
+                      key: _arisCardKey,
+                      activeMessage: arisDisplayMessage,
+                      isSending: _arisIsThinking,
+                      onOpenFullConversation: () =>
+                          HomeArisChatInsideSheet.show(
+                        context,
+                        onSend: _sendArisMessage,
+                        onMicTap: _onMicPressed,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
-            child: const HomeEphemeralGreetingHeader(),
           ),
-          TodaySummaryCard(
-            key: _todaySummaryKey,
-            events: homeEvents,
-            tasks: homeTasks,
-            onOpenCalendar: widget.onOpenCalendar,
-            onOpenTasks: widget.onOpenTasks,
-            onOpenMail: widget.onOpenMail,
-          ),
-          const SizedBox(height: AppSpacing.homeSectionGapMax),
-          HomeArisReplyCard(
-            key: _arisCardKey,
-            activeMessage: arisDisplayMessage,
+          HomeArisFixedInputBar(
             isSending: _arisIsThinking,
-            onOpenFullConversation: () => HomeArisChatInsideSheet.show(
-              context,
-              onSend: _sendArisMessage,
-              onMicTap: _onMicPressed,
-            ),
             onSubmit: _sendArisMessage,
             onMicPressed: _onMicPressed,
           ),

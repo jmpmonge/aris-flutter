@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'aris_thinking_indicator.dart';
-import 'home_aris_layout.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/home_card_theme.dart';
 
-/// Overlay cabecera ARIS.
+/// Overlay cabecera ARIS — igual que CHAT CON ARIS (v0.48.33).
 WidgetStateProperty<Color?> _arisHeaderOverlayColor(bool isDark) {
   const light = Color(0xFFF0EEFF);
   const lightHover = Color(0xFFEDE9FF);
@@ -32,33 +31,187 @@ WidgetStateProperty<Color?> _arisHeaderOverlayColor(bool isDark) {
   });
 }
 
-/// Tarjeta Aris unificada: cabecera + mensaje flexible + input (v0.48.44-fix).
-class HomeArisReplyCard extends StatefulWidget {
+/// Cuerpo scrollable de la tarjeta Aris (cabecera + mensaje; v0.48.45).
+class HomeArisReplyCard extends StatelessWidget {
   const HomeArisReplyCard({
     super.key,
     required this.activeMessage,
     this.isSending = false,
     this.onOpenFullConversation,
-    this.onSubmit,
-    this.onMicPressed,
   });
 
   final String activeMessage;
   final bool isSending;
   final VoidCallback? onOpenFullConversation;
+
+  static const double _padH = 16;
+  static const double _padV = 15;
+
+  static const Color _kArisTitleDark = AppColors.chatAccentLavenderDark;
+
+  Widget _buildArisHeaderRow({
+    required ColorScheme scheme,
+    required bool isDark,
+    required Color arisIconColor,
+  }) {
+    final titleStyle = HomeCardTheme.sectionTitleStyle(
+      scheme,
+      isDark ? Brightness.dark : Brightness.light,
+    );
+
+    final chevronColor = HomeCardTheme.neutralChevron(
+      scheme,
+      isDark ? Brightness.dark : Brightness.light,
+    );
+
+    final row = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.auto_awesome_rounded,
+          size: AppSpacing.homeCardHeaderIconSize,
+          color: arisIconColor,
+        ),
+        const SizedBox(width: AppSpacing.homeCardHeaderIconTitleGap),
+        Expanded(child: Text('ARIS', style: titleStyle)),
+        if (onOpenFullConversation != null)
+          SizedBox(
+            width: AppSpacing.homeCardHeaderChevronBox,
+            height: AppSpacing.homeCardHeaderChevronBox,
+            child: Center(
+              child: Icon(
+                Icons.chevron_right_rounded,
+                size: AppSpacing.homeCardHeaderChevronSize,
+                color: chevronColor,
+              ),
+            ),
+          ),
+      ],
+    );
+
+    final padded = Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.homeCardHeaderInkPaddingH,
+        vertical: AppSpacing.homeCardHeaderInkPaddingV,
+      ),
+      child: row,
+    );
+
+    if (onOpenFullConversation == null) return padded;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onOpenFullConversation,
+        borderRadius: BorderRadius.circular(
+          AppSpacing.homeCardHeaderInkBorderRadius,
+        ),
+        overlayColor: _arisHeaderOverlayColor(isDark),
+        child: padded,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brightness = isDark ? Brightness.dark : Brightness.light;
+    final arisIconColor =
+        isDark ? _kArisTitleDark : AppColors.secondaryViolet;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.homePageMarginH),
+      child: DecoratedBox(
+        decoration: HomeCardTheme.arisCardBodyDecoration(
+          scheme: scheme,
+          brightness: brightness,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: _padH,
+            vertical: _padV,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildArisHeaderRow(
+                scheme: scheme,
+                isDark: isDark,
+                arisIconColor: arisIconColor,
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 58,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: isSending
+                      ? ArisThinkingIndicator(
+                          compact: true,
+                          dotColor: HomeCardTheme.thinkingDot(
+                            scheme,
+                            brightness,
+                          ),
+                          textStyle: TextStyle(
+                            fontSize: 14.5,
+                            height: 1.32,
+                            fontWeight: FontWeight.w400,
+                            fontStyle: FontStyle.italic,
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                    .withValues(alpha: 0.92)
+                                : AppColors.textSecondaryLight,
+                          ),
+                        )
+                      : Text(
+                          activeMessage,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            height: 1.32,
+                            fontWeight: FontWeight.w400,
+                            color: scheme.onSurface,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Input de Aris anclado al pie de Inicio (v0.48.45).
+class HomeArisFixedInputBar extends StatefulWidget {
+  /// Altura del dock: padding + divider + gap + campo + padding inferior.
+  static const double dockHeight = 10 + 1 + 9 + 42 + 12;
+
+  const HomeArisFixedInputBar({
+    super.key,
+    required this.isSending,
+    this.onSubmit,
+    this.onMicPressed,
+  });
+
+  final bool isSending;
   final Future<void> Function(String text)? onSubmit;
   final VoidCallback? onMicPressed;
 
   @override
-  State<HomeArisReplyCard> createState() => _HomeArisReplyCardState();
+  State<HomeArisFixedInputBar> createState() => _HomeArisFixedInputBarState();
 }
 
-class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
+class _HomeArisFixedInputBarState extends State<HomeArisFixedInputBar> {
   final _controller = TextEditingController();
 
   static const double _padH = 16;
-  static const double _padTop = 15;
+  static const double _padTop = 10;
   static const double _padBottom = 12;
+  static const double _inputHeight = 42;
   static const double _inputRadius = 20;
   static const double _inputPadH = 13;
   static const double _micSize = 36;
@@ -88,112 +241,6 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
     if (t.isEmpty || widget.isSending) return;
     _controller.clear();
     await widget.onSubmit?.call(t);
-  }
-
-  Widget _buildArisHeaderRow({
-    required ColorScheme scheme,
-    required bool isDark,
-    required Color arisIconColor,
-  }) {
-    final titleStyle = HomeCardTheme.sectionTitleStyle(
-      scheme,
-      isDark ? Brightness.dark : Brightness.light,
-    );
-
-    final chevronColor = HomeCardTheme.neutralChevron(
-      scheme,
-      isDark ? Brightness.dark : Brightness.light,
-    );
-
-    final row = Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.auto_awesome_rounded,
-          size: AppSpacing.homeCardHeaderIconSize,
-          color: arisIconColor,
-        ),
-        const SizedBox(width: AppSpacing.homeCardHeaderIconTitleGap),
-        Expanded(child: Text('ARIS', style: titleStyle)),
-        if (widget.onOpenFullConversation != null)
-          SizedBox(
-            width: AppSpacing.homeCardHeaderChevronBox,
-            height: AppSpacing.homeCardHeaderChevronBox,
-            child: Center(
-              child: Icon(
-                Icons.chevron_right_rounded,
-                size: AppSpacing.homeCardHeaderChevronSize,
-                color: chevronColor,
-              ),
-            ),
-          ),
-      ],
-    );
-
-    final padded = Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.homeCardHeaderInkPaddingH,
-        vertical: AppSpacing.homeCardHeaderInkPaddingV,
-      ),
-      child: row,
-    );
-
-    if (widget.onOpenFullConversation == null) return padded;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: widget.onOpenFullConversation,
-        borderRadius: BorderRadius.circular(
-          AppSpacing.homeCardHeaderInkBorderRadius,
-        ),
-        overlayColor: _arisHeaderOverlayColor(isDark),
-        child: padded,
-      ),
-    );
-  }
-
-  Widget _buildMessageBlock({
-    required ColorScheme scheme,
-    required bool isDark,
-    required Brightness brightness,
-  }) {
-    final textStyle = TextStyle(
-      fontSize: 14.5,
-      height: 1.32,
-      fontWeight: FontWeight.w400,
-      color: scheme.onSurface,
-    );
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(
-        minHeight: HomeArisLayout.messageMinHeight,
-        maxHeight: HomeArisLayout.messageMaxHeight,
-      ),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: widget.isSending
-            ? ArisThinkingIndicator(
-                compact: true,
-                dotColor: HomeCardTheme.thinkingDot(scheme, brightness),
-                textStyle: TextStyle(
-                  fontSize: 14.5,
-                  height: 1.32,
-                  fontWeight: FontWeight.w400,
-                  fontStyle: FontStyle.italic,
-                  color: isDark
-                      ? AppColors.textSecondaryDark.withValues(alpha: 0.92)
-                      : AppColors.textSecondaryLight,
-                ),
-              )
-            : Text(
-                widget.activeMessage,
-                maxLines: HomeArisLayout.messageMaxLines,
-                overflow: TextOverflow.ellipsis,
-                style: textStyle,
-              ),
-      ),
-    );
   }
 
   Widget _buildTrailingAction(
@@ -255,10 +302,9 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final brightness = isDark ? Brightness.dark : Brightness.light;
-    final arisIconColor =
-        isDark ? _kArisTitleDark : AppColors.secondaryViolet;
     final arisAccent =
         isDark ? _kArisTitleDark : AppColors.secondaryViolet;
+
     final dividerColor = HomeCardTheme.sectionDivider(scheme, brightness);
 
     final inputBg = isDark
@@ -268,31 +314,19 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.homePageMarginH),
       child: DecoratedBox(
-        decoration: HomeCardTheme.cardDecoration(
+        decoration: HomeCardTheme.arisCardInputDockDecoration(
           scheme: scheme,
           brightness: brightness,
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(_padH, _padTop, _padH, _padBottom),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildArisHeaderRow(
-                scheme: scheme,
-                isDark: isDark,
-                arisIconColor: arisIconColor,
-              ),
-              const SizedBox(height: 12),
-              _buildMessageBlock(
-                scheme: scheme,
-                isDark: isDark,
-                brightness: brightness,
-              ),
               Divider(height: 1, thickness: 1, color: dividerColor),
               const SizedBox(height: 9),
               SizedBox(
-                height: HomeArisLayout.inputHeight,
+                height: _inputHeight,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -300,7 +334,8 @@ class _HomeArisReplyCardState extends State<HomeArisReplyCard> {
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           color: inputBg,
-                          borderRadius: BorderRadius.circular(_inputRadius),
+                          borderRadius:
+                              BorderRadius.circular(_inputRadius),
                           border: Border.all(
                             color: scheme.outline.withValues(alpha: 0.12),
                           ),

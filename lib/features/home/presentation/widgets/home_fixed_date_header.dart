@@ -17,7 +17,7 @@ class HomeFixedDateHeader extends StatelessWidget {
         AppSpacing.homeFixedDateLeftInsetH,
         AppSpacing.homeFixedDateTopGap,
         AppSpacing.homePageMarginH,
-        0,
+        AppSpacing.homeFixedDateMinPadding,
       ),
       child: Text(
         UserService.getHomeFixedDateLine(),

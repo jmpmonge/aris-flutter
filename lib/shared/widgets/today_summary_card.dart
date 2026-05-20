@@ -105,12 +105,65 @@ WidgetStateProperty<Color?> _taskTextBlockOverlayColor(bool isDark) {
   });
 }
 
+// TODO: ocultar sección MAIL cuando no haya datos reales.
+const int _demoMailTotalCount = 21;
+
+const List<_HomeMailPreview> _demoMailSeeds = [
+  _HomeMailPreview(
+    sender: 'Luis',
+    subject: 'Reunión del lunes',
+    requiresAttention: true,
+  ),
+  _HomeMailPreview(
+    sender: 'Ana',
+    subject: 'Presupuesto Q2',
+    requiresAttention: false,
+  ),
+  _HomeMailPreview(
+    sender: 'Equipo',
+    subject: 'Acta reunión',
+    requiresAttention: false,
+  ),
+  _HomeMailPreview(
+    sender: 'María',
+    subject: 'Factura pendiente',
+    requiresAttention: true,
+  ),
+  _HomeMailPreview(
+    sender: 'Carlos',
+    subject: 'Entrega documentación',
+    requiresAttention: false,
+  ),
+  _HomeMailPreview(
+    sender: 'Soporte',
+    subject: 'Ticket resuelto',
+    requiresAttention: false,
+  ),
+];
+
+/// Catálogo demo alineado con [_demoMailTotalCount] (v0.48.47).
+List<_HomeMailPreview> get _demoMails => List<_HomeMailPreview>.generate(
+      _demoMailTotalCount,
+      (i) {
+        if (i < _demoMailSeeds.length) return _demoMailSeeds[i];
+        final seed = _demoMailSeeds[i % _demoMailSeeds.length];
+        return _HomeMailPreview(
+          sender: seed.sender,
+          subject: '${seed.subject} (${i + 1})',
+          requiresAttention: seed.requiresAttention,
+        );
+      },
+    );
+
 /// Bloque **HOY** — v0.48.14 cabecera completa pulsable + timeline/alineación eventos.
 class TodaySummaryCard extends StatefulWidget {
   const TodaySummaryCard({
     super.key,
     required this.events,
     required this.tasks,
+    this.maxAgendaItems = 2,
+    this.maxTaskItems = 3,
+    this.maxMailItems = 1,
     this.onOpenCalendar,
     this.onOpenTasks,
     this.onOpenMail,
@@ -118,9 +171,15 @@ class TodaySummaryCard extends StatefulWidget {
 
   final List<EventModel> events;
   final List<TaskModel> tasks;
+  final int maxAgendaItems;
+  final int maxTaskItems;
+  final int maxMailItems;
   final VoidCallback? onOpenCalendar;
   final VoidCallback? onOpenTasks;
   final VoidCallback? onOpenMail;
+
+  /// Correos demo en catálogo (v0.48.47).
+  static int get demoMailCatalogLength => _demoMails.length;
 
   @override
   State<TodaySummaryCard> createState() => _TodaySummaryCardState();
@@ -284,17 +343,6 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
   /// Altura fija fila evento (hora + punto + texto; hover solo en texto).
   static const double _eventRowHeight = 52;
   static const double _eventTimelineLineTrim = 4;
-  static const int _maxHomeEvents = 2;
-  static const int _maxHomeTasks = 3;
-
-  // TODO: ocultar sección MAIL cuando no haya datos reales.
-  static const int _demoMailTotalCount = 21;
-  static const _demoVisibleMail = _HomeMailPreview(
-    sender: 'Luis',
-    subject: 'Reunión del lunes',
-    requiresAttention: true,
-  );
-
   /// Texto secundario / cuerpo como [SuggestionCard] y tarjetas `surface`.
   static Color homeCardSecondaryText(ColorScheme scheme, bool isDark) =>
       isDark ? AppColors.textSecondaryDark : scheme.onSurfaceVariant;
@@ -523,42 +571,68 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
     );
   }
 
+  Widget _buildMailEntry(
+    _HomeMailPreview mail,
+    ColorScheme scheme,
+    bool isDark,
+  ) {
+    return Text(
+      'De: ${mail.sender} · ${mail.subject}',
+      style: TextStyle(
+        fontSize: 12.75,
+        height: 1.3,
+        fontWeight: FontWeight.w400,
+        color: homeCardSecondaryText(scheme, isDark),
+      ),
+    );
+  }
+
   Widget _buildMailBody(ColorScheme scheme, bool isDark) {
-    final moreMails = _demoMailTotalCount - 1;
+    final visibleCount = widget.maxMailItems.clamp(1, _demoMails.length);
+    final visibleMails = _demoMails.take(visibleCount).toList();
+    final attentionCount =
+        visibleMails.where((m) => m.requiresAttention).length;
+    final headline = attentionCount <= 1
+        ? '1 correo requiere atención'
+        : '$attentionCount correos requieren atención';
+    final moreMails = _demoMailTotalCount - visibleMails.length;
+
+    final children = <Widget>[
+      Text(
+        headline,
+        style: TextStyle(
+          fontSize: 14.25,
+          height: 1.3,
+          fontWeight: FontWeight.w600,
+          color: scheme.onSurface,
+        ),
+      ),
+      const SizedBox(height: 4),
+    ];
+
+    for (var i = 0; i < visibleMails.length; i++) {
+      if (i > 0) {
+        children.add(const SizedBox(height: 8));
+      }
+      children.add(_buildMailEntry(visibleMails[i], scheme, isDark));
+    }
+
+    if (moreMails > 0) {
+      children.add(const SizedBox(height: _lastLineToMoreLinkPad));
+      children.add(
+        _buildMoreLink(
+          label: _moreMailsLabel(moreMails),
+          onTap: widget.onOpenMail,
+          scheme: scheme,
+          isDark: isDark,
+        ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          '1 correo requiere atención',
-          style: TextStyle(
-            fontSize: 14.25,
-            height: 1.3,
-            fontWeight: FontWeight.w600,
-            color: scheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'De: ${_demoVisibleMail.sender} · ${_demoVisibleMail.subject}',
-          style: TextStyle(
-            fontSize: 12.75,
-            height: 1.3,
-            fontWeight: FontWeight.w400,
-            color: homeCardSecondaryText(scheme, isDark),
-          ),
-        ),
-        if (moreMails > 0) ...[
-          const SizedBox(height: _lastLineToMoreLinkPad),
-          _buildMoreLink(
-            label: _moreMailsLabel(moreMails),
-            onTap: widget.onOpenMail,
-            scheme: scheme,
-            isDark: isDark,
-          ),
-        ],
-      ],
+      children: children,
     );
   }
 
@@ -577,11 +651,13 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
     final mailGreen =
         isDark ? _kMailSectionIconDark : _kMailSectionIconLight;
 
-    final visibleEvents = widget.events.take(_maxHomeEvents).toList();
+    final maxEvents = widget.maxAgendaItems.clamp(0, widget.events.length);
+    final maxTasks = widget.maxTaskItems;
+    final visibleEvents = widget.events.take(maxEvents).toList();
     final moreEvents = widget.events.length - visibleEvents.length;
 
     final allTasks = _homeVisibleTasks();
-    final displayedTasks = allTasks.take(_maxHomeTasks).toList();
+    final displayedTasks = allTasks.take(maxTasks).toList();
     final moreTasks = allTasks.length - displayedTasks.length;
 
     final emptyLineStyle = TextStyle(

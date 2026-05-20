@@ -64,6 +64,9 @@ abstract final class AppSpacing {
   /// Margen superior fecha fija Home (v0.48.41).
   static const double homeFixedDateTopGap = 16;
 
+  /// Respiro mínimo bajo la fecha fija (encima del scroll).
+  static const double homeFixedDateMinPadding = 2;
+
   /// Fecha fija → bloque saludo temporal (v0.48.41).
   static const double homeFixedDateToEphemeralGap = 9;
 
@@ -82,6 +85,12 @@ abstract final class AppSpacing {
 
   /// Máxima entre bloques principales (evita > 20 px de aire).
   static const double homeSectionGapMax = 16;
+
+  /// Hueco superior de Aris al subir con scroll (0 = pegado al borde útil).
+  static const double homeArisScrollTopGap = 0;
+
+  /// Respiro bajo el último ítem del ListView (encima del dock fijo).
+  static const double homeScrollBottomBreathing = 12;
 
   /// Tras cabecera → primera tarjeta (Greeting).
   static const double homeHeaderToGreetingGap = 14;
