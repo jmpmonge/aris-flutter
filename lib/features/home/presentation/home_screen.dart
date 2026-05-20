@@ -15,7 +15,7 @@ import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../shared/widgets/today_summary_card.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Inicio — tarjeta Aris libre en scroll + input fijo + alto útil (v0.48.50).
+/// Inicio — tarjeta Aris libre en scroll + input fijo + espaciador útil (v0.48.51).
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -39,6 +39,8 @@ class HomeScreenState extends State<HomeScreen> {
 
   int _homeArisInstructionCount = 0;
   bool _arisSending = false;
+  double _scrollViewportHeight = 0;
+  double _flexSpacerHeight = 0;
 
   @override
   void initState() {
@@ -50,7 +52,10 @@ class HomeScreenState extends State<HomeScreen> {
     ChatService.revision.addListener(_onConversationRevision);
     Repositories.history.revision.addListener(_onConversationRevision);
     _scrollController.addListener(_onScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _ensureScrollAtTop());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ensureScrollAtTop();
+      _remeasureFlexSpacer();
+    });
   }
 
   void scrollToTop() => _ensureScrollAtTop();
@@ -129,19 +134,44 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _scheduleFlexSpacerRemeasure() {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _remeasureFlexSpacer());
+  }
+
+  void _remeasureFlexSpacer() {
+    if (!mounted || _scrollViewportHeight <= 0) return;
+
+    final todayBox =
+        _todaySummaryKey.currentContext?.findRenderObject() as RenderBox?;
+    if (todayBox == null || !todayBox.hasSize) return;
+
+    final spacer = HomeScrollLayout.flexSpacerFromMeasuredHoy(
+      viewportHeight: _scrollViewportHeight,
+      measuredHoyHeight: todayBox.size.height,
+      context: context,
+    );
+
+    if ((spacer - _flexSpacerHeight).abs() > 0.5) {
+      setState(() => _flexSpacerHeight = spacer);
+    }
+  }
+
   void _onHomeDataRevision() {
     if (!mounted) return;
     setState(() {});
+    _scheduleFlexSpacerRemeasure();
   }
 
   void _onLocalActions() {
     if (!mounted) return;
     setState(() {});
+    _scheduleFlexSpacerRemeasure();
   }
 
   void _onConversationRevision() {
     if (!mounted) return;
     setState(() {});
+    _scheduleFlexSpacerRemeasure();
   }
 
   List<ChatMessageModel> get _homeConversation =>
@@ -206,9 +236,12 @@ class HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
+                _scrollViewportHeight = constraints.maxHeight;
+
                 final scrollBottomPad =
                     HomeScrollLayout.scrollContentBottomPadding(context);
 
+                // Presupuesto HOY sin reservar altura de Aris (v0.48.51).
                 final visibleCounts = HomeVisibleCounts.forListViewport(
                   listViewportHeight: constraints.maxHeight,
                   availableEvents: homeEvents.length,
@@ -216,62 +249,56 @@ class HomeScreenState extends State<HomeScreen> {
                   availableMails: TodaySummaryCard.demoMailCatalogLength,
                 );
 
+                final flexSpacer = _flexSpacerHeight > 0
+                    ? _flexSpacerHeight
+                    : HomeScrollLayout.flexSpacerHeight(
+                        viewportHeight: constraints.maxHeight,
+                        counts: visibleCounts,
+                        context: context,
+                      );
+
                 final sectionGap =
                     HomeScrollLayout.sectionGapBeforeAris(context);
 
-                return CustomScrollView(
+                if (_flexSpacerHeight == 0) {
+                  _scheduleFlexSpacerRemeasure();
+                }
+
+                return ListView(
                   controller: _scrollController,
                   physics: const ClampingScrollPhysics(),
-                  slivers: [
-                    SliverPadding(
+                  padding: EdgeInsets.only(bottom: scrollBottomPad),
+                  children: [
+                    Padding(
                       padding: const EdgeInsets.only(
                         top: AppSpacing.homeFixedDateToEphemeralGap,
                         bottom: AppSpacing.homeGreetingToHoyGap,
                       ),
-                      sliver: const SliverToBoxAdapter(
-                        child: HomeEphemeralGreetingHeader(),
-                      ),
+                      child: const HomeEphemeralGreetingHeader(),
                     ),
-                    SliverToBoxAdapter(
-                      child: TodaySummaryCard(
-                        key: _todaySummaryKey,
-                        events: homeEvents,
-                        tasks: homeTasks,
-                        maxAgendaItems: visibleCounts.agendaItems,
-                        maxTaskItems: visibleCounts.taskItems,
-                        maxMailItems: visibleCounts.mailItems,
-                        onOpenCalendar: widget.onOpenCalendar,
-                        onOpenTasks: widget.onOpenTasks,
-                        onOpenMail: widget.onOpenMail,
-                      ),
+                    TodaySummaryCard(
+                      key: _todaySummaryKey,
+                      events: homeEvents,
+                      tasks: homeTasks,
+                      maxAgendaItems: visibleCounts.agendaItems,
+                      maxTaskItems: visibleCounts.taskItems,
+                      maxMailItems: visibleCounts.mailItems,
+                      onOpenCalendar: widget.onOpenCalendar,
+                      onOpenTasks: widget.onOpenTasks,
+                      onOpenMail: widget.onOpenMail,
                     ),
-                    SliverPadding(
-                      padding: EdgeInsets.only(bottom: scrollBottomPad),
-                      sliver: SliverFillRemaining(
-                      hasScrollBody: false,
-                      fillOverscroll: false,
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            SizedBox(height: sectionGap),
-                            HomeArisReplyCard(
-                              key: _arisCardKey,
-                              activeMessage: arisDisplayMessage,
-                              isSending: _arisIsThinking,
-                              onOpenFullConversation: () =>
-                                  HomeArisChatInsideSheet.show(
-                                context,
-                                onSend: _sendArisMessage,
-                                onMicTap: _onMicPressed,
-                              ),
-                            ),
-                          ],
-                        ),
+                    SizedBox(height: flexSpacer, key: const ValueKey('aris_flex_spacer')),
+                    SizedBox(height: sectionGap),
+                    HomeArisReplyCard(
+                      key: _arisCardKey,
+                      activeMessage: arisDisplayMessage,
+                      isSending: _arisIsThinking,
+                      onOpenFullConversation: () =>
+                          HomeArisChatInsideSheet.show(
+                        context,
+                        onSend: _sendArisMessage,
+                        onMicTap: _onMicPressed,
                       ),
-                    ),
                     ),
                   ],
                 );
