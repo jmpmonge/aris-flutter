@@ -40,16 +40,11 @@ class _TimeWheelSheet extends StatefulWidget {
 class _TimeWheelSheetState extends State<_TimeWheelSheet> {
   static const double _pickerHeight = 216;
 
-  /// Franja activa compacta, centrada sobre las columnas hora:minuto.
-  static const double _selectionBandHeight = 30;
-  static const double _selectionBandWidth = 128;
-  static const double _selectionBandRadius = 14;
-
-  /// Relleno de la franja activa (v0.49.23 — tinte muy sutil por sección).
-  static const double _selectionFillAlpha = 0.07;
-
-  /// Borde/halo mínimo de la franja activa.
-  static const double _selectionBorderAlpha = 0.14;
+  /// Una sola cápsula central (misma geometría Calendario / Tareas).
+  static const double _capsuleHeight = 28;
+  static const double _capsuleWidth = 128;
+  static const double _capsuleRadius = 14;
+  static const double _capsuleFillAlpha = 0.09;
 
   late DateTime _pickerDateTime;
 
@@ -62,6 +57,32 @@ class _TimeWheelSheetState extends State<_TimeWheelSheet> {
   }
 
   TimeOfDay _toTimeOfDay(DateTime dt) => TimeOfDay(hour: dt.hour, minute: dt.minute);
+
+  /// Sin overlay nativo por columna: solo la cápsula central del [Stack].
+  Widget? _noNativeSelectionOverlay(
+    BuildContext context, {
+    required int columnCount,
+    required int selectedIndex,
+  }) {
+    return null;
+  }
+
+  Widget _selectionCapsule() {
+    return IgnorePointer(
+      child: Center(
+        child: SizedBox(
+          width: _capsuleWidth,
+          height: _capsuleHeight,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: widget.accent.withValues(alpha: _capsuleFillAlpha),
+              borderRadius: BorderRadius.circular(_capsuleRadius),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,36 +122,14 @@ class _TimeWheelSheetState extends State<_TimeWheelSheet> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
+                  _selectionCapsule(),
                   CupertinoDatePicker(
                     mode: CupertinoDatePickerMode.time,
                     initialDateTime: _pickerDateTime,
                     use24hFormat: true,
+                    selectionOverlayBuilder: _noNativeSelectionOverlay,
                     onDateTimeChanged: (dt) =>
                         setState(() => _pickerDateTime = dt),
-                  ),
-                  IgnorePointer(
-                    child: Center(
-                      child: SizedBox(
-                        width: _selectionBandWidth,
-                        height: _selectionBandHeight,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: widget.accent.withValues(
-                              alpha: _selectionFillAlpha,
-                            ),
-                            borderRadius: BorderRadius.circular(
-                              _selectionBandRadius,
-                            ),
-                            border: Border.all(
-                              color: widget.accent.withValues(
-                                alpha: _selectionBorderAlpha,
-                              ),
-                              width: 0.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                   ),
                 ],
               ),
