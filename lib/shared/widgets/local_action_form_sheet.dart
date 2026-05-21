@@ -147,9 +147,7 @@ class _TaskFormBodyState extends State<_TaskFormBody> {
     setState(() => _busy = false);
     if (!ok) {
       setState(
-        () => _submitError =
-            'No se pudo crear la tarea. Comprueba que el backend esté '
-            'en marcha y la URL configurada.',
+        () => _submitError = 'No se pudo crear la tarea. Inténtalo de nuevo.',
       );
       return;
     }
@@ -160,16 +158,26 @@ class _TaskFormBodyState extends State<_TaskFormBody> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
+    final bottom = MediaQuery.viewInsetsOf(context).bottom;
+    final pad = EdgeInsets.fromLTRB(
+      AppSpacing.lg,
+      AppSpacing.sm,
+      AppSpacing.lg,
+      AppSpacing.md + bottom,
+    );
+
     return SingleChildScrollView(
-      padding: LocalActionFormSheet._paddingFor(context),
+      padding: pad,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          LocalActionFormSheet._sheetHeader(
-            context,
+          Text(
             'Nueva tarea',
-            subtitle: 'Se guarda en el servidor (misma lista que el chat).',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
           ),
+          const SizedBox(height: AppSpacing.md),
           const FormSectionTitle('Título'),
           AppTextField(
             controller: _title,
@@ -177,14 +185,14 @@ class _TaskFormBodyState extends State<_TaskFormBody> {
             errorText: _titleError,
             textInputAction: TextInputAction.next,
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.sm),
           const FormSectionTitle('Descripción (opcional)'),
           AppTextField(
             controller: _description,
             maxLines: 3,
             hint: 'Detalles breves',
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.sm),
           const FormSectionTitle('Prioridad'),
           SegmentedButton<LocalTaskPriority>(
             segments: [
@@ -219,17 +227,12 @@ class _TaskFormBodyState extends State<_TaskFormBody> {
                   ),
             ),
           ],
+          const SizedBox(height: AppSpacing.md),
           AppFormButton(
             label: _busy ? 'Guardando…' : 'Crear tarea',
             onPressed: _busy ? null : () => _submit(),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          AppFormButton(
-            label: 'Cancelar',
-            primary: false,
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          SizedBox(height: scheme.brightness == Brightness.dark ? 8 : 0),
+          SizedBox(height: scheme.brightness == Brightness.dark ? 6 : 0),
         ],
       ),
     );

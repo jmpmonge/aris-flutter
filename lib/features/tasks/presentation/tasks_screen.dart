@@ -6,6 +6,7 @@ import '../../../core/models/task_model.dart';
 import '../../../core/models/task_ui_buckets.dart';
 import '../../../core/repositories/repositories.dart';
 import '../../../shared/widgets/app_header.dart';
+import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../shared/widgets/local_action_form_sheet.dart';
 import '../../../theme/app_spacing.dart';
 import 'widgets/compact_expandable_task_tile.dart';
@@ -24,6 +25,7 @@ class TasksScreen extends StatefulWidget {
 class _TasksScreenState extends State<TasksScreen> {
   final Set<String> _busyTaskIds = <String>{};
   final Map<String, bool> _localCompletionOverride = <String, bool>{};
+  bool _arisSending = false;
 
   static const _taskBackendFail =
       'No he podido actualizar la tarea. Revisa la conexión con el backend.';
@@ -127,6 +129,25 @@ class _TasksScreenState extends State<TasksScreen> {
   void _onTaskReads() {
     _localCompletionOverride.clear();
     if (mounted) setState(() {});
+  }
+
+  double _listBottomPadding(BuildContext context) {
+    return HomeArisFixedInputBar.dockHeight +
+        AppSpacing.homeScrollBottomBreathing;
+  }
+
+  Future<void> _sendArisMessage(String text) async {
+    final t = text.trim();
+    if (t.isEmpty) return;
+
+    setState(() => _arisSending = true);
+    await Repositories.assistant.sendMessage(t);
+    if (!mounted) return;
+    setState(() => _arisSending = false);
+  }
+
+  void _onMicPressed() {
+    Repositories.assistant.sendVoicePendingNotice();
   }
 
   Future<void> _onTaskCheckbox(TaskModel t, bool? nextCompleted) async {
@@ -249,7 +270,7 @@ class _TasksScreenState extends State<TasksScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (final row in sections) _buildSection(context, row.$1, row.$2),
-          const SizedBox(height: AppSpacing.fabStackClearance),
+          SizedBox(height: _listBottomPadding(context)),
         ],
       );
     }
@@ -257,20 +278,34 @@ class _TasksScreenState extends State<TasksScreen> {
     return SafeArea(
       top: true,
       bottom: false,
-      child: CustomScrollView(
-        key: const Key('tab_tasks'),
-        slivers: [
-          SliverToBoxAdapter(
-            child: AppHeader(
-              title: 'Tareas',
-              trailing: IconButton.filledTonal(
-                onPressed: () => LocalActionFormSheet.showTaskForm(context),
-                icon: const Icon(Icons.add_rounded),
-                tooltip: 'Nueva tarea',
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: CustomScrollView(
+              key: const Key('tab_tasks'),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: AppHeader(
+                    title: 'Tareas',
+                    trailing: IconButton.filledTonal(
+                      onPressed: () =>
+                          LocalActionFormSheet.showTaskForm(context),
+                      icon: const Icon(Icons.add_rounded),
+                      tooltip: 'Nueva tarea',
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(child: bodyChildren()),
+              ],
             ),
           ),
-          SliverToBoxAdapter(child: bodyChildren()),
+          HomeArisFixedInputBar(
+            hintText: 'Pide a Aris crear o buscar tareas…',
+            isSending: _arisSending,
+            onSubmit: _sendArisMessage,
+            onMicPressed: _onMicPressed,
+          ),
         ],
       ),
     );
