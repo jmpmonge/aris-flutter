@@ -39,7 +39,11 @@ class _TimeWheelSheet extends StatefulWidget {
 
 class _TimeWheelSheetState extends State<_TimeWheelSheet> {
   static const double _pickerHeight = 216;
-  static const double _selectionBandHeight = 34;
+
+  /// Franja activa compacta, centrada sobre las columnas hora:minuto.
+  static const double _selectionBandHeight = 30;
+  static const double _selectionBandWidth = 128;
+  static const double _selectionBandRadius = 14;
 
   /// Relleno de la franja activa (v0.49.23 — tinte muy sutil por sección).
   static const double _selectionFillAlpha = 0.07;
@@ -105,24 +109,25 @@ class _TimeWheelSheetState extends State<_TimeWheelSheet> {
                         setState(() => _pickerDateTime = dt),
                   ),
                   IgnorePointer(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: widget.accent.withValues(
-                            alpha: _selectionFillAlpha,
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
+                    child: Center(
+                      child: SizedBox(
+                        width: _selectionBandWidth,
+                        height: _selectionBandHeight,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
                             color: widget.accent.withValues(
-                              alpha: _selectionBorderAlpha,
+                              alpha: _selectionFillAlpha,
                             ),
-                            width: 0.5,
+                            borderRadius: BorderRadius.circular(
+                              _selectionBandRadius,
+                            ),
+                            border: Border.all(
+                              color: widget.accent.withValues(
+                                alpha: _selectionBorderAlpha,
+                              ),
+                              width: 0.5,
+                            ),
                           ),
-                        ),
-                        child: const SizedBox(
-                          height: _selectionBandHeight,
-                          width: double.infinity,
                         ),
                       ),
                     ),
