@@ -68,10 +68,8 @@ class ProfileScreen extends StatelessWidget {
           AppHeader(
             title: 'Perfil',
             subtitle: 'Tu espacio en Aris',
-            trailing: IconButton.filledTonal(
+            trailing: _ProfileBackButton(
               onPressed: () => _handleBack(context),
-              icon: const Icon(Icons.arrow_back_rounded),
-              tooltip: 'Volver a Inicio',
             ),
           ),
           Padding(
@@ -199,6 +197,53 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Cerrar Perfil — círculo suave; X de cierre, no flecha de navegación (v0.49.35).
+class _ProfileBackButton extends StatelessWidget {
+  const _ProfileBackButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  static const double _size = 36;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Tooltip(
+      message: 'Cerrar',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          customBorder: const CircleBorder(),
+          child: Container(
+            width: _size,
+            height: _size,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: scheme.surfaceContainerHighest.withValues(
+                alpha: isDark ? 0.26 : 0.34,
+              ),
+              border: Border.all(
+                color: scheme.outlineVariant.withValues(
+                  alpha: isDark ? 0.32 : 0.42,
+                ),
+              ),
+            ),
+            child: Icon(
+              Icons.close_rounded,
+              size: 20,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+            ),
+          ),
+        ),
       ),
     );
   }
