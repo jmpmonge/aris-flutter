@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/repositories/repositories.dart';
 import '../../../shared/layout/breakpoints.dart';
+import '../../../shared/widgets/manual_editor_time_meta_chip.dart';
 import '../../../shared/widgets/section_accent_time_wheel_picker.dart';
 import '../../../theme/app_spacing.dart';
 
@@ -329,10 +330,11 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
                       valueLabel: _date != null ? _dateLabel(_date!) : null,
                     ),
                     const SizedBox(width: AppSpacing.xs),
-                    _metaChip(
-                      icon: Icons.schedule_outlined,
+                    ManualEditorTimeMetaChip(
+                      accent: TaskManualEditorAccent.metaActive,
                       active: _time != null,
                       onTap: _pickTime,
+                      enabled: !_busy,
                       valueLabel: _time != null ? _timeLabel(_time!) : null,
                     ),
                     const SizedBox(width: AppSpacing.xs),
@@ -383,13 +385,7 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
               ],
               FilledButton(
                 onPressed: _busy ? null : _submit,
-                style: FilledButton.styleFrom(
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                  ),
-                ),
+                style: ManualEditorPrimaryCtaStyle.style(context),
                 child: Text(_busy ? 'Guardando…' : 'Crear tarea'),
               ),
             ],

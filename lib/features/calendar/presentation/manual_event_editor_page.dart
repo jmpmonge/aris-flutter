@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/services/local_action_service.dart';
 import '../../../shared/layout/breakpoints.dart';
+import '../../../shared/widgets/manual_editor_time_meta_chip.dart';
 import '../../../shared/widgets/section_accent_time_wheel_picker.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
@@ -86,7 +87,6 @@ class _ManualEventEditorSheetState extends State<_ManualEventEditorSheet> {
   ];
 
   static const _metaIconSizeDate = 17.0;
-  static const _metaIconSizeTime = 15.0;
 
   @override
   void dispose() {
@@ -347,12 +347,11 @@ class _ManualEventEditorSheetState extends State<_ManualEventEditorSheet> {
                       valueLabel: _date != null ? _dateLabel(_date!) : null,
                     ),
                     const SizedBox(width: AppSpacing.xs),
-                    _metaChip(
-                      icon: Icons.access_time_rounded,
+                    ManualEditorTimeMetaChip(
+                      accent: EventManualEditorAccent.metaActive(context),
                       active: _time != null,
                       onTap: _pickTime,
                       valueLabel: _time != null ? _timeLabel(_time!) : null,
-                      iconSize: _metaIconSizeTime,
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     _metaChip(
@@ -390,13 +389,7 @@ class _ManualEventEditorSheetState extends State<_ManualEventEditorSheet> {
           ),
           child: FilledButton(
             onPressed: _submit,
-            style: FilledButton.styleFrom(
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              ),
-            ),
+            style: ManualEditorPrimaryCtaStyle.style(context),
             child: const Text('Crear evento'),
           ),
         ),
