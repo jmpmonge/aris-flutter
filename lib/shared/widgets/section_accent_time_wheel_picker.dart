@@ -38,6 +38,15 @@ class _TimeWheelSheet extends StatefulWidget {
 }
 
 class _TimeWheelSheetState extends State<_TimeWheelSheet> {
+  static const double _pickerHeight = 216;
+  static const double _selectionBandHeight = 34;
+
+  /// Relleno de la franja activa (v0.49.23 — tinte muy sutil por sección).
+  static const double _selectionFillAlpha = 0.07;
+
+  /// Borde/halo mínimo de la franja activa.
+  static const double _selectionBorderAlpha = 0.14;
+
   late DateTime _pickerDateTime;
 
   @override
@@ -84,12 +93,41 @@ class _TimeWheelSheetState extends State<_TimeWheelSheet> {
           CupertinoTheme(
             data: cupertinoBase.copyWith(primaryColor: widget.accent),
             child: SizedBox(
-              height: 216,
-              child: CupertinoDatePicker(
-                mode: CupertinoDatePickerMode.time,
-                initialDateTime: _pickerDateTime,
-                use24hFormat: true,
-                onDateTimeChanged: (dt) => setState(() => _pickerDateTime = dt),
+              height: _pickerHeight,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CupertinoDatePicker(
+                    mode: CupertinoDatePickerMode.time,
+                    initialDateTime: _pickerDateTime,
+                    use24hFormat: true,
+                    onDateTimeChanged: (dt) =>
+                        setState(() => _pickerDateTime = dt),
+                  ),
+                  IgnorePointer(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: widget.accent.withValues(
+                            alpha: _selectionFillAlpha,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: widget.accent.withValues(
+                              alpha: _selectionBorderAlpha,
+                            ),
+                            width: 0.5,
+                          ),
+                        ),
+                        child: const SizedBox(
+                          height: _selectionBandHeight,
+                          width: double.infinity,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
