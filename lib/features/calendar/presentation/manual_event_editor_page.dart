@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/services/local_action_service.dart';
 import '../../../shared/layout/breakpoints.dart';
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
-import '../../tasks/presentation/manual_task_editor_page.dart';
+
+/// Azul funcional de Calendario en metadatos activos del editor manual (v0.49.22).
+abstract final class EventManualEditorAccent {
+  static Color metaActive(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? AppColors.calendarBlueDark : AppColors.calendarBlue;
+  }
+}
 
 /// Editor manual de evento: sheet alto alineado con Tareas (v0.49.22).
 abstract final class ManualEventEditorPage {
@@ -54,7 +63,9 @@ class _ManualEventEditorSheet extends StatefulWidget {
 class _ManualEventEditorSheetState extends State<_ManualEventEditorSheet> {
   final _title = TextEditingController();
   final _notes = TextEditingController();
+  final _timeInput = TextEditingController();
   final _notesFocus = FocusNode();
+  final _timeFocus = FocusNode();
 
   DateTime? _date;
   TimeOfDay? _time;
@@ -76,11 +87,23 @@ class _ManualEventEditorSheetState extends State<_ManualEventEditorSheet> {
     'dic',
   ];
 
+  static const _metaIconSizeDate = 17.0;
+  static const _metaIconSizeTime = 15.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _timeInput.addListener(_onTimeInputChanged);
+  }
+
   @override
   void dispose() {
+    _timeInput.removeListener(_onTimeInputChanged);
     _title.dispose();
     _notes.dispose();
+    _timeInput.dispose();
     _notesFocus.dispose();
+    _timeFocus.dispose();
     super.dispose();
   }
 
@@ -98,6 +121,21 @@ class _ManualEventEditorSheetState extends State<_ManualEventEditorSheet> {
     if (_time != null) parts.add(_timeLabel(_time!));
     if (parts.isEmpty) return null;
     return parts.join(' · ');
+  }
+
+  void _onTimeInputChanged() {
+    final parsed = _parseHm(_timeInput.text);
+    if (parsed == _time) return;
+    setState(() => _time = parsed);
+  }
+
+  TimeOfDay? _parseHm(String raw) {
+    final m = RegExp(r'^(\d{2}):(\d{2})$').firstMatch(raw.trim());
+    if (m == null) return null;
+    final h = int.tryParse(m.group(1)!);
+    final min = int.tryParse(m.group(2)!);
+    if (h == null || min == null || h > 23 || min > 59) return null;
+    return TimeOfDay(hour: h, minute: min);
   }
 
   InputDecoration _fieldDecoration(
@@ -151,15 +189,6 @@ class _ManualEventEditorSheetState extends State<_ManualEventEditorSheet> {
     );
     if (!mounted || picked == null) return;
     setState(() => _date = DateTime(picked.year, picked.month, picked.day));
-  }
-
-  Future<void> _pickTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _time ?? TimeOfDay.now(),
-    );
-    if (!mounted || picked == null) return;
-    setState(() => _time = picked);
   }
 
   Future<void> _editLocation() async {
@@ -219,33 +248,30 @@ class _ManualEventEditorSheetState extends State<_ManualEventEditorSheet> {
     required bool active,
     required VoidCallback onTap,
     String? valueLabel,
-    bool iconOnly = false,
+    double iconSize = _metaIconSizeDate,
   }) {
     final scheme = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final accent = EventManualEditorAccent.metaActive(context);
     final color = active
-        ? TaskManualEditorAccent.metaActive
+        ? accent
         : scheme.onSurfaceVariant.withValues(alpha: 0.38);
-    final iconSize = iconOnly ? 18.0 : 17.0;
 
     return Material(
       color: active
-          ? TaskManualEditorAccent.metaActive.withValues(alpha: 0.14)
+          ? accent.withValues(alpha: 0.14)
           : scheme.surfaceContainerHighest.withValues(alpha: 0.35),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: iconOnly ? 8 : 10,
-            vertical: 6,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: iconSize, color: color),
-              if (!iconOnly && valueLabel != null && valueLabel.isNotEmpty) ...[
+              if (valueLabel != null && valueLabel.isNotEmpty) ...[
                 const SizedBox(width: 5),
                 Text(
                   valueLabel,
@@ -258,6 +284,64 @@ class _ManualEventEditorSheetState extends State<_ManualEventEditorSheet> {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _timeMetaChip() {
+    final scheme = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final accent = EventManualEditorAccent.metaActive(context);
+    final active = _time != null;
+    final color = active
+        ? accent
+        : scheme.onSurfaceVariant.withValues(alpha: 0.38);
+    final hintStyle = tt.labelSmall?.copyWith(
+      color: scheme.onSurfaceVariant.withValues(alpha: 0.35),
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.2,
+    );
+    final valueStyle = tt.labelSmall?.copyWith(
+      color: color,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.2,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+
+    return Material(
+      color: active
+          ? accent.withValues(alpha: 0.14)
+          : scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 8, right: 6, top: 5, bottom: 5),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.access_time_rounded,
+              size: _metaIconSizeTime,
+              color: color,
+            ),
+            const SizedBox(width: 4),
+            SizedBox(
+              width: 40,
+              child: TextField(
+                controller: _timeInput,
+                focusNode: _timeFocus,
+                style: valueStyle,
+                decoration: _fieldDecoration('hh:mm', hintStyle),
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.next,
+                maxLength: 5,
+                buildCounter: (_, {required currentLength, required isFocused, maxLength}) =>
+                    null,
+                inputFormatters: [_HmTimeInputFormatter()],
+                onSubmitted: (_) => _notesFocus.requestFocus(),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -319,7 +403,7 @@ class _ManualEventEditorSheetState extends State<_ManualEventEditorSheet> {
                     style: titleStyle,
                     maxLines: 2,
                     textInputAction: TextInputAction.next,
-                    onSubmitted: (_) => _notesFocus.requestFocus(),
+                    onSubmitted: (_) => _timeFocus.requestFocus(),
                     decoration: _fieldDecoration(
                       'Título del evento',
                       titleHint,
@@ -337,18 +421,14 @@ class _ManualEventEditorSheetState extends State<_ManualEventEditorSheet> {
                       valueLabel: _date != null ? _dateLabel(_date!) : null,
                     ),
                     const SizedBox(width: AppSpacing.xs),
-                    _metaChip(
-                      icon: Icons.schedule_outlined,
-                      active: _time != null,
-                      onTap: _pickTime,
-                      valueLabel: _time != null ? _timeLabel(_time!) : null,
-                    ),
+                    _timeMetaChip(),
                     const SizedBox(width: AppSpacing.xs),
                     _metaChip(
                       icon: Icons.place_outlined,
                       active: _location.isNotEmpty,
                       onTap: _editLocation,
                       valueLabel: locationLabel,
+                      iconSize: _metaIconSizeDate,
                     ),
                   ],
                 ),
@@ -389,6 +469,31 @@ class _ManualEventEditorSheetState extends State<_ManualEventEditorSheet> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Entrada compacta `hh:mm` con dos dígitos, dos puntos y dos dígitos.
+final class _HmTimeInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty) {
+      return const TextEditingValue();
+    }
+
+    final buf = StringBuffer();
+    for (var i = 0; i < digits.length && i < 4; i++) {
+      if (i == 2) buf.write(':');
+      buf.write(digits[i]);
+    }
+    final text = buf.toString();
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
     );
   }
 }
