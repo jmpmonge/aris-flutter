@@ -2,15 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../core/models/local_action_model.dart';
 import '../../../core/models/note_model.dart';
 import '../../../core/repositories/repositories.dart';
-import '../../../core/services/local_action_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/home_aris_reply_card.dart';
-import '../../../shared/widgets/local_action_card.dart';
-import '../../../shared/widgets/local_action_empty_state.dart';
 import 'manual_note_canvas_sheet.dart';
 import '../../../theme/app_spacing.dart';
 
@@ -56,22 +52,16 @@ class _NotesScreenState extends State<NotesScreen> {
   void initState() {
     super.initState();
     unawaited(Repositories.note.refreshFromBackend());
-    LocalActionService.revision.addListener(_onArisActions);
     Repositories.note.readRevision.addListener(_onNoteReads);
   }
 
   @override
   void dispose() {
     Repositories.note.readRevision.removeListener(_onNoteReads);
-    LocalActionService.revision.removeListener(_onArisActions);
     super.dispose();
   }
 
   void _onNoteReads() {
-    if (mounted) setState(() {});
-  }
-
-  void _onArisActions() {
     if (mounted) setState(() {});
   }
 
@@ -231,8 +221,6 @@ class _NotesScreenState extends State<NotesScreen> {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final recent = Repositories.note.getRecentNotes();
-    final arisNotes =
-        LocalActionService.getActionsByType(LocalActionType.note);
 
     return SafeArea(
       top: true,
@@ -253,48 +241,6 @@ class _NotesScreenState extends State<NotesScreen> {
                     tooltip: 'Nueva nota',
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.md,
-                    AppSpacing.md,
-                    AppSpacing.md,
-                    AppSpacing.sm,
-                  ),
-                  child: Text(
-                    'Notas creadas por Aris',
-                    style: text.labelSmall?.copyWith(
-                      letterSpacing: 1.1,
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                if (arisNotes.isEmpty)
-                  const LocalActionEmptyState(
-                    message: 'Aún no hay notas de Aris.',
-                  )
-                else
-                  SizedBox(
-                    height: 132,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                      ),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: arisNotes.length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(width: AppSpacing.sm),
-                      itemBuilder: (context, i) {
-                        return SizedBox(
-                          width: 280,
-                          child: LocalActionCard(
-                            action: arisNotes[i],
-                            compact: true,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.md,
