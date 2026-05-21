@@ -64,11 +64,10 @@ class LocalActionCard extends StatelessWidget {
       );
     }
 
+    // v0.49.15: sin chips de categoría/etiqueta en notas (noteCategory omitido).
     final metaChips = <Widget>[
       if (action.taskPriority != null)
         chip(action.taskPriority!.displayLabel, primary: false),
-      if (action.noteCategory != null && action.noteCategory!.isNotEmpty)
-        chip(action.noteCategory!, primary: false),
       if (action.eventWhenText != null && action.eventWhenText!.isNotEmpty)
         chip(action.eventWhenText!, primary: false),
     ];

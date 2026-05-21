@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/services/local_action_service.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Lienzo manual de nota: título + línea sutil + cuerpo (v0.49.14).
+/// Lienzo manual de nota: solo título y cuerpo, sin etiquetas (v0.49.14–15).
 abstract final class ManualNoteCanvasSheet {
   static Future<void> show(BuildContext context) {
     return Navigator.of(context).push<void>(

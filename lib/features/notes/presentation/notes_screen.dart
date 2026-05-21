@@ -11,11 +11,10 @@ import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../shared/widgets/local_action_card.dart';
 import '../../../shared/widgets/local_action_empty_state.dart';
-import '../../../shared/widgets/section_title.dart';
 import 'manual_note_canvas_sheet.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Notas — buscador, notas rápidas y lista **mock**.
+/// Notas — creación manual (+), listado y canal Aris (sin tags visibles, v0.49.15).
 class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key});
 
@@ -231,7 +230,6 @@ class _NotesScreenState extends State<NotesScreen> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    final quick = Repositories.note.getQuickLabels();
     final recent = Repositories.note.getRecentNotes();
     final arisNotes =
         LocalActionService.getActionsByType(LocalActionType.note);
@@ -253,28 +251,6 @@ class _NotesScreenState extends State<NotesScreen> {
                     onPressed: () => ManualNoteCanvasSheet.show(context),
                     icon: const Icon(Icons.add_rounded),
                     tooltip: 'Nueva nota',
-                  ),
-                ),
-                const SectionTitle(title: 'Notas rápidas'),
-                SizedBox(
-                  height: AppSpacing.quickChipsStripHeight,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                    ),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: quick.length,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(width: AppSpacing.xs),
-                    itemBuilder: (context, i) {
-                      return ActionChip(
-                        label: Text(quick[i]),
-                        side: BorderSide(
-                          color: scheme.outline.withValues(alpha: 0.35),
-                        ),
-                        onPressed: () {},
-                      );
-                    },
                   ),
                 ),
                 Padding(
