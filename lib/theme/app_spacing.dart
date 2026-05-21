@@ -50,6 +50,9 @@ abstract final class AppSpacing {
   /// Separación inferior en listas cuando hay FAB flotante centrado.
   static const double fabStackClearance = 100;
 
+  /// Extra bajo la rejilla Semana (FAB centerFloat + nav; v0.49.4).
+  static const double calendarWeekBottomClearanceExtra = 48;
+
   /// Espacio vertical **uniforme** entre bloques de Inicio (cabecera, tarjetas, reciente)
   /// y respiro final antes de la barra de chat. Valor intermedio (16–24) para ritmo premium.
   static const double homeSectionSpacing = 20;

@@ -205,7 +205,7 @@ class CalendarDayView extends StatelessWidget {
   }
 }
 
-/// Cabecera semanal + columnas por día (mock).
+/// Rejilla horaria semanal compacta (misma franja que [CalendarDayView], v0.49.4).
 class CalendarWeekView extends StatelessWidget {
   const CalendarWeekView({
     super.key,
@@ -215,130 +215,216 @@ class CalendarWeekView extends StatelessWidget {
 
   final DateTime weekStart;
 
-  /// Fuente principal (backend + fallback en [CalendarRepository]).
   final CalendarRepository calendarRepository;
 
   static const weekdayShortLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
-  /// Ancho mínimo aproximado del [PopupMenuButton] de acciones backend; por
-  /// debajo de esto el menú fuerza overflow en columnas semanales estrechas.
-  static const double _kMinWidthForWeekCellBackendMenu = 52;
+  static const int _dayCount = 7;
+
+  /// Misma ventana horaria que la vista Día.
+  static const int _firstHour = 7;
+  static const int _lastHour = 21;
+
+  /// Altura fija por franja: evita overflow vertical en columnas estrechas.
+  static const double _kWeekSlotHeight = 30;
+
+  static EventModel? _eventStartingAtHour(List<EventModel> dayEvents, int hour) {
+    for (final e in dayEvents) {
+      if (!e.hasCivilCalendarDate) continue;
+      if (e.start.hour == hour) return e;
+    }
+    return null;
+  }
+
+  Widget _weekDayHeader({
+    required BuildContext context,
+    required int dayIndex,
+    required DateTime day,
+    required bool isToday,
+  }) {
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: isToday
+            ? scheme.primaryContainer.withValues(alpha: 0.4)
+            : scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        border: Border.all(
+          color: isToday
+              ? scheme.primary.withValues(alpha: 0.35)
+              : scheme.outline.withValues(alpha: 0.15),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+        child: Column(
+          children: [
+            Text(
+              weekdayShortLabels[dayIndex],
+              style: text.labelSmall?.copyWith(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+            Text(
+              '${day.day}',
+              style: text.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                height: 1.1,
+                color: isToday ? scheme.primary : scheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Bloque mínimo: solo título (la hora va en la columna izquierda de la rejilla).
+  Widget _weekEventBlock(BuildContext context, EventModel event) {
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: scheme.primaryContainer.withValues(alpha: 0.55),
+          border: Border.all(
+            color: scheme.primary.withValues(alpha: 0.22),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              event.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: text.labelSmall?.copyWith(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                height: 1,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _weekHourSlot({
+    required BuildContext context,
+    required int hour,
+    required List<EventModel> dayEvents,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final match = _eventStartingAtHour(dayEvents, hour);
+
+    return SizedBox(
+      height: _kWeekSlotHeight,
+      child: ClipRect(
+        child: Container(
+          padding: const EdgeInsets.only(left: AppSpacing.xxs),
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(
+                color: scheme.outline.withValues(alpha: 0.22),
+              ),
+            ),
+          ),
+          alignment: Alignment.centerLeft,
+          child: match == null ? null : _weekEventBlock(context, match),
+        ),
+      ),
+    );
+  }
+
+  Widget _weekHourRow({
+    required BuildContext context,
+    required int hour,
+    required List<List<EventModel>> eventsByDay,
+  }) {
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: AppSpacing.calendarTimeColumnWidth,
+            child: Text(
+              '${hour.toString().padLeft(2, '0')}:00',
+              style: text.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+                height: 1.2,
+              ),
+            ),
+          ),
+          for (var i = 0; i < _dayCount; i++)
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(left: i == 0 ? AppSpacing.xxs : 2),
+                child: _weekHourSlot(
+                  context: context,
+                  hour: hour,
+                  dayEvents: eventsByDay[i],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final now = DateTime.now();
+    final eventsByDay = List.generate(_dayCount, (i) {
+      final d = weekStart.add(Duration(days: i));
+      return calendarRepository.getWeekEvents(d);
+    });
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Semana · reparto simulado',
-            style: text.labelSmall?.copyWith(
-              letterSpacing: 0.8,
-              color: scheme.primary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: List.generate(7, (i) {
-              final d = weekStart.add(Duration(days: i));
-              final events = calendarRepository.getWeekEvents(d);
-              final isToday =
-                  d.year == DateTime.now().year &&
-                  d.month == DateTime.now().month &&
-                  d.day == DateTime.now().day;
-
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.xxs / 2),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: isToday
-                          ? scheme.primaryContainer.withValues(alpha: 0.35)
-                          : scheme.surfaceContainerHighest.withValues(
-                              alpha: 0.25,
-                            ),
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                      border: Border.all(
-                        color: scheme.outline.withValues(alpha: 0.18),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.xs),
-                      child: Column(
-                        children: [
-                          Text(
-                            weekdayShortLabels[i],
-                            style: text.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: scheme.primary,
-                            ),
-                          ),
-                          Text(
-                            '${d.day}',
-                            style: text.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.xs),
-                          if (events.isEmpty)
-                            Text(
-                              '—',
-                              style: text.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                              ),
-                            )
-                          else
-                            ...events.map(
-                              (e) => Padding(
-                                padding: const EdgeInsets.only(
-                                  bottom: AppSpacing.xxs,
-                                ),
-                                child: LayoutBuilder(
-                                  builder: (context, constraints) {
-                                    final showBackendMenu =
-                                        calendarShouldShowBackendActions(e) &&
-                                            constraints.maxWidth >=
-                                                _kMinWidthForWeekCellBackendMenu;
-                                    return Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            e.title,
-                                            maxLines: 2,
-                                            softWrap: true,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: text.bodySmall
-                                                ?.copyWith(height: 1.2),
-                                          ),
-                                        ),
-                                        if (showBackendMenu)
-                                          calendarBackendEventOverflowMenu(
-                                            context,
-                                            e,
-                                          ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                        ],
+            children: [
+              const SizedBox(width: AppSpacing.calendarTimeColumnWidth),
+              for (var i = 0; i < _dayCount; i++)
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(left: i == 0 ? AppSpacing.xxs : 2),
+                    child: _weekDayHeader(
+                      context: context,
+                      dayIndex: i,
+                      day: weekStart.add(Duration(days: i)),
+                      isToday: calendarSameLocalDay(
+                        weekStart.add(Duration(days: i)),
+                        now,
                       ),
                     ),
                   ),
                 ),
-              );
-            }),
+            ],
           ),
+          const SizedBox(height: AppSpacing.sm),
+          for (int h = _firstHour; h <= _lastHour; h++)
+            _weekHourRow(
+              context: context,
+              hour: h,
+              eventsByDay: eventsByDay,
+            ),
+          const SizedBox(height: AppSpacing.md),
           CalendarTextualBackendEventsPanel(
             repository: calendarRepository,
           ),

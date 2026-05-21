@@ -14,7 +14,7 @@ import '../../../shared/widgets/local_action_empty_state.dart';
 import '../../../shared/widgets/local_action_form_sheet.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Calendario — vistas **Día / Semana / Mes** simuladas (sin calendario real).
+/// Calendario — vistas Día / Semana / Mes (v0.49.4: reserva inferior Semana).
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
 
@@ -46,6 +46,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
     if (mounted) setState(() {});
   }
 
+  /// Aire inferior del scroll: Semana necesita más reserva por FAB centrado.
+  double _listBottomPadding(BuildContext context) {
+    var pad = AppSpacing.fabStackClearance;
+    if (_view == 1) {
+      pad += AppSpacing.calendarWeekBottomClearanceExtra;
+      pad += MediaQuery.paddingOf(context).bottom;
+    }
+    return pad;
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -70,12 +80,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
       bottom: false,
       child: ListView(
         key: const Key('tab_calendar'),
-        padding: const EdgeInsets.only(bottom: AppSpacing.fabStackClearance),
+        padding: EdgeInsets.only(bottom: _listBottomPadding(context)),
         children: [
           AppHeader(
             title: 'Calendario',
-            subtitle:
-                'Servidor PATCH/DELETE cuando GET /events OK · datos locales como respaldo',
+            subtitle: _view == 1
+                ? null
+                : 'Servidor PATCH/DELETE cuando GET /events OK · datos locales como respaldo',
             trailing: IconButton.filledTonal(
               onPressed: () => LocalActionFormSheet.showEventForm(context),
               icon: const Icon(Icons.add_rounded),
@@ -95,19 +106,23 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: Text(
-              switch (_view) {
-                0 => 'Vista día · franjas horarias mock',
-                1 => 'Vista semana · columnas por día mock',
-                _ => 'Vista mes · cuadrícula y día seleccionado mock',
-              },
-              style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+          if (_view != 1) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Text(
+                switch (_view) {
+                  0 => 'Vista día · franjas horarias mock',
+                  _ => 'Vista mes · cuadrícula y día seleccionado mock',
+                },
+                style: text.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.sm),
+          ],
           calendarBody,
+          if (_view == 1) const SizedBox(height: AppSpacing.lg),
           const SizedBox(height: AppSpacing.lg),
           if (Repositories.calendar.readsFromBackend &&
               Repositories.calendar.allBackendEvents.isNotEmpty) ...[
@@ -181,11 +196,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: Text(
               'Eventos creados por Aris',
-              style: text.labelSmall?.copyWith(
-                letterSpacing: 0.8,
-                color: scheme.primary,
-                fontWeight: FontWeight.w700,
-              ),
+              style: _view == 1
+                  ? text.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+                      fontWeight: FontWeight.w500,
+                    )
+                  : text.labelSmall?.copyWith(
+                      letterSpacing: 0.8,
+                      color: scheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
