@@ -11,7 +11,7 @@ import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../shared/widgets/local_action_form_sheet.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Calendario — input fijo de Aris al pie como Home (v0.49.5).
+/// Calendario — input fijo de Aris al pie como Home (v0.49.10).
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
 
@@ -86,9 +86,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
               children: [
                 AppHeader(
                   title: 'Calendario',
-                  subtitle: _view == 1
-                      ? null
-                      : 'Servidor PATCH/DELETE cuando GET /events OK · datos locales como respaldo',
+                  subtitle: _view == 2
+                      ? 'Servidor PATCH/DELETE cuando GET /events OK · datos locales como respaldo'
+                      : null,
                   trailing: IconButton.filledTonal(
                     onPressed: () =>
                         LocalActionFormSheet.showEventForm(context),
@@ -111,16 +111,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                if (_view != 1) ...[
+                if (_view == 2) ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.md,
                     ),
                     child: Text(
-                      switch (_view) {
-                        0 => 'Vista día · franjas horarias mock',
-                        _ => 'Vista mes · cuadrícula y día seleccionado mock',
-                      },
+                      'Vista mes · cuadrícula y día seleccionado mock',
                       style: text.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),

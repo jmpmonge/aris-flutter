@@ -13,7 +13,7 @@ bool calendarSameLocalDay(DateTime a, DateTime ref) {
   return al.year == rl.year && al.month == rl.month && al.day == rl.day;
 }
 
-/// Franja horaria vertical (vista día) — eventos mock por hora.
+/// Franja horaria vertical (vista día, v0.49.10).
 class CalendarDayView extends StatelessWidget {
   const CalendarDayView({super.key, required this.events});
 
@@ -189,15 +189,6 @@ class CalendarDayView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Hoy · franjas horarias (mock)',
-            style: text.labelSmall?.copyWith(
-              letterSpacing: 0.8,
-              color: scheme.primary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
           for (int h = _firstHour; h <= _lastHour; h++) hourRow(h),
           _textualDatesSection(context),
         ],
