@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/repositories/repositories.dart';
-import '../../../theme/app_spacing.dart';
 import '../../../shared/layout/breakpoints.dart';
+import '../../../shared/widgets/section_accent_time_wheel_picker.dart';
+import '../../../theme/app_spacing.dart';
 
 /// Naranja solo para metadatos activos en el editor manual (v0.49.20).
 abstract final class TaskManualEditorAccent {
@@ -160,9 +161,10 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
   }
 
   Future<void> _pickTime() async {
-    final picked = await showTimePicker(
+    final picked = await SectionAccentTimeWheelPicker.show(
       context: context,
-      initialTime: _time ?? TimeOfDay.now(),
+      accent: TaskManualEditorAccent.metaActive,
+      initialTime: _time,
     );
     if (!mounted || picked == null) return;
     setState(() => _time = picked);
