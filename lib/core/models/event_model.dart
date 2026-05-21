@@ -28,6 +28,8 @@ class EventModel {
     this.sourceText,
     this.createdAt,
     this.updatedAt,
+    this.weekIconKey,
+    this.weekLabelText,
   });
 
   /// `true` cuando el id es generado en cliente (**no** valido para PATCH/DELETE servidor).
@@ -61,6 +63,12 @@ class EventModel {
   final String? sourceText;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+
+  /// Clave de icono para vista Semana (`icono_semana` backend, opcional).
+  final String? weekIconKey;
+
+  /// Etiqueta corta para vista Semana (`texto_semana` backend, opcional).
+  final String? weekLabelText;
 
   /// Eventos **`mock_*`** del CalendarService offline no llaman servidor.
   bool get supportsBackendMutation =>
@@ -115,6 +123,10 @@ class EventModel {
     if (sourceText != null) 'source_text': sourceText,
     if (createdAt != null) 'created_at': createdAt!.toUtc().toIso8601String(),
     if (updatedAt != null) 'updated_at': updatedAt!.toUtc().toIso8601String(),
+    if (weekIconKey != null && weekIconKey!.trim().isNotEmpty)
+      'icono_semana': weekIconKey,
+    if (weekLabelText != null && weekLabelText!.trim().isNotEmpty)
+      'texto_semana': weekLabelText,
   };
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
@@ -164,6 +176,10 @@ class EventModel {
       updatedAt: json['updated_at'] != null
           ? DateTime.tryParse('${json['updated_at']}')
           : null,
+      weekIconKey: _jsonOptionalTrimmed(json['icono_semana']) ??
+          _jsonOptionalTrimmed(json['weekIconKey']),
+      weekLabelText: _jsonOptionalTrimmed(json['texto_semana']) ??
+          _jsonOptionalTrimmed(json['weekLabelText']),
     );
   }
 }

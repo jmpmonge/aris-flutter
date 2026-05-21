@@ -57,6 +57,9 @@ abstract final class BackendEventMapper {
           BackendEventMapper._optionalIso(m['date_iso']) ??
           BackendEventMapper._optionalIso(m['dateISO']);
 
+      final weekIcon = _str(m['icono_semana']);
+      final weekText = _str(m['texto_semana']);
+
       return EventModel(
         id: id,
         syntheticBackendId: syntheticBackendId,
@@ -77,6 +80,8 @@ abstract final class BackendEventMapper {
         sourceText: sourceText,
         createdAt: createdAt,
         updatedAt: updatedAt,
+        weekIconKey: weekIcon.isEmpty ? null : weekIcon,
+        weekLabelText: weekText.isEmpty ? null : weekText,
       );
     } on Object {
       return null;
