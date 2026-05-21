@@ -424,7 +424,6 @@ class CalendarWeekView extends StatelessWidget {
               hour: h,
               eventsByDay: eventsByDay,
             ),
-          const SizedBox(height: AppSpacing.md),
           CalendarTextualBackendEventsPanel(
             repository: calendarRepository,
           ),

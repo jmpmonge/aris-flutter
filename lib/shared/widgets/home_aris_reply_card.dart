@@ -196,11 +196,13 @@ class HomeArisFixedInputBar extends StatefulWidget {
   const HomeArisFixedInputBar({
     super.key,
     required this.isSending,
+    this.hintText = 'Escribe a Aris…',
     this.onSubmit,
     this.onMicPressed,
   });
 
   final bool isSending;
+  final String hintText;
   final Future<void> Function(String text)? onSubmit;
   final VoidCallback? onMicPressed;
 
@@ -345,7 +347,7 @@ class _HomeArisFixedInputBarState extends State<HomeArisFixedInputBar> {
                   ),
                   onSubmitted: _handleSubmit,
                   decoration: InputDecoration(
-                    hintText: 'Escribe a Aris…',
+                    hintText: widget.hintText,
                     hintStyle: TextStyle(
                       fontSize: 14,
                       height: 1.2,
