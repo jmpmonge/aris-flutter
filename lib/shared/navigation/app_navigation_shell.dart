@@ -139,7 +139,7 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
           ),
         ],
       ),
-      floatingActionButton: _tabIndex == 0 || _tabIndex == 1
+      floatingActionButton: _tabIndex == 0 || _tabIndex == 1 || _tabIndex == 2
           ? null
           : AppFloatingActionButton(
               heroTag: 'shell_assistant_fab',

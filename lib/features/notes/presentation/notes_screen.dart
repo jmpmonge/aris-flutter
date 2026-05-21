@@ -9,6 +9,7 @@ import '../../../core/services/local_action_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/app_search_bar.dart';
+import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../shared/widgets/local_action_card.dart';
 import '../../../shared/widgets/local_action_empty_state.dart';
 import '../../../shared/widgets/local_action_form_sheet.dart';
@@ -25,6 +26,7 @@ class NotesScreen extends StatefulWidget {
 
 class _NotesScreenState extends State<NotesScreen> {
   final Set<String> _busyNoteIds = <String>{};
+  bool _arisSending = false;
 
   static const _noteBackendFail =
       'No he podido actualizar la nota. Revisa la conexión con el backend.';
@@ -73,6 +75,25 @@ class _NotesScreenState extends State<NotesScreen> {
 
   void _onArisActions() {
     if (mounted) setState(() {});
+  }
+
+  double _listBottomPadding(BuildContext context) {
+    return HomeArisFixedInputBar.dockHeight +
+        AppSpacing.homeScrollBottomBreathing;
+  }
+
+  Future<void> _sendArisMessage(String text) async {
+    final t = text.trim();
+    if (t.isEmpty) return;
+
+    setState(() => _arisSending = true);
+    await Repositories.assistant.sendMessage(t);
+    if (!mounted) return;
+    setState(() => _arisSending = false);
+  }
+
+  void _onMicPressed() {
+    Repositories.assistant.sendVoicePendingNotice();
   }
 
   Future<void> _onRecentNoteMenu(String action, NoteModel n) async {
@@ -220,152 +241,174 @@ class _NotesScreenState extends State<NotesScreen> {
       top: true,
       bottom: false,
       child: Column(
-        key: const Key('tab_notes'),
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AppHeader(title: 'Notas'),
-          const AppSearchBar(hintText: 'Buscar en notas…', readOnly: true),
-          SectionTitle(
-            title: 'Notas rápidas',
-            actionLabel: 'Nueva nota',
-            onAction: () {
-              LocalActionFormSheet.showNoteForm(context);
-            },
-          ),
-          SizedBox(
-            height: AppSpacing.quickChipsStripHeight,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              scrollDirection: Axis.horizontal,
-              itemCount: quick.length,
-              separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.xs),
-              itemBuilder: (context, i) {
-                return ActionChip(
-                  label: Text(quick[i]),
-                  side: BorderSide(
-                    color: scheme.outline.withValues(alpha: 0.35),
-                  ),
-                  onPressed: () {},
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.md,
-              AppSpacing.md,
-              AppSpacing.sm,
-            ),
-            child: Text(
-              'Notas creadas por Aris',
-              style: text.labelSmall?.copyWith(
-                letterSpacing: 1.1,
-                color: scheme.primary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          if (arisNotes.isEmpty)
-            const LocalActionEmptyState(
-              message: 'Aún no hay notas de Aris.',
-            )
-          else
-            SizedBox(
-              height: 132,
-              child: ListView.separated(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                scrollDirection: Axis.horizontal,
-                itemCount: arisNotes.length,
-                separatorBuilder: (_, _) =>
-                    const SizedBox(width: AppSpacing.sm),
-                itemBuilder: (context, i) {
-                  return SizedBox(
-                    width: 280,
-                    child: LocalActionCard(
-                      action: arisNotes[i],
-                      compact: true,
-                    ),
-                  );
-                },
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.md,
-              AppSpacing.md,
-              AppSpacing.xs,
-            ),
-            child: Text(
-              'Recientes',
-              style: text.labelSmall?.copyWith(
-                letterSpacing: 1.1,
-                color: scheme.primary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                0,
-                AppSpacing.md,
-                AppSpacing.fabStackClearance,
-              ),
-              itemCount: recent.length,
-              itemBuilder: (context, i) {
-                final n = recent[i];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: AppCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Column(
+            child: Column(
+              key: const Key('tab_notes'),
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const AppHeader(title: 'Notas'),
+                const AppSearchBar(
+                  hintText: 'Buscar en notas…',
+                  readOnly: true,
+                ),
+                SectionTitle(
+                  title: 'Notas rápidas',
+                  actionLabel: 'Nueva nota',
+                  onAction: () {
+                    LocalActionFormSheet.showManualNoteForm(context);
+                  },
+                ),
+                SizedBox(
+                  height: AppSpacing.quickChipsStripHeight,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                    ),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: quick.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(width: AppSpacing.xs),
+                    itemBuilder: (context, i) {
+                      return ActionChip(
+                        label: Text(quick[i]),
+                        side: BorderSide(
+                          color: scheme.outline.withValues(alpha: 0.35),
+                        ),
+                        onPressed: () {},
+                      );
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.sm,
+                  ),
+                  child: Text(
+                    'Notas creadas por Aris',
+                    style: text.labelSmall?.copyWith(
+                      letterSpacing: 1.1,
+                      color: scheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                if (arisNotes.isEmpty)
+                  const LocalActionEmptyState(
+                    message: 'Aún no hay notas de Aris.',
+                  )
+                else
+                  SizedBox(
+                    height: 132,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                      ),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: arisNotes.length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(width: AppSpacing.sm),
+                      itemBuilder: (context, i) {
+                        return SizedBox(
+                          width: 280,
+                          child: LocalActionCard(
+                            action: arisNotes[i],
+                            compact: true,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.xs,
+                  ),
+                  child: Text(
+                    'Recientes',
+                    style: text.labelSmall?.copyWith(
+                      letterSpacing: 1.1,
+                      color: scheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      0,
+                      AppSpacing.md,
+                      _listBottomPadding(context),
+                    ),
+                    itemCount: recent.length,
+                    itemBuilder: (context, i) {
+                      final n = recent[i];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                        child: AppCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(n.title, style: text.titleSmall),
-                                  const SizedBox(height: AppSpacing.xs),
-                                  Text(
-                                    n.body,
-                                    style: text.bodyMedium?.copyWith(
-                                      color: scheme.onSurfaceVariant,
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(n.title, style: text.titleSmall),
+                                        const SizedBox(height: AppSpacing.xs),
+                                        Text(
+                                          n.body,
+                                          style: text.bodyMedium?.copyWith(
+                                            color: scheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
+                                  if (Repositories.note.readsFromBackend)
+                                    PopupMenuButton<String>(
+                                      tooltip: 'Más opciones',
+                                      enabled: !_busyNoteIds.contains(n.id),
+                                      onSelected: (v) =>
+                                          _onRecentNoteMenu(v, n),
+                                      itemBuilder: (_) => const [
+                                        PopupMenuItem(
+                                          value: 'edit',
+                                          child: Text('Editar'),
+                                        ),
+                                        PopupMenuItem(
+                                          value: 'delete',
+                                          child: Text('Eliminar'),
+                                        ),
+                                      ],
+                                    ),
                                 ],
                               ),
-                            ),
-                            if (Repositories.note.readsFromBackend)
-                              PopupMenuButton<String>(
-                                tooltip: 'Más opciones',
-                                enabled: !_busyNoteIds.contains(n.id),
-                                onSelected: (v) => _onRecentNoteMenu(v, n),
-                                itemBuilder: (_) => const [
-                                  PopupMenuItem(
-                                    value: 'edit',
-                                    child: Text('Editar'),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'delete',
-                                    child: Text('Eliminar'),
-                                  ),
-                                ],
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
+                ),
+              ],
             ),
+          ),
+          HomeArisFixedInputBar(
+            hintText: 'Pide una nota a Aris…',
+            isSending: _arisSending,
+            onSubmit: _sendArisMessage,
+            onMicPressed: _onMicPressed,
           ),
         ],
       ),

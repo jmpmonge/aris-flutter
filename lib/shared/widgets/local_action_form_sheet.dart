@@ -16,8 +16,13 @@ abstract final class LocalActionFormSheet {
     return _open(context, const _TaskFormBody());
   }
 
+  /// Editor manual vacío: título arriba y contenido debajo (v0.49.13).
+  static Future<void> showManualNoteForm(BuildContext context) {
+    return _open(context, const _ManualNoteFormBody());
+  }
+
   static Future<void> showNoteForm(BuildContext context) {
-    return _open(context, const _NoteFormBody());
+    return showManualNoteForm(context);
   }
 
   static Future<void> showEventForm(BuildContext context) {
@@ -230,20 +235,17 @@ class _TaskFormBodyState extends State<_TaskFormBody> {
   }
 }
 
-class _NoteFormBody extends StatefulWidget {
-  const _NoteFormBody();
+class _ManualNoteFormBody extends StatefulWidget {
+  const _ManualNoteFormBody();
 
   @override
-  State<_NoteFormBody> createState() => _NoteFormBodyState();
+  State<_ManualNoteFormBody> createState() => _ManualNoteFormBodyState();
 }
 
-class _NoteFormBodyState extends State<_NoteFormBody> {
+class _ManualNoteFormBodyState extends State<_ManualNoteFormBody> {
   final _title = TextEditingController();
   final _content = TextEditingController();
-  String? _category;
   String? _titleError;
-
-  static const _categories = ['Trabajo', 'Personal', 'Ideas'];
 
   @override
   void dispose() {
@@ -261,8 +263,7 @@ class _NoteFormBodyState extends State<_NoteFormBody> {
     setState(() => _titleError = null);
     LocalActionService.createNote(
       title: t,
-      content: _content.text,
-      category: _category,
+      content: _content.text.trim(),
     );
     Navigator.of(context).pop();
   }
@@ -276,7 +277,11 @@ class _NoteFormBodyState extends State<_NoteFormBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          LocalActionFormSheet._sheetHeader(context, 'Nueva nota con Aris'),
+          LocalActionFormSheet._sheetHeader(
+            context,
+            'Nueva nota',
+            subtitle: 'Crea una nota a mano: título arriba y contenido debajo.',
+          ),
           const FormSectionTitle('Título'),
           AppTextField(
             controller: _title,
@@ -288,32 +293,11 @@ class _NoteFormBodyState extends State<_NoteFormBody> {
           const FormSectionTitle('Contenido'),
           AppTextField(
             controller: _content,
-            maxLines: 4,
-            hint: 'Escribe aquí…',
-          ),
-          const SizedBox(height: AppSpacing.md),
-          const FormSectionTitle('Categoría (opcional)'),
-          DropdownButtonFormField<String?>(
-            initialValue: _category,
-            decoration: const InputDecoration(
-              hintText: 'Selecciona…',
-            ),
-            items: [
-              const DropdownMenuItem<String?>(
-                value: null,
-                child: Text('Sin categoría'),
-              ),
-              ..._categories.map(
-                (c) => DropdownMenuItem<String?>(
-                  value: c,
-                  child: Text(c),
-                ),
-              ),
-            ],
-            onChanged: (v) => setState(() => _category = v),
+            maxLines: 10,
+            hint: 'Escribe el cuerpo de la nota…',
           ),
           const SizedBox(height: AppSpacing.xl),
-          AppFormButton(label: 'Crear nota', onPressed: _submit),
+          AppFormButton(label: 'Guardar nota', onPressed: _submit),
           const SizedBox(height: AppSpacing.sm),
           AppFormButton(
             label: 'Cancelar',
