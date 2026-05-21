@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/services/local_action_service.dart';
+import '../../features/calendar/presentation/manual_event_editor_page.dart';
 import '../../features/notes/presentation/manual_note_canvas_sheet.dart';
 import '../../features/tasks/presentation/manual_task_editor_page.dart';
 import '../../theme/app_spacing.dart';
@@ -26,7 +27,7 @@ abstract final class LocalActionFormSheet {
   }
 
   static Future<void> showEventForm(BuildContext context) {
-    return _open(context, const _EventFormBody());
+    return ManualEventEditorPage.show(context);
   }
 
   static Future<void> showMailForm(BuildContext context) {
@@ -94,89 +95,6 @@ abstract final class LocalActionFormSheet {
               height: 1.35,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EventFormBody extends StatefulWidget {
-  const _EventFormBody();
-
-  @override
-  State<_EventFormBody> createState() => _EventFormBodyState();
-}
-
-class _EventFormBodyState extends State<_EventFormBody> {
-  final _title = TextEditingController();
-  final _description = TextEditingController();
-  final _when = TextEditingController();
-  String? _titleError;
-
-  @override
-  void dispose() {
-    _title.dispose();
-    _description.dispose();
-    _when.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final t = _title.text.trim();
-    if (t.isEmpty) {
-      setState(() => _titleError = 'Añade un título');
-      return;
-    }
-    setState(() => _titleError = null);
-    LocalActionService.createEvent(
-      title: t,
-      description: _description.text.trim().isEmpty
-          ? null
-          : _description.text.trim(),
-      dateText: _when.text.trim().isEmpty ? null : _when.text.trim(),
-    );
-    Navigator.of(context).pop();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    return SingleChildScrollView(
-      padding: LocalActionFormSheet._paddingFor(context),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          LocalActionFormSheet._sheetHeader(context, 'Nuevo evento con Aris'),
-          const FormSectionTitle('Título'),
-          AppTextField(
-            controller: _title,
-            hint: 'Ej. Revisión de diseño',
-            errorText: _titleError,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          const FormSectionTitle('Descripción'),
-          AppTextField(
-            controller: _description,
-            maxLines: 3,
-            hint: 'Notas del evento',
-          ),
-          const SizedBox(height: AppSpacing.md),
-          const FormSectionTitle('Fecha u hora (texto libre)'),
-          AppTextField(
-            controller: _when,
-            hint: 'Ej. Mañana 10:00',
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          AppFormButton(label: 'Crear evento', onPressed: _submit),
-          const SizedBox(height: AppSpacing.sm),
-          AppFormButton(
-            label: 'Cancelar',
-            primary: false,
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          SizedBox(height: scheme.brightness == Brightness.dark ? 8 : 0),
         ],
       ),
     );
