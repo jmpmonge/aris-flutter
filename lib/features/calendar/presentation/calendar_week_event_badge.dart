@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/models/event_model.dart';
 
-/// Icono + etiqueta para bloques de la rejilla Semana (v0.49.7).
+/// Icono + etiqueta para bloques de la rejilla Semana (v0.49.8).
 class CalendarWeekEventBadge {
   const CalendarWeekEventBadge({
     required this.icon,
@@ -24,14 +24,18 @@ abstract final class CalendarWeekEventBadgeResolver {
   static const int _maxLabelChars = 8;
 
   static const Map<String, IconData> _iconByBackendKey = {
+    'coffee': Icons.local_cafe_outlined,
     'cafe': Icons.local_cafe_outlined,
     'café': Icons.local_cafe_outlined,
     'sync': Icons.sync_rounded,
+    'meal': Icons.restaurant_outlined,
     'comer': Icons.restaurant_outlined,
     'comida': Icons.restaurant_outlined,
+    'send': Icons.send_rounded,
     'envio': Icons.send_rounded,
     'envío': Icons.send_rounded,
     'gym': Icons.fitness_center_outlined,
+    'shopping': Icons.shopping_cart_outlined,
     'super': Icons.shopping_cart_outlined,
     'evento': Icons.event_rounded,
   };
@@ -45,7 +49,9 @@ abstract final class CalendarWeekEventBadgeResolver {
     if (hasIconKey || hasLabelText) {
       return CalendarWeekEventBadge(
         icon: _iconFromBackendKey(iconKey) ?? Icons.event_rounded,
-        label: _clipLabel(hasLabelText ? labelText : 'Evento'),
+        label: _clipLabel(
+          hasLabelText ? labelText : _fallbackLabelFromTitle(event.title),
+        ),
         fromBackendFields: true,
       );
     }

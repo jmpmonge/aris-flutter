@@ -9,18 +9,21 @@ abstract final class MockEvents {
         start: DateTime(day.year, day.month, day.day, 9, 0),
         title: 'Café con Laura',
         detail: 'Café Central (mock)',
+        weekIconKey: 'coffee',
       ),
       EventModel(
         id: 'mock_evt_lunch',
         start: DateTime(day.year, day.month, day.day, 12, 30),
         title: 'Almuerzo equipo',
         detail: 'Online',
+        weekIconKey: 'meal',
       ),
       EventModel(
         id: 'mock_evt_gym',
         start: DateTime(day.year, day.month, day.day, 18, 0),
         title: 'Gimnasio',
         detail: 'Plan suave',
+        weekIconKey: 'gym',
       ),
     ];
   }
@@ -36,6 +39,7 @@ abstract final class MockEvents {
             start: DateTime(d.year, d.month, d.day, 11, 0),
             title: 'Sync rápido',
             detail: '15 min · mock',
+            weekIconKey: 'sync',
           ),
         ];
       case DateTime.tuesday:
@@ -52,6 +56,7 @@ abstract final class MockEvents {
             start: DateTime(d.year, d.month, d.day, 16, 0),
             title: 'Enviar resumen',
             detail: 'Borrador simulado',
+            weekIconKey: 'send',
           ),
         ];
       case DateTime.saturday:
@@ -61,6 +66,7 @@ abstract final class MockEvents {
             start: DateTime(d.year, d.month, d.day, 10, 30),
             title: 'Mercado',
             detail: 'Lista corta (mock)',
+            weekIconKey: 'shopping',
           ),
         ];
       default:
