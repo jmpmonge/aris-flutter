@@ -127,8 +127,12 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
     );
   }
 
+  /// Recuadro del título: ~52–56 px total (v0.49.32).
+  static const double _titleSurfaceVerticalPad = 10;
+
   Widget _textSurface({
     required Widget child,
+    bool titleField = false,
   }) {
     final scheme = Theme.of(context).colorScheme;
     return DecoratedBox(
@@ -140,9 +144,10 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
+        padding: EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm + 2,
+          vertical:
+              titleField ? _titleSurfaceVerticalPad : AppSpacing.sm + 2,
         ),
         child: child,
       ),
@@ -264,10 +269,10 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
     final scheme = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    final titleStyle = tt.titleLarge?.copyWith(
-      fontWeight: FontWeight.w700,
-      height: 1.15,
-      fontSize: 22,
+    final titleStyle = tt.titleMedium?.copyWith(
+      fontWeight: FontWeight.w600,
+      height: 1.2,
+      fontSize: 17,
       color: scheme.onSurface,
     );
     final bodyStyle = tt.bodyMedium?.copyWith(
@@ -306,11 +311,13 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _textSurface(
+                  titleField: true,
                   child: TextField(
                     controller: _title,
                     style: titleStyle,
                     enabled: !_busy,
-                    maxLines: 2,
+                    minLines: 1,
+                    maxLines: 1,
                     textInputAction: TextInputAction.next,
                     onSubmitted: (_) => _bodyFocus.requestFocus(),
                     decoration: _fieldDecoration(

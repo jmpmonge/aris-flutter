@@ -11,7 +11,21 @@ import '../../settings/presentation/settings_screen.dart';
 
 /// Perfil — cuenta, categorías amplias y acerca de (v0.49.25).
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super.key, this.onClose});
+
+  /// Cierra Perfil dentro del shell (v0.49.33).
+  final VoidCallback? onClose;
+
+  void _handleBack(BuildContext context) {
+    if (onClose != null) {
+      onClose!();
+      return;
+    }
+    final navigator = Navigator.maybeOf(context);
+    if (navigator != null && navigator.canPop()) {
+      navigator.pop();
+    }
+  }
 
   void _openAccountMock(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -51,7 +65,15 @@ class ProfileScreen extends StatelessWidget {
         key: const Key('tab_profile'),
         padding: const EdgeInsets.only(bottom: AppSpacing.fabStackClearance),
         children: [
-          const AppHeader(title: 'Perfil', subtitle: 'Tu espacio en Aris'),
+          AppHeader(
+            title: 'Perfil',
+            subtitle: 'Tu espacio en Aris',
+            trailing: IconButton.filledTonal(
+              onPressed: () => _handleBack(context),
+              icon: const Icon(Icons.arrow_back_rounded),
+              tooltip: 'Volver a Inicio',
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: AppCard(

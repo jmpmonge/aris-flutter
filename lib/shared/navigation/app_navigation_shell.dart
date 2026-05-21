@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/repositories/repositories.dart';
-import '../../features/assistant/presentation/assistant_screen.dart';
 import '../../features/calendar/presentation/calendar_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/mail/presentation/mail_screen.dart';
@@ -13,9 +12,8 @@ import '../../features/tasks/presentation/tasks_screen.dart';
 import '../layout/app_scaffold.dart';
 import '../../theme/app_spacing.dart';
 import 'app_bottom_navigation.dart';
-import '../widgets/app_floating_action_button.dart';
 
-/// Shell: **Inicio · Calendario · Notas · Tareas · Perfil** (input Aris en Home v0.48.43).
+/// Shell: **Inicio · Calendario · Tareas · Notas · Mail** (v0.49.30–31).
 class AppNavigationShell extends StatefulWidget {
   const AppNavigationShell({super.key});
 
@@ -25,6 +23,7 @@ class AppNavigationShell extends StatefulWidget {
 
 class _AppNavigationShellState extends State<AppNavigationShell> {
   int _tabIndex = 0;
+  bool _profileOpen = false;
   final _homeKey = GlobalKey<HomeScreenState>();
 
   late final List<Widget> _pages;
@@ -37,31 +36,61 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
         key: _homeKey,
         onOpenCalendar: _goToCalendarTab,
         onOpenTasks: _goToTasksTab,
-        onOpenMail: _openMailScreen,
+        onOpenMail: _goToMailTab,
+        onOpenSettings: _openProfileInShell,
       ),
       const CalendarScreen(),
-      const NotesScreen(),
       const TasksScreen(),
-      const ProfileScreen(),
+      const NotesScreen(),
+      const MailScreen(),
     ];
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(Repositories.prefetchBackendReads());
     });
   }
 
-  void _goToCalendarTab() => _onTabSelected(1);
+  static const int _tabHome = 0;
+  static const int _tabCalendar = 1;
+  static const int _tabTasks = 2;
+  static const int _tabNotes = 3;
+  static const int _tabMail = 4;
 
-  void _goToTasksTab() => _onTabSelected(3);
+  static const List<int> _mainSectionTabs = [
+    _tabHome,
+    _tabCalendar,
+    _tabTasks,
+    _tabNotes,
+    _tabMail,
+  ];
 
-  void _openMailScreen() {
-    Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(builder: (_) => const MailScreen()),
-    );
+  void _goToCalendarTab() => _onTabSelected(_tabCalendar);
+
+  void _goToTasksTab() => _onTabSelected(_tabTasks);
+
+  void _goToMailTab() => _onTabSelected(_tabMail);
+
+  /// Perfil auxiliar dentro del shell: botonera sigue visible (v0.49.31).
+  void _openProfileInShell() {
+    setState(() => _profileOpen = true);
+  }
+
+  void _closeProfileToHome() {
+    setState(() {
+      _profileOpen = false;
+      _tabIndex = _tabHome;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _homeKey.currentState?.scrollToTop();
+    });
   }
 
   void _onTabSelected(int index) {
-    setState(() => _tabIndex = index);
-    if (index == 0) {
+    assert(_mainSectionTabs.contains(index));
+    setState(() {
+      _tabIndex = index;
+      _profileOpen = false;
+    });
+    if (index == _tabHome) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _homeKey.currentState?.scrollToTop();
       });
@@ -80,34 +109,38 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
       label: 'Calendario',
     ),
     AppNavDestination(
-      icon: Icons.note_alt_outlined,
-      selectedIcon: Icons.note_alt_rounded,
-      label: 'Notas',
-    ),
-    AppNavDestination(
       icon: Icons.task_alt_outlined,
       selectedIcon: Icons.task_alt_rounded,
       label: 'Tareas',
     ),
     AppNavDestination(
-      icon: Icons.person_outline_rounded,
-      selectedIcon: Icons.person_rounded,
-      label: 'Perfil',
+      icon: Icons.note_alt_outlined,
+      selectedIcon: Icons.note_alt_rounded,
+      label: 'Notas',
+    ),
+    AppNavDestination(
+      icon: Icons.mail_outline_rounded,
+      selectedIcon: Icons.mail_rounded,
+      label: 'Mail',
     ),
   ];
-
-  void _openAssistant() {
-    Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(builder: (_) => const AssistantScreen()),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
     return AppScaffold(
-      body: IndexedStack(index: _tabIndex, children: _pages),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          IndexedStack(index: _tabIndex, children: _pages),
+          if (_profileOpen)
+            ColoredBox(
+              color: scheme.surface,
+              child: ProfileScreen(onClose: _closeProfileToHome),
+            ),
+        ],
+      ),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -139,18 +172,6 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
           ),
         ],
       ),
-      floatingActionButton: _tabIndex == 0 ||
-              _tabIndex == 1 ||
-              _tabIndex == 2 ||
-              _tabIndex == 3
-          ? null
-          : AppFloatingActionButton(
-              heroTag: 'shell_assistant_fab',
-              tooltip: 'Hablar con Aris',
-              icon: Icons.auto_awesome_rounded,
-              onPressed: _openAssistant,
-            ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

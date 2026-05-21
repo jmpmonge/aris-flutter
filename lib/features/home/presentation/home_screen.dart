@@ -22,11 +22,13 @@ class HomeScreen extends StatefulWidget {
     this.onOpenCalendar,
     this.onOpenTasks,
     this.onOpenMail,
+    this.onOpenSettings,
   });
 
   final VoidCallback? onOpenCalendar;
   final VoidCallback? onOpenTasks;
   final VoidCallback? onOpenMail;
+  final VoidCallback? onOpenSettings;
 
   @override
   State<HomeScreen> createState() => HomeScreenState();
@@ -307,7 +309,7 @@ class HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const HomeFixedDateHeader(),
+          HomeFixedDateHeader(onOpenSettings: widget.onOpenSettings),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {

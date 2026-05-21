@@ -64,7 +64,7 @@ abstract final class UserService {
     return dayMonth;
   }
 
-  /// Fecha fija superior Home (v0.49.24): «Jueves, 21 de mayo» — sin «Hoy» ni año.
+  /// Fecha fija superior Home (v0.49.30): «Jueves, 21 de mayo» — sin «Hoy».
   static String getHomeFixedDateLine([DateTime? reference]) {
     final now = reference ?? DateTime.now();
     const weekdays = [
