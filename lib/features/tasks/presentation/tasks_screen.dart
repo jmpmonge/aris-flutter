@@ -200,7 +200,7 @@ class _TasksScreenState extends State<TasksScreen> {
               AppSpacing.md,
               0,
               AppSpacing.md,
-              AppSpacing.sm,
+              AppSpacing.xs,
             ),
             child: CompactExpandableTaskTile(
               task: t,

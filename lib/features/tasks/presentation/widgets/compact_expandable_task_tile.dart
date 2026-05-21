@@ -4,6 +4,7 @@ import '../../../../core/models/task_model.dart';
 import '../../../../core/models/task_ui_buckets.dart';
 import '../../../../theme/app_spacing.dart';
 
+/// Tarjeta compacta de tarea con check y expansión inline (v0.49.18).
 class CompactExpandableTaskTile extends StatefulWidget {
   const CompactExpandableTaskTile({
     super.key,
@@ -34,6 +35,10 @@ class CompactExpandableTaskTile extends StatefulWidget {
 class _CompactExpandableTaskTileState extends State<CompactExpandableTaskTile> {
   late bool _open;
 
+  static const double _checkSlot = 22;
+  static const double _checkTextGap = 10;
+  static const double _cardRadius = 14;
+
   @override
   void initState() {
     super.initState();
@@ -56,65 +61,124 @@ class _CompactExpandableTaskTileState extends State<CompactExpandableTaskTile> {
     final titleStyle = tt.bodyMedium?.copyWith(
       decoration: strike ? TextDecoration.lineThrough : null,
       color: strike
-          ? scheme.onSurfaceVariant.withValues(alpha: 0.7)
+          ? scheme.onSurfaceVariant.withValues(alpha: 0.72)
           : scheme.onSurface,
-      height: 1.25,
+      height: 1.2,
       fontWeight: FontWeight.w600,
+      fontSize: 15,
     );
 
     final metaStyle = tt.bodySmall?.copyWith(
       color: strike
-          ? scheme.onSurfaceVariant.withValues(alpha: 0.48)
-          : scheme.onSurfaceVariant.withValues(alpha: 0.78),
-      height: 1.25,
+          ? scheme.onSurfaceVariant.withValues(alpha: 0.45)
+          : scheme.onSurfaceVariant.withValues(alpha: 0.72),
+      height: 1.2,
+      fontSize: 12,
     );
 
     final desc = (widget.task.description ?? '').trim();
     final hasDesc = desc.isNotEmpty;
-    final tagsLabel = widget.task.tags.where((x) => x.trim().isNotEmpty).join(' · ');
+    final tagsLabel =
+        widget.task.tags.where((x) => x.trim().isNotEmpty).join(' · ');
     final hasTags = tagsLabel.isNotEmpty;
+    final hasExpandedBody = hasDesc || hasTags;
 
     void toggleExpanded() => setState(() => _open = !_open);
+
+    final detailBlock = _open && hasExpandedBody
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.sm),
+                child: Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: scheme.outline.withValues(alpha: 0.18),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.sm),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (hasDesc)
+                      Text(
+                        desc,
+                        style: tt.bodySmall?.copyWith(
+                          height: 1.4,
+                          color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    if (hasTags)
+                      Padding(
+                        padding: EdgeInsets.only(
+                          top: hasDesc ? AppSpacing.xs : 0,
+                        ),
+                        child: Text(
+                          tagsLabel,
+                          style: tt.labelSmall?.copyWith(
+                            color: scheme.onSurfaceVariant
+                                .withValues(alpha: 0.65),
+                            height: 1.3,
+                            letterSpacing: 0.15,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          )
+        : const SizedBox.shrink();
 
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      elevation: Theme.of(context).cardTheme.elevation ?? 2,
-      shadowColor: Theme.of(context).cardTheme.shadowColor,
-      shape: Theme.of(context).cardTheme.shape,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      color: scheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_cardRadius),
+        side: BorderSide(
+          color: scheme.outline.withValues(alpha: 0.2),
+        ),
+      ),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.xs,
-          AppSpacing.sm,
-          AppSpacing.sm,
-          AppSpacing.sm,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.sm + 2,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              width: AppSpacing.minTouchTarget * 0.85,
-              child: Checkbox(
-                shape: const CircleBorder(),
-                visualDensity: VisualDensity.compact,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                value: widget.task.completed,
-                onChanged: widget.busy ? null : widget.onCheckboxChanged,
+              width: _checkSlot,
+              height: _checkSlot,
+              child: Align(
+                alignment: Alignment.center,
+                child: Checkbox(
+                  shape: const CircleBorder(),
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  value: widget.task.completed,
+                  onChanged: widget.busy ? null : widget.onCheckboxChanged,
+                ),
               ),
             ),
+            SizedBox(width: _checkTextGap),
             Expanded(
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: toggleExpanded,
                   borderRadius:
-                      BorderRadius.circular(AppSpacing.radiusMd * 0.5),
+                      BorderRadius.circular(AppSpacing.radiusSm),
                   child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      0,
-                      2,
-                      AppSpacing.sm,
-                      AppSpacing.sm,
+                    padding: const EdgeInsets.only(
+                      top: 1,
+                      right: AppSpacing.xs,
+                      bottom: 1,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -138,6 +202,7 @@ class _CompactExpandableTaskTileState extends State<CompactExpandableTaskTile> {
                                 '\u26A0',
                                 style: tt.titleSmall?.copyWith(
                                   height: 1,
+                                  fontSize: 14,
                                   color: Theme.of(context).brightness ==
                                           Brightness.dark
                                       ? const Color(0xFFF59E0B)
@@ -162,12 +227,12 @@ class _CompactExpandableTaskTileState extends State<CompactExpandableTaskTile> {
                                 ],
                                 child: Padding(
                                   padding:
-                                      EdgeInsets.only(left: AppSpacing.xs),
+                                      EdgeInsets.only(left: AppSpacing.xxs),
                                   child: Icon(
                                     Icons.more_vert_rounded,
                                     size: 18,
                                     color: scheme.onSurfaceVariant
-                                        .withValues(alpha: 0.6),
+                                        .withValues(alpha: 0.55),
                                   ),
                                 ),
                               ),
@@ -175,51 +240,14 @@ class _CompactExpandableTaskTileState extends State<CompactExpandableTaskTile> {
                         ),
                         if (meta.isNotEmpty)
                           Padding(
-                            padding: EdgeInsets.only(top: AppSpacing.xxs),
+                            padding: const EdgeInsets.only(top: 3),
                             child: Text(meta, style: metaStyle),
                           ),
                         AnimatedSize(
-                          duration: const Duration(milliseconds: 200),
-                          curve: Curves.easeInOut,
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOutCubic,
                           alignment: Alignment.topLeft,
-                          child: _open
-                              ? Padding(
-                                  padding: EdgeInsets.only(
-                                    top: AppSpacing.sm,
-                                    bottom: AppSpacing.xs,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      if (hasDesc)
-                                        Text(
-                                          desc,
-                                          style: tt.bodyMedium?.copyWith(
-                                            height: 1.35,
-                                            color: scheme.onSurfaceVariant
-                                                .withValues(alpha: 0.94),
-                                          ),
-                                        ),
-                                      if (hasTags)
-                                        Padding(
-                                          padding: EdgeInsets.only(
-                                            top: hasDesc ? AppSpacing.sm : 0,
-                                          ),
-                                          child: Text(
-                                            tagsLabel,
-                                            style: tt.labelSmall?.copyWith(
-                                              color: scheme.outline
-                                                  .withValues(alpha: 0.95),
-                                              height: 1.3,
-                                              letterSpacing: 0.1,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
+                          child: detailBlock,
                         ),
                       ],
                     ),
