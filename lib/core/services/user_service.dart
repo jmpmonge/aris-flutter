@@ -64,7 +64,7 @@ abstract final class UserService {
     return dayMonth;
   }
 
-  /// Fecha fija superior Home (v0.48.34): «Martes, 19 de mayo de 2026» — sin «Hoy».
+  /// Fecha fija superior Home (v0.49.24): «Jueves, 21 de mayo» — sin «Hoy» ni año.
   static String getHomeFixedDateLine([DateTime? reference]) {
     final now = reference ?? DateTime.now();
     const weekdays = [
@@ -96,7 +96,7 @@ abstract final class UserService {
 
     final weekday = cap(weekdays[now.weekday - 1]);
     final month = months[now.month - 1];
-    return '$weekday, ${now.day} de $month de ${now.year}';
+    return '$weekday, ${now.day} de $month';
   }
 
   /// Fecha compacta sobre agenda (v0.48.32): «19 de mayo de 2026» — sin «Hoy».

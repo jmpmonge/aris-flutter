@@ -14,36 +14,27 @@ abstract final class MockUser {
   static const homeSuggestion =
       'Revisa tus tareas pendientes antes del fin de semana.';
 
+  /// Menú Perfil (v0.49.25): sin Cuenta ni Integraciones duplicadas.
   static const profileMenu = [
     ProfileMenuEntryModel(
-      iconKey: 'mail_outline_rounded',
-      title: 'Mail',
-      subtitle: 'Bandeja simulada local',
-    ),
-    ProfileMenuEntryModel(
-      iconKey: 'person_rounded',
-      title: 'Cuenta',
-      subtitle: 'Datos de perfil simulados',
+      iconKey: 'hub_outlined',
+      title: 'Conexiones',
+      subtitle: 'Mail, calendario y servicios',
     ),
     ProfileMenuEntryModel(
       iconKey: 'tune_rounded',
       title: 'Preferencias',
-      subtitle: 'Notificaciones, idioma…',
-    ),
-    ProfileMenuEntryModel(
-      iconKey: 'hub_outlined',
-      title: 'Integraciones',
-      subtitle: 'Próximamente · sin APIs',
+      subtitle: 'Idioma, apariencia y notificaciones',
     ),
     ProfileMenuEntryModel(
       iconKey: 'shield_outlined',
       title: 'Privacidad',
-      subtitle: 'Políticas de ejemplo',
+      subtitle: 'Datos, permisos y seguridad',
     ),
     ProfileMenuEntryModel(
       iconKey: 'help_outline_rounded',
       title: 'Ayuda',
-      subtitle: 'Centro de ayuda mock',
+      subtitle: 'Soporte y comentarios',
     ),
   ];
 }

@@ -4,7 +4,7 @@ import '../../../../core/services/user_service.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 
-/// Fecha fija superior Home — siempre visible (v0.48.41).
+/// Fecha fija superior Home — ancla diaria discreta (v0.49.24).
 class HomeFixedDateHeader extends StatelessWidget {
   const HomeFixedDateHeader({super.key});
 
@@ -22,12 +22,13 @@ class HomeFixedDateHeader extends StatelessWidget {
       child: Text(
         UserService.getHomeFixedDateLine(),
         style: TextStyle(
-          fontSize: 13,
-          height: 1.15,
-          fontWeight: FontWeight.w500,
+          fontSize: 12,
+          height: 1.2,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0.1,
           color: isDark
-              ? AppColors.textTertiaryDark.withValues(alpha: 0.95)
-              : AppColors.textTertiaryLight,
+              ? AppColors.textSecondaryDark.withValues(alpha: 0.88)
+              : AppColors.textSecondaryLight,
         ),
       ),
     );

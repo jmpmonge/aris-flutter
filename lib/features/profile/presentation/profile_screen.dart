@@ -9,9 +9,33 @@ import '../../../theme/app_spacing.dart';
 import '../../mail/presentation/mail_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
 
-/// Perfil — usuario, opciones y **versión** (mock).
+/// Perfil — cuenta, categorías amplias y acerca de (v0.49.25).
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
+
+  void _openAccountMock(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Cuenta · solo mock')),
+    );
+  }
+
+  void _onMenuTap(BuildContext context, String title) {
+    if (title == 'Conexiones') {
+      Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(builder: (_) => const MailScreen()),
+      );
+      return;
+    }
+    if (title == 'Preferencias') {
+      Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+      );
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$title · solo mock')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +55,7 @@ class ProfileScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: AppCard(
+              onTap: () => _openAccountMock(context),
               child: Row(
                 children: [
                   CircleAvatar(
@@ -49,9 +74,27 @@ class ProfileScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(user.displayName, style: text.titleMedium),
-                        Text(user.emailSimulated, style: text.bodySmall),
+                        Text(
+                          'Cuenta local simulada',
+                          style: text.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          user.emailSimulated,
+                          style: text.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.85,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
+                  ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: scheme.onSurfaceVariant,
                   ),
                 ],
               ),
@@ -65,33 +108,7 @@ class ProfileScreen extends StatelessWidget {
                 vertical: AppSpacing.xxs,
               ),
               child: AppCard(
-                onTap: () {
-                  if (o.title == 'Cuenta') {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Cuenta · solo mock')),
-                    );
-                    return;
-                  }
-                  if (o.title == 'Mail') {
-                    Navigator.of(context).push<void>(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const MailScreen(),
-                      ),
-                    );
-                    return;
-                  }
-                  if (o.title == 'Preferencias') {
-                    Navigator.of(context).push<void>(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const SettingsScreen(),
-                      ),
-                    );
-                    return;
-                  }
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${o.title} · solo mock')),
-                  );
-                },
+                onTap: () => _onMenuTap(context, o.title),
                 child: Row(
                   children: [
                     Icon(iconFromKey(o.iconKey), color: scheme.primary),
@@ -123,23 +140,37 @@ class ProfileScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              onTap: () => _onMenuTap(context, 'Acerca de Aris'),
+              child: Row(
                 children: [
-                  Text(
-                    'Versión',
-                    style: text.labelSmall?.copyWith(
-                      color: scheme.secondary,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
+                  Icon(Icons.info_outline_rounded, color: scheme.primary),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Acerca de Aris', style: text.titleSmall),
+                        Text(
+                          'Versión, cambios y estado',
+                          style: text.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          AppMeta.userVisibleVersionLine,
+                          style: text.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.9,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    AppMeta.userVisibleVersionLine,
-                    style: text.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: scheme.onSurfaceVariant,
                   ),
                 ],
               ),

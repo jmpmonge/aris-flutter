@@ -50,6 +50,8 @@ class HomeArisReplyCard extends StatelessWidget {
   /// Altura de referencia para métricas de layout en Home.
   static const double bodyHeight = _padV * 2 + 36 + 12 + 58;
 
+  static const Duration _bodySwitchDuration = Duration(milliseconds: 210);
+
   static const Color _kArisTitleDark = AppColors.chatAccentLavenderDark;
 
   Widget _buildArisHeaderRow({
@@ -147,35 +149,57 @@ class HomeArisReplyCard extends StatelessWidget {
               const SizedBox(height: 12),
               SizedBox(
                 height: 58,
-                child: Align(
-                  alignment: Alignment.centerLeft,
+                child: AnimatedSwitcher(
+                  duration: _bodySwitchDuration,
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeOut,
+                  layoutBuilder: (currentChild, previousChildren) {
+                    return Stack(
+                      alignment: Alignment.centerLeft,
+                      children: [
+                        ...previousChildren,
+                        ?currentChild,
+                      ],
+                    );
+                  },
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
                   child: isSending
-                      ? ArisThinkingIndicator(
-                          compact: true,
-                          dotColor: HomeCardTheme.thinkingDot(
-                            scheme,
-                            brightness,
-                          ),
-                          textStyle: TextStyle(
-                            fontSize: 14.5,
-                            height: 1.32,
-                            fontWeight: FontWeight.w400,
-                            fontStyle: FontStyle.italic,
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                    .withValues(alpha: 0.92)
-                                : AppColors.textSecondaryLight,
+                      ? Align(
+                          key: const ValueKey<String>('aris-body-thinking'),
+                          alignment: Alignment.centerLeft,
+                          child: ArisThinkingIndicator(
+                            compact: true,
+                            dotColor: HomeCardTheme.thinkingDot(
+                              scheme,
+                              brightness,
+                            ),
+                            textStyle: TextStyle(
+                              fontSize: 14.5,
+                              height: 1.32,
+                              fontWeight: FontWeight.w400,
+                              fontStyle: FontStyle.italic,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                      .withValues(alpha: 0.92)
+                                  : AppColors.textSecondaryLight,
+                            ),
                           ),
                         )
-                      : Text(
-                          activeMessage,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14.5,
-                            height: 1.32,
-                            fontWeight: FontWeight.w400,
-                            color: scheme.onSurface,
+                      : Align(
+                          key: ValueKey<String>('aris-body-$activeMessage'),
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            activeMessage,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14.5,
+                              height: 1.32,
+                              fontWeight: FontWeight.w400,
+                              color: scheme.onSurface,
+                            ),
                           ),
                         ),
                 ),

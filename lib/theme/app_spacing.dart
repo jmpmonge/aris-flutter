@@ -67,11 +67,11 @@ abstract final class AppSpacing {
   /// Margen superior fecha fija Home (v0.48.41).
   static const double homeFixedDateTopGap = 16;
 
-  /// Respiro mínimo bajo la fecha fija (encima del scroll).
+  /// Respiro bajo la fecha fija, antes del scroll (v0.49.24).
   static const double homeFixedDateMinPadding = 2;
 
-  /// Fecha fija → bloque saludo temporal (v0.48.41).
-  static const double homeFixedDateToEphemeralGap = 9;
+  /// Fecha fija → bloque saludo «Hola, …» (sin los 10 px extra bajo la fecha).
+  static const double homeFixedDateToEphemeralGap = 0;
 
   /// Fecha fija → HOY cuando el saludo temporal está oculto (v0.48.41).
   static const double homeFixedDateToHoyWhenGreetingHidden = 12;
