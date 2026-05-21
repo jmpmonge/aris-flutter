@@ -42,7 +42,7 @@ class _TimeWheelSheetState extends State<_TimeWheelSheet> {
 
   /// Una sola cápsula central (misma geometría Calendario / Tareas).
   static const double _capsuleHeight = 28;
-  static const double _capsuleWidth = 128;
+  static const double _capsuleWidth = 168;
   static const double _capsuleRadius = 14;
   static const double _capsuleFillAlpha = 0.09;
 
