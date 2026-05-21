@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/models/event_model.dart';
 
-/// Icono + etiqueta para bloques de la rejilla Semana (v0.49.6).
+/// Icono + etiqueta para bloques de la rejilla Semana (v0.49.7).
 class CalendarWeekEventBadge {
   const CalendarWeekEventBadge({
     required this.icon,
@@ -21,7 +21,7 @@ class CalendarWeekEventBadge {
 abstract final class CalendarWeekEventBadgeResolver {
   CalendarWeekEventBadgeResolver._();
 
-  static const int _maxLabelChars = 9;
+  static const int _maxLabelChars = 8;
 
   static const Map<String, IconData> _iconByBackendKey = {
     'cafe': Icons.local_cafe_outlined,

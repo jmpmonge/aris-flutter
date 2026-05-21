@@ -5,7 +5,7 @@ import '../../../core/repositories/calendar_repository.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../theme/app_spacing.dart';
 import 'calendar_event_sheet.dart';
-import 'calendar_week_event_badge.dart';
+import 'calendar_week_event_bubble.dart';
 
 bool calendarSameLocalDay(DateTime a, DateTime ref) {
   final al = DateTime(a.year, a.month, a.day);
@@ -206,7 +206,7 @@ class CalendarDayView extends StatelessWidget {
   }
 }
 
-/// Rejilla horaria semanal compacta (misma franja que [CalendarDayView], v0.49.6).
+/// Rejilla horaria semanal compacta (misma franja que [CalendarDayView], v0.49.7).
 class CalendarWeekView extends StatelessWidget {
   const CalendarWeekView({
     super.key,
@@ -227,7 +227,7 @@ class CalendarWeekView extends StatelessWidget {
   static const int _lastHour = 21;
 
   /// Altura fija por franja: evita overflow vertical en columnas estrechas.
-  static const double _kWeekSlotHeight = 30;
+  static const double _kWeekSlotHeight = 32;
 
   static EventModel? _eventStartingAtHour(List<EventModel> dayEvents, int hour) {
     for (final e in dayEvents) {
@@ -284,51 +284,8 @@ class CalendarWeekView extends StatelessWidget {
     );
   }
 
-  /// Bloque icono + palabra (backend `icono_semana`/`texto_semana` o fallback).
   Widget _weekEventBlock(BuildContext context, EventModel event) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-    final badge = CalendarWeekEventBadgeResolver.resolve(event);
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: scheme.primaryContainer.withValues(alpha: 0.62),
-          border: Border.all(
-            color: scheme.primary.withValues(alpha: 0.28),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(
-                badge.icon,
-                size: 13,
-                color: scheme.primary.withValues(alpha: 0.9),
-              ),
-              const SizedBox(width: 3),
-              Expanded(
-                child: Text(
-                  badge.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: text.labelSmall?.copyWith(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    height: 1,
-                    letterSpacing: -0.1,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    return CalendarWeekEventBubble(event: event);
   }
 
   Widget _weekHourSlot({
