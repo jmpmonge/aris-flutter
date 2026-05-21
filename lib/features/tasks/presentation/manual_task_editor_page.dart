@@ -2,45 +2,61 @@ import 'package:flutter/material.dart';
 
 import '../../../core/repositories/repositories.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../shared/layout/breakpoints.dart';
 
-/// Editor manual de tarea: pantalla completa desde abajo (v0.49.20).
+/// Acento coral/naranja del editor manual de tarea (v0.49.20).
+abstract final class TaskManualEditorAccent {
+  static const Color coral = Color(0xFFF4A261);
+  static const Color coralDeep = Color(0xFFE07A3A);
+}
+
+/// Editor manual de tarea: sheet alto desde abajo (~68 %), compacto (v0.49.20).
 abstract final class ManualTaskEditorPage {
+  static const double _sheetHeightFactor = 0.68;
+
   static Future<void> show(BuildContext context) {
-    return Navigator.of(context).push<void>(
-      PageRouteBuilder<void>(
-        opaque: true,
-        barrierDismissible: false,
-        transitionDuration: const Duration(milliseconds: 320),
-        reverseTransitionDuration: const Duration(milliseconds: 260),
-        pageBuilder: (_, _, _) => const _ManualTaskEditorScreen(),
-        transitionsBuilder: (_, animation, _, child) {
-          final curved = CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutCubic,
-            reverseCurve: Curves.easeInCubic,
-          );
-          return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 1),
-              end: Offset.zero,
-            ).animate(curved),
-            child: child,
-          );
-        },
+    final scheme = Theme.of(context).colorScheme;
+    final width = MediaQuery.sizeOf(context).width;
+    final sheetConstraints = width > LayoutBreakpoints.webMobileFrameMaxWidth
+        ? BoxConstraints(maxWidth: LayoutBreakpoints.webMobileFrameMaxWidth)
+        : null;
+
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: scheme.surface,
+      barrierColor: scheme.scrim.withValues(alpha: 0.45),
+      constraints: sheetConstraints,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.radiusXl),
+        ),
       ),
+      builder: (ctx) {
+        final viewBottom = MediaQuery.viewInsetsOf(ctx).bottom;
+        final sheetH = MediaQuery.sizeOf(ctx).height * _sheetHeightFactor;
+        return Padding(
+          padding: EdgeInsets.only(bottom: viewBottom),
+          child: SizedBox(
+            height: sheetH,
+            child: const _ManualTaskEditorSheet(),
+          ),
+        );
+      },
     );
   }
 }
 
-class _ManualTaskEditorScreen extends StatefulWidget {
-  const _ManualTaskEditorScreen();
+class _ManualTaskEditorSheet extends StatefulWidget {
+  const _ManualTaskEditorSheet();
 
   @override
-  State<_ManualTaskEditorScreen> createState() =>
-      _ManualTaskEditorScreenState();
+  State<_ManualTaskEditorSheet> createState() => _ManualTaskEditorSheetState();
 }
 
-class _ManualTaskEditorScreenState extends State<_ManualTaskEditorScreen> {
+class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
   final _title = TextEditingController();
   final _body = TextEditingController();
   final _bodyFocus = FocusNode();
@@ -74,6 +90,9 @@ class _ManualTaskEditorScreenState extends State<_ManualTaskEditorScreen> {
     _bodyFocus.dispose();
     super.dispose();
   }
+
+  Color get _accent =>
+      _priorityHigh ? TaskManualEditorAccent.coralDeep : TaskManualEditorAccent.coral;
 
   String? _dateIso(DateTime d) {
     final m = d.month.toString().padLeft(2, '0');
@@ -166,40 +185,50 @@ class _ManualTaskEditorScreenState extends State<_ManualTaskEditorScreen> {
     Navigator.of(context).pop();
   }
 
-  Widget _metaControl({
+  Widget _metaChip({
     required IconData icon,
     required bool active,
     required VoidCallback onTap,
     String? valueLabel,
+    bool iconOnly = false,
   }) {
     final scheme = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final accent = active ? scheme.primary : scheme.onSurfaceVariant;
-    final alpha = active ? 1.0 : 0.42;
+    final color = active
+        ? _accent
+        : scheme.onSurfaceVariant.withValues(alpha: 0.38);
+    final iconSize = iconOnly ? 18.0 : 17.0;
 
-    return InkWell(
-      onTap: _busy ? null : onTap,
-      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xs,
-          vertical: AppSpacing.xxs,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: accent.withValues(alpha: alpha)),
-            if (valueLabel != null && valueLabel.isNotEmpty) ...[
-              const SizedBox(width: 4),
-              Text(
-                valueLabel,
-                style: tt.labelMedium?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w600,
+    return Material(
+      color: active
+          ? _accent.withValues(alpha: 0.12)
+          : scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: _busy ? null : onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: iconOnly ? 8 : 10,
+            vertical: 6,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: iconSize, color: color),
+              if (!iconOnly && valueLabel != null && valueLabel.isNotEmpty) ...[
+                const SizedBox(width: 5),
+                Text(
+                  valueLabel,
+                  style: tt.labelSmall?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.1,
+                  ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -209,128 +238,161 @@ class _ManualTaskEditorScreenState extends State<_ManualTaskEditorScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
-    final titleStyle = tt.headlineSmall?.copyWith(
+    final titleStyle = tt.titleLarge?.copyWith(
       fontWeight: FontWeight.w700,
-      height: 1.2,
+      height: 1.15,
+      fontSize: 22,
       color: scheme.onSurface,
     );
-    final bodyStyle = tt.bodyLarge?.copyWith(
-      height: 1.45,
+    final bodyStyle = tt.bodyMedium?.copyWith(
+      height: 1.4,
       color: scheme.onSurface,
     );
     final titleHint = titleStyle?.copyWith(
-      color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+      color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
       fontWeight: FontWeight.w600,
     );
     final bodyHint = bodyStyle?.copyWith(
-      color: scheme.onSurfaceVariant.withValues(alpha: 0.48),
+      color: scheme.onSurfaceVariant.withValues(alpha: 0.42),
     );
 
-    return Scaffold(
-      backgroundColor: scheme.surface,
-      appBar: AppBar(
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: scheme.surface,
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          tooltip: 'Cerrar',
-          onPressed: _busy ? null : () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.lg,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.sm,
             0,
-            AppSpacing.lg,
-            AppSpacing.md + bottomInset,
+            AppSpacing.md,
+            AppSpacing.xs,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Row(
             children: [
-              TextField(
-                controller: _title,
-                style: titleStyle,
-                enabled: !_busy,
-                maxLines: 2,
-                textInputAction: TextInputAction.next,
-                onSubmitted: (_) => _bodyFocus.requestFocus(),
-                decoration: _borderlessHint(
-                  'Título de la tarea',
-                  titleHint,
-                  errorText: _titleError,
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.close_rounded, size: 22),
+                tooltip: 'Cerrar',
+                onPressed: _busy ? null : () => Navigator.of(context).pop(),
+              ),
+              Icon(
+                Icons.task_alt_outlined,
+                size: 18,
+                color: TaskManualEditorAccent.coral.withValues(alpha: 0.85),
+              ),
+              const Spacer(),
+              Icon(
+                Icons.circle_outlined,
+                size: 20,
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.28),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              0,
+              AppSpacing.lg,
+              AppSpacing.sm,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: _title,
+                  style: titleStyle,
+                  enabled: !_busy,
+                  maxLines: 2,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) => _bodyFocus.requestFocus(),
+                  decoration: _borderlessHint(
+                    'Título de la tarea',
+                    titleHint,
+                    errorText: _titleError,
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Row(
-                children: [
-                  _metaControl(
-                    icon: Icons.calendar_today_outlined,
-                    active: _date != null,
-                    onTap: _pickDate,
-                    valueLabel: _date != null ? _dateLabel(_date!) : null,
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  _metaControl(
-                    icon: Icons.schedule_outlined,
-                    active: _time != null,
-                    onTap: _pickTime,
-                    valueLabel: _time != null ? _timeLabel(_time!) : null,
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  _metaControl(
-                    icon: _priorityHigh
-                        ? Icons.flag_rounded
-                        : Icons.flag_outlined,
-                    active: _priorityHigh,
-                    onTap: _togglePriority,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: scheme.outline.withValues(alpha: 0.16),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Expanded(
-                child: TextField(
+                const SizedBox(height: AppSpacing.xs),
+                Row(
+                  children: [
+                    _metaChip(
+                      icon: Icons.calendar_today_outlined,
+                      active: _date != null,
+                      onTap: _pickDate,
+                      valueLabel: _date != null ? _dateLabel(_date!) : null,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    _metaChip(
+                      icon: Icons.schedule_outlined,
+                      active: _time != null,
+                      onTap: _pickTime,
+                      valueLabel: _time != null ? _timeLabel(_time!) : null,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    _metaChip(
+                      icon: _priorityHigh
+                          ? Icons.flag_rounded
+                          : Icons.flag_outlined,
+                      active: _priorityHigh,
+                      onTap: _togglePriority,
+                      iconOnly: true,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                TextField(
                   controller: _body,
                   focusNode: _bodyFocus,
                   style: bodyStyle,
                   enabled: !_busy,
-                  maxLines: null,
-                  expands: true,
+                  minLines: 3,
+                  maxLines: 6,
                   textAlignVertical: TextAlignVertical.top,
                   keyboardType: TextInputType.multiline,
                   decoration: _borderlessHint('Notas o detalles…', bodyHint),
                 ),
-              ),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.xs,
+            AppSpacing.lg,
+            AppSpacing.md,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               if (_submitError != null) ...[
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: Text(
-                    _submitError!,
-                    style: tt.bodySmall?.copyWith(color: scheme.error),
-                  ),
+                Text(
+                  _submitError!,
+                  style: tt.bodySmall?.copyWith(color: scheme.error),
                 ),
+                const SizedBox(height: AppSpacing.xs),
               ],
               FilledButton(
                 onPressed: _busy ? null : _submit,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Text(_busy ? 'Guardando…' : 'Crear tarea'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: TaskManualEditorAccent.coral,
+                  foregroundColor: const Color(0xFF1A1410),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  ),
+                ),
+                child: Text(
+                  _busy ? 'Guardando…' : 'Crear tarea',
+                  style: tt.labelLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 }
