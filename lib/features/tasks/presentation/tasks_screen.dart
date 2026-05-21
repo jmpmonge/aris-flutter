@@ -263,7 +263,6 @@ class _TasksScreenState extends State<TasksScreen> {
           SliverToBoxAdapter(
             child: AppHeader(
               title: 'Tareas',
-              subtitle: 'Lista unificada · pulsa una tarea para ampliar',
               trailing: IconButton.filledTonal(
                 onPressed: () => LocalActionFormSheet.showTaskForm(context),
                 icon: const Icon(Icons.add_rounded),

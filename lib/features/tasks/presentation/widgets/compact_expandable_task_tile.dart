@@ -74,6 +74,8 @@ class _CompactExpandableTaskTileState extends State<CompactExpandableTaskTile> {
     final tagsLabel = widget.task.tags.where((x) => x.trim().isNotEmpty).join(' · ');
     final hasTags = tagsLabel.isNotEmpty;
 
+    void toggleExpanded() => setState(() => _open = !_open);
+
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
@@ -93,6 +95,7 @@ class _CompactExpandableTaskTileState extends State<CompactExpandableTaskTile> {
             SizedBox(
               width: AppSpacing.minTouchTarget * 0.85,
               child: Checkbox(
+                shape: const CircleBorder(),
                 visualDensity: VisualDensity.compact,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 value: widget.task.completed,
@@ -100,131 +103,128 @@ class _CompactExpandableTaskTileState extends State<CompactExpandableTaskTile> {
               ),
             ),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  InkWell(
-                    onTap: () => setState(() => _open = !_open),
-                    borderRadius:
-                        BorderRadius.circular(AppSpacing.radiusMd * 0.5),
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(0, 2, AppSpacing.sm, AppSpacing.sm),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  widget.task.title,
-                                  style: titleStyle,
-                                  maxLines: _open ? 6 : 2,
-                                  overflow:
-                                      _open ? TextOverflow.visible : TextOverflow.ellipsis,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: toggleExpanded,
+                  borderRadius:
+                      BorderRadius.circular(AppSpacing.radiusMd * 0.5),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      0,
+                      2,
+                      AppSpacing.sm,
+                      AppSpacing.sm,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                widget.task.title,
+                                style: titleStyle,
+                                maxLines: _open ? 6 : 2,
+                                overflow: _open
+                                    ? TextOverflow.visible
+                                    : TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (high) ...[
+                              const SizedBox(width: AppSpacing.xs),
+                              Text(
+                                '\u26A0',
+                                style: tt.titleSmall?.copyWith(
+                                  height: 1,
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? const Color(0xFFF59E0B)
+                                      : const Color(0xFFD97706),
+                                ),
+                                semanticsLabel: 'Prioridad alta',
+                              ),
+                            ],
+                            if (widget.onDelete != null)
+                              PopupMenuButton<String>(
+                                tooltip: 'Más opciones',
+                                enabled: !widget.busy,
+                                padding: EdgeInsets.zero,
+                                onSelected: (v) {
+                                  if (v == 'delete') widget.onDelete?.call();
+                                },
+                                itemBuilder: (_) => const [
+                                  PopupMenuItem(
+                                    value: 'delete',
+                                    child: Text('Eliminar'),
+                                  ),
+                                ],
+                                child: Padding(
+                                  padding:
+                                      EdgeInsets.only(left: AppSpacing.xs),
+                                  child: Icon(
+                                    Icons.more_vert_rounded,
+                                    size: 18,
+                                    color: scheme.onSurfaceVariant
+                                        .withValues(alpha: 0.6),
+                                  ),
                                 ),
                               ),
-                              if (high) ...[
-                                const SizedBox(width: AppSpacing.xs),
-                                Text(
-                                  '\u26A0',
-                                  style: tt.titleSmall?.copyWith(
-                                    height: 1,
-                                    color: Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? const Color(0xFFF59E0B)
-                                        : const Color(0xFFD97706),
-                                  ),
-                                  semanticsLabel: 'Prioridad alta',
-                                ),
-                              ],
-                              if (widget.onDelete != null)
-                                PopupMenuButton<String>(
-                                  tooltip: 'Más opciones',
-                                  enabled: !widget.busy,
-                                  padding: EdgeInsets.zero,
-                                  onSelected: (v) {
-                                    if (v == 'delete') widget.onDelete?.call();
-                                  },
-                                  itemBuilder: (_) => const [
-                                    PopupMenuItem(
-                                      value: 'delete',
-                                      child: Text('Eliminar'),
-                                    ),
-                                  ],
-                                  // child en lugar del IconButton por defecto
-                                  // para evitar la restricción mínima de 48 px.
-                                  child: Padding(
-                                    padding: EdgeInsets.only(left: AppSpacing.xs),
-                                    child: Icon(
-                                      Icons.more_vert_rounded,
-                                      size: 18,
-                                      color: scheme.onSurfaceVariant
-                                          .withValues(alpha: 0.6),
-                                    ),
-                                  ),
-                                ),
-                            ],
+                          ],
+                        ),
+                        if (meta.isNotEmpty)
+                          Padding(
+                            padding: EdgeInsets.only(top: AppSpacing.xxs),
+                            child: Text(meta, style: metaStyle),
                           ),
-                          if (meta.isNotEmpty)
-                            Padding(
-                              padding:
-                                  EdgeInsets.only(top: AppSpacing.xxs),
-                              child: Text(meta, style: metaStyle),
-                            ),
-                        ],
-                      ),
+                        AnimatedSize(
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeInOut,
+                          alignment: Alignment.topLeft,
+                          child: _open
+                              ? Padding(
+                                  padding: EdgeInsets.only(
+                                    top: AppSpacing.sm,
+                                    bottom: AppSpacing.xs,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      if (hasDesc)
+                                        Text(
+                                          desc,
+                                          style: tt.bodyMedium?.copyWith(
+                                            height: 1.35,
+                                            color: scheme.onSurfaceVariant
+                                                .withValues(alpha: 0.94),
+                                          ),
+                                        ),
+                                      if (hasTags)
+                                        Padding(
+                                          padding: EdgeInsets.only(
+                                            top: hasDesc ? AppSpacing.sm : 0,
+                                          ),
+                                          child: Text(
+                                            tagsLabel,
+                                            style: tt.labelSmall?.copyWith(
+                                              color: scheme.outline
+                                                  .withValues(alpha: 0.95),
+                                              height: 1.3,
+                                              letterSpacing: 0.1,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                      ],
                     ),
                   ),
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeInOut,
-                    alignment: Alignment.topLeft,
-                    child: _open
-                        ? Padding(
-                            padding:
-                                EdgeInsets.only(bottom: AppSpacing.sm),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                if (hasDesc)
-                                  Padding(
-                                    padding:
-                                        EdgeInsets.only(right: AppSpacing.sm),
-                                    child: Text(
-                                      desc,
-                                      style: tt.bodyMedium?.copyWith(
-                                        height: 1.35,
-                                        color:
-                                            scheme.onSurfaceVariant.withValues(
-                                          alpha: 0.94,
-                                        ),
-                                      ),
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                if (hasTags)
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                      top: hasDesc ? AppSpacing.sm : 0,
-                                      right: AppSpacing.sm,
-                                    ),
-                                    child: Text(
-                                      tagsLabel,
-                                      style: tt.labelSmall?.copyWith(
-                                        color: scheme.outline.withValues(alpha: 0.95),
-                                        height: 1.3,
-                                        letterSpacing: 0.1,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
+                ),
               ),
             ),
           ],
