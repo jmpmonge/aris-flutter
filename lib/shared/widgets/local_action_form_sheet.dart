@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../core/models/local_action_model.dart';
-import '../../core/repositories/repositories.dart';
 import '../../core/services/local_action_service.dart';
 import '../../features/notes/presentation/manual_note_canvas_sheet.dart';
+import '../../features/tasks/presentation/manual_task_editor_page.dart';
 import '../../theme/app_spacing.dart';
 import '../layout/breakpoints.dart';
 import 'app_form_button.dart';
@@ -14,7 +13,7 @@ import 'form_section_title.dart';
 /// otros tipos pueden seguir usando acciones locales de demostración.
 abstract final class LocalActionFormSheet {
   static Future<void> showTaskForm(BuildContext context) {
-    return _open(context, const _TaskFormBody());
+    return ManualTaskEditorPage.show(context);
   }
 
   /// Lienzo manual de nota (v0.49.14).
@@ -95,144 +94,6 @@ abstract final class LocalActionFormSheet {
               height: 1.35,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TaskFormBody extends StatefulWidget {
-  const _TaskFormBody();
-
-  @override
-  State<_TaskFormBody> createState() => _TaskFormBodyState();
-}
-
-class _TaskFormBodyState extends State<_TaskFormBody> {
-  final _title = TextEditingController();
-  final _description = TextEditingController();
-  LocalTaskPriority _priority = LocalTaskPriority.medium;
-  String? _titleError;
-  String? _submitError;
-  bool _busy = false;
-
-  @override
-  void dispose() {
-    _title.dispose();
-    _description.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    final t = _title.text.trim();
-    if (t.isEmpty) {
-      setState(() => _titleError = 'Añade un título');
-      return;
-    }
-    setState(() {
-      _titleError = null;
-      _submitError = null;
-      _busy = true;
-    });
-    final wirePriority =
-        _priority == LocalTaskPriority.high ? 'high' : 'normal';
-    final ok = await Repositories.task.createTaskOnBackend(
-      title: t,
-      description:
-          _description.text.trim().isEmpty ? null : _description.text.trim(),
-      priority: wirePriority,
-      tags: const <String>[],
-    );
-    if (!mounted) return;
-    setState(() => _busy = false);
-    if (!ok) {
-      setState(
-        () => _submitError = 'No se pudo crear la tarea. Inténtalo de nuevo.',
-      );
-      return;
-    }
-    Navigator.of(context).pop();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    final bottom = MediaQuery.viewInsetsOf(context).bottom;
-    final pad = EdgeInsets.fromLTRB(
-      AppSpacing.lg,
-      AppSpacing.sm,
-      AppSpacing.lg,
-      AppSpacing.md + bottom,
-    );
-
-    return SingleChildScrollView(
-      padding: pad,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Nueva tarea',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          const FormSectionTitle('Título'),
-          AppTextField(
-            controller: _title,
-            hint: 'Ej. Llamar al cliente',
-            errorText: _titleError,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          const FormSectionTitle('Descripción (opcional)'),
-          AppTextField(
-            controller: _description,
-            maxLines: 3,
-            hint: 'Detalles breves',
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          const FormSectionTitle('Prioridad'),
-          SegmentedButton<LocalTaskPriority>(
-            segments: [
-              ButtonSegment(
-                value: LocalTaskPriority.low,
-                label: Text(LocalTaskPriority.low.displayLabel),
-              ),
-              ButtonSegment(
-                value: LocalTaskPriority.medium,
-                label: Text(LocalTaskPriority.medium.displayLabel),
-              ),
-              ButtonSegment(
-                value: LocalTaskPriority.high,
-                label: Text(LocalTaskPriority.high.displayLabel),
-              ),
-            ],
-            selected: {_priority},
-            onSelectionChanged: (s) {
-              if (_busy) return;
-              setState(() => _priority = s.first);
-            },
-            style: SegmentedButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-            ),
-          ),
-          if (_submitError != null) ...[
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              _submitError!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.error,
-                  ),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.md),
-          AppFormButton(
-            label: _busy ? 'Guardando…' : 'Crear tarea',
-            onPressed: _busy ? null : () => _submit(),
-          ),
-          SizedBox(height: scheme.brightness == Brightness.dark ? 6 : 0),
         ],
       ),
     );
