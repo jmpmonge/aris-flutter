@@ -8,12 +8,11 @@ import '../../../core/repositories/repositories.dart';
 import '../../../core/services/local_action_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
-import '../../../shared/widgets/app_search_bar.dart';
 import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../shared/widgets/local_action_card.dart';
 import '../../../shared/widgets/local_action_empty_state.dart';
-import '../../../shared/widgets/local_action_form_sheet.dart';
 import '../../../shared/widgets/section_title.dart';
+import 'manual_note_canvas_sheet.dart';
 import '../../../theme/app_spacing.dart';
 
 /// Notas — buscador, notas rápidas y lista **mock**.
@@ -248,18 +247,15 @@ class _NotesScreenState extends State<NotesScreen> {
               key: const Key('tab_notes'),
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const AppHeader(title: 'Notas'),
-                const AppSearchBar(
-                  hintText: 'Buscar en notas…',
-                  readOnly: true,
+                AppHeader(
+                  title: 'Notas',
+                  trailing: IconButton.filledTonal(
+                    onPressed: () => ManualNoteCanvasSheet.show(context),
+                    icon: const Icon(Icons.add_rounded),
+                    tooltip: 'Nueva nota',
+                  ),
                 ),
-                SectionTitle(
-                  title: 'Notas rápidas',
-                  actionLabel: 'Nueva nota',
-                  onAction: () {
-                    LocalActionFormSheet.showManualNoteForm(context);
-                  },
-                ),
+                const SectionTitle(title: 'Notas rápidas'),
                 SizedBox(
                   height: AppSpacing.quickChipsStripHeight,
                   child: ListView.separated(
@@ -405,7 +401,7 @@ class _NotesScreenState extends State<NotesScreen> {
             ),
           ),
           HomeArisFixedInputBar(
-            hintText: 'Pide una nota a Aris…',
+            hintText: 'Pide a Aris crear o buscar notas…',
             isSending: _arisSending,
             onSubmit: _sendArisMessage,
             onMicPressed: _onMicPressed,

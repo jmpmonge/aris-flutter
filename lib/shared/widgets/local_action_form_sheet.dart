@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/models/local_action_model.dart';
 import '../../core/repositories/repositories.dart';
 import '../../core/services/local_action_service.dart';
+import '../../features/notes/presentation/manual_note_canvas_sheet.dart';
 import '../../theme/app_spacing.dart';
 import '../layout/breakpoints.dart';
 import 'app_form_button.dart';
@@ -16,9 +17,9 @@ abstract final class LocalActionFormSheet {
     return _open(context, const _TaskFormBody());
   }
 
-  /// Editor manual vacío: título arriba y contenido debajo (v0.49.13).
+  /// Lienzo manual de nota (v0.49.14).
   static Future<void> showManualNoteForm(BuildContext context) {
-    return _open(context, const _ManualNoteFormBody());
+    return ManualNoteCanvasSheet.show(context);
   }
 
   static Future<void> showNoteForm(BuildContext context) {
@@ -222,82 +223,6 @@ class _TaskFormBodyState extends State<_TaskFormBody> {
             label: _busy ? 'Guardando…' : 'Crear tarea',
             onPressed: _busy ? null : () => _submit(),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          AppFormButton(
-            label: 'Cancelar',
-            primary: false,
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          SizedBox(height: scheme.brightness == Brightness.dark ? 8 : 0),
-        ],
-      ),
-    );
-  }
-}
-
-class _ManualNoteFormBody extends StatefulWidget {
-  const _ManualNoteFormBody();
-
-  @override
-  State<_ManualNoteFormBody> createState() => _ManualNoteFormBodyState();
-}
-
-class _ManualNoteFormBodyState extends State<_ManualNoteFormBody> {
-  final _title = TextEditingController();
-  final _content = TextEditingController();
-  String? _titleError;
-
-  @override
-  void dispose() {
-    _title.dispose();
-    _content.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final t = _title.text.trim();
-    if (t.isEmpty) {
-      setState(() => _titleError = 'Añade un título');
-      return;
-    }
-    setState(() => _titleError = null);
-    LocalActionService.createNote(
-      title: t,
-      content: _content.text.trim(),
-    );
-    Navigator.of(context).pop();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    return SingleChildScrollView(
-      padding: LocalActionFormSheet._paddingFor(context),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          LocalActionFormSheet._sheetHeader(
-            context,
-            'Nueva nota',
-            subtitle: 'Crea una nota a mano: título arriba y contenido debajo.',
-          ),
-          const FormSectionTitle('Título'),
-          AppTextField(
-            controller: _title,
-            hint: 'Título de la nota',
-            errorText: _titleError,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          const FormSectionTitle('Contenido'),
-          AppTextField(
-            controller: _content,
-            maxLines: 10,
-            hint: 'Escribe el cuerpo de la nota…',
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          AppFormButton(label: 'Guardar nota', onPressed: _submit),
           const SizedBox(height: AppSpacing.sm),
           AppFormButton(
             label: 'Cancelar',
