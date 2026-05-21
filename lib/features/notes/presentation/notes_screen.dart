@@ -223,10 +223,7 @@ class _NotesScreenState extends State<NotesScreen> {
         key: const Key('tab_notes'),
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AppHeader(
-            title: 'Notas',
-            subtitle: 'Servidor PATCH/DELETE cuando hay GET OK · demo si no',
-          ),
+          const AppHeader(title: 'Notas'),
           const AppSearchBar(hintText: 'Buscar en notas…', readOnly: true),
           SectionTitle(
             title: 'Notas rápidas',
@@ -271,8 +268,7 @@ class _NotesScreenState extends State<NotesScreen> {
           ),
           if (arisNotes.isEmpty)
             const LocalActionEmptyState(
-              message:
-                  'Sin notas desde el chat ni desde el formulario. Pulsa «Nueva nota» arriba.',
+              message: 'Aún no hay notas de Aris.',
             )
           else
             SizedBox(
