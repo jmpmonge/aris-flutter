@@ -477,7 +477,7 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
   }
 }
 
-/// Cuadrícula mensual + lista del día seleccionado (mock).
+/// Cuadrícula mensual + detalle del día seleccionado (v0.49.11).
 class CalendarMonthView extends StatefulWidget {
   const CalendarMonthView({
     super.key,
@@ -492,8 +492,26 @@ class CalendarMonthView extends StatefulWidget {
 }
 
 class _CalendarMonthViewState extends State<CalendarMonthView> {
+  static const _monthNames = <String>[
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
+  ];
+
   late DateTime _month;
   late int _selectedDay;
+
+  String get _monthTitleLabel =>
+      '${_monthNames[_month.month - 1]} ${_month.year}';
 
   @override
   void initState() {
@@ -522,11 +540,10 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Mes · ${_month.year}/${_month.month.toString().padLeft(2, '0')}',
-            style: text.labelSmall?.copyWith(
-              letterSpacing: 0.8,
-              color: scheme.primary,
-              fontWeight: FontWeight.w700,
+            _monthTitleLabel,
+            style: text.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: scheme.onSurface,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -619,17 +636,16 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Día $_selectedDay · detalle (mock)',
-            style: text.labelSmall?.copyWith(
-              letterSpacing: 0.8,
-              color: scheme.primary,
-              fontWeight: FontWeight.w700,
+            'Día $_selectedDay',
+            style: text.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: scheme.onSurface,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
           if (selectedEvents.isEmpty)
             Text(
-              'Sin eventos simulados para este día.',
+              'Sin eventos para este día.',
               style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
             )
           else
