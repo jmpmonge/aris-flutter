@@ -206,8 +206,8 @@ class CalendarDayView extends StatelessWidget {
   }
 }
 
-/// Rejilla horaria semanal compacta (misma franja que [CalendarDayView], v0.49.7).
-class CalendarWeekView extends StatelessWidget {
+/// Rejilla horaria semanal + ficha de detalle inferior al pulsar (v0.49.9).
+class CalendarWeekView extends StatefulWidget {
   const CalendarWeekView({
     super.key,
     required this.weekStart,
@@ -219,6 +219,13 @@ class CalendarWeekView extends StatelessWidget {
   final CalendarRepository calendarRepository;
 
   static const weekdayShortLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
+  @override
+  State<CalendarWeekView> createState() => _CalendarWeekViewState();
+}
+
+class _CalendarWeekViewState extends State<CalendarWeekView> {
+  String? _selectedEventId;
 
   static const int _dayCount = 7;
 
@@ -263,7 +270,7 @@ class CalendarWeekView extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              weekdayShortLabels[dayIndex],
+              CalendarWeekView.weekdayShortLabels[dayIndex],
               style: text.labelSmall?.copyWith(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
@@ -284,8 +291,80 @@ class CalendarWeekView extends StatelessWidget {
     );
   }
 
+  void _onWeekEventTap(String eventId) {
+    setState(() {
+      _selectedEventId = _selectedEventId == eventId ? null : eventId;
+    });
+  }
+
+  EventModel? _findSelectedEvent(List<List<EventModel>> eventsByDay) {
+    final id = _selectedEventId;
+    if (id == null) return null;
+    for (final day in eventsByDay) {
+      for (final e in day) {
+        if (e.id == id) return e;
+      }
+    }
+    return null;
+  }
+
   Widget _weekEventBlock(BuildContext context, EventModel event) {
-    return CalendarWeekEventBubble(event: event);
+    final isSelected = _selectedEventId == event.id;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _onWeekEventTap(event.id),
+        borderRadius: BorderRadius.circular(6),
+        child: CalendarWeekEventBubble(
+          event: event,
+          isSelected: isSelected,
+        ),
+      ),
+    );
+  }
+
+  /// Misma presentación que la tarjeta de evento en [CalendarDayView].
+  Widget _weekSelectedEventDetail(BuildContext context, EventModel event) {
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.md),
+      child: AppCard(
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${event.timeHm} · ${event.title}',
+                    style: text.titleSmall,
+                  ),
+                  if (event.detail.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.xxs),
+                      child: Text(
+                        event.detail,
+                        style: text.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (calendarShouldShowBackendActions(event))
+              Padding(
+                padding: const EdgeInsets.only(left: AppSpacing.xs),
+                child: calendarBackendEventOverflowMenu(context, event),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _weekHourSlot({
@@ -358,9 +437,10 @@ class CalendarWeekView extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final eventsByDay = List.generate(_dayCount, (i) {
-      final d = weekStart.add(Duration(days: i));
-      return calendarRepository.getWeekEvents(d);
+      final d = widget.weekStart.add(Duration(days: i));
+      return widget.calendarRepository.getWeekEvents(d);
     });
+    final selected = _findSelectedEvent(eventsByDay);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -378,9 +458,9 @@ class CalendarWeekView extends StatelessWidget {
                     child: _weekDayHeader(
                       context: context,
                       dayIndex: i,
-                      day: weekStart.add(Duration(days: i)),
+                      day: widget.weekStart.add(Duration(days: i)),
                       isToday: calendarSameLocalDay(
-                        weekStart.add(Duration(days: i)),
+                        widget.weekStart.add(Duration(days: i)),
                         now,
                       ),
                     ),
@@ -395,8 +475,10 @@ class CalendarWeekView extends StatelessWidget {
               hour: h,
               eventsByDay: eventsByDay,
             ),
+          if (selected != null)
+            _weekSelectedEventDetail(context, selected),
           CalendarTextualBackendEventsPanel(
-            repository: calendarRepository,
+            repository: widget.calendarRepository,
           ),
         ],
       ),

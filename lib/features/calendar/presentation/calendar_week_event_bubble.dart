@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 import '../../../core/models/event_model.dart';
 import 'calendar_week_event_badge.dart';
 
-/// Pieza compacta de agenda para la rejilla Semana (v0.49.7).
+/// Pieza compacta de agenda para la rejilla Semana (v0.49.9).
 class CalendarWeekEventBubble extends StatelessWidget {
   const CalendarWeekEventBubble({
     super.key,
     required this.event,
+    this.isSelected = false,
   });
 
   final EventModel event;
+  final bool isSelected;
 
   static const double _minWidthForLabel = 46;
   static const double _iconWellSize = 18;
@@ -28,7 +30,10 @@ class CalendarWeekEventBubble extends StatelessWidget {
     final surface = isDark
         ? scheme.surfaceContainerHigh.withValues(alpha: 0.92)
         : scheme.surface;
-    final borderColor = scheme.primary.withValues(alpha: isDark ? 0.42 : 0.32);
+    final borderColor = isSelected
+        ? scheme.primary
+        : scheme.primary.withValues(alpha: isDark ? 0.42 : 0.32);
+    final borderWidth = isSelected ? 2.0 : 1.0;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -42,7 +47,7 @@ class CalendarWeekEventBubble extends StatelessWidget {
           decoration: BoxDecoration(
             color: surface,
             borderRadius: BorderRadius.circular(_bubbleRadius),
-            border: Border.all(color: borderColor, width: 1),
+            border: Border.all(color: borderColor, width: borderWidth),
             boxShadow: [
               BoxShadow(
                 color: scheme.shadow.withValues(alpha: isDark ? 0.28 : 0.1),
