@@ -85,94 +85,8 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 
   Future<void> _onRecentNoteMenu(String action, NoteModel n) async {
-    switch (action) {
-      case 'edit':
-        await _editBackendNote(n);
-      case 'delete':
-        await _deleteBackendNote(n);
-      default:
-        break;
-    }
-  }
-
-  Future<void> _editBackendNote(NoteModel n) async {
-    final titleCtrl = TextEditingController(text: n.title);
-    final bodyCtrl = TextEditingController(text: n.body);
-
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        final dlgScheme = Theme.of(ctx).colorScheme;
-        return AlertDialog(
-          title: const Text('Editar nota'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleCtrl,
-                  decoration: InputDecoration(
-                    labelText: 'Título (se envía junto al texto)',
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(color: dlgScheme.outline),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                TextField(
-                  controller: bodyCtrl,
-                  minLines: 3,
-                  maxLines: 8,
-                  decoration: InputDecoration(
-                    labelText: 'Contenido',
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(color: dlgScheme.outline),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Guardar'),
-            ),
-          ],
-        );
-      },
-    );
-
-    final tt = titleCtrl.text.trim();
-    final bb = bodyCtrl.text.trim();
-    titleCtrl.dispose();
-    bodyCtrl.dispose();
-
-    if (saved != true || !mounted) return;
-    if (tt.isEmpty && bb.isEmpty) {
-      _briefSnack(context, message: _noteBackendFail, error: true);
-      return;
-    }
-
-    setState(() => _busyNoteIds.add(n.id));
-    try {
-      final ok = await Repositories.note.updateNote(
-        n.id,
-        title: tt.isEmpty ? null : tt,
-        content: bb.isEmpty ? null : bb,
-      );
-      if (!mounted) return;
-      if (ok) {
-        _briefSnack(context, message: 'Nota actualizada.');
-      } else {
-        _briefSnack(context, message: _noteBackendFail, error: true);
-      }
-    } finally {
-      if (mounted) setState(() => _busyNoteIds.remove(n.id));
+    if (action == 'delete') {
+      await _deleteBackendNote(n);
     }
   }
 
@@ -271,47 +185,42 @@ class _NotesScreenState extends State<NotesScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                         child: AppCard(
-                          child: Column(
+                          onTap: () =>
+                              ManualNoteCanvasSheet.openExisting(context, n),
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(n.title, style: text.titleSmall),
-                                        const SizedBox(height: AppSpacing.xs),
-                                        Text(
-                                          n.body,
-                                          style: text.bodyMedium?.copyWith(
-                                            color: scheme.onSurfaceVariant,
-                                          ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(n.title, style: text.titleSmall),
+                                    if (n.body.isNotEmpty) ...[
+                                      const SizedBox(height: AppSpacing.xs),
+                                      Text(
+                                        n.body,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: text.bodyMedium?.copyWith(
+                                          color: scheme.onSurfaceVariant,
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  if (Repositories.note.readsFromBackend)
-                                    PopupMenuButton<String>(
-                                      tooltip: 'Más opciones',
-                                      enabled: !_busyNoteIds.contains(n.id),
-                                      onSelected: (v) =>
-                                          _onRecentNoteMenu(v, n),
-                                      itemBuilder: (_) => const [
-                                        PopupMenuItem(
-                                          value: 'edit',
-                                          child: Text('Editar'),
-                                        ),
-                                        PopupMenuItem(
-                                          value: 'delete',
-                                          child: Text('Eliminar'),
-                                        ),
-                                      ],
-                                    ),
-                                ],
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
+                              if (Repositories.note.readsFromBackend)
+                                PopupMenuButton<String>(
+                                  tooltip: 'Más opciones',
+                                  enabled: !_busyNoteIds.contains(n.id),
+                                  onSelected: (v) => _onRecentNoteMenu(v, n),
+                                  itemBuilder: (_) => const [
+                                    PopupMenuItem(
+                                      value: 'delete',
+                                      child: Text('Eliminar'),
+                                    ),
+                                  ],
+                                ),
                             ],
                           ),
                         ),
