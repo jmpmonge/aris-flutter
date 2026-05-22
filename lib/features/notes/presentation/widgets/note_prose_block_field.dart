@@ -38,7 +38,9 @@ class NoteProseBlockField extends StatelessWidget {
       minLines: minLines,
       maxLines: null,
       keyboardType: TextInputType.multiline,
+      scrollPadding: EdgeInsets.zero,
       decoration: InputDecoration(
+        isDense: true,
         border: InputBorder.none,
         enabledBorder: InputBorder.none,
         focusedBorder: InputBorder.none,

@@ -7,6 +7,7 @@ import '../../../core/repositories/repositories.dart';
 import '../../../core/services/local_action_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import 'widgets/note_body_block_spacing.dart';
 import 'widgets/note_body_format.dart';
 import 'widgets/note_checklist_line.dart';
 import 'widgets/note_editor_blocks.dart';
@@ -194,17 +195,27 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
 
   bool get _hasChecklistEntries => _entries.any((e) => e.isChecklist);
 
-  /// Separación mínima entre bloques; tras tabla, sin hueco extra antes del texto.
-  double _gapBeforeBlock(int index) {
+  /// Separador único entre bloques (sin padding vertical extra en cada bloque).
+  Widget _blockSeparator(int index) {
     assert(index > 0);
     final prev = _entries[index - 1];
     final curr = _entries[index];
-    if (prev.isTable && curr.isProse) return 0;
-    if (prev.isProse && curr.isTable) return AppSpacing.xs;
-    if (prev.isChecklist || curr.isChecklist) return AppSpacing.xs;
-    if (prev.isTable || curr.isTable) return AppSpacing.xs;
-    return AppSpacing.md;
+    final gap = NoteBodyBlockSpacing.gapBetween(prev.kind, curr.kind);
+    final box = SizedBox(width: double.infinity, height: gap);
+
+    if (prev.isTable && curr.isProse) {
+      final tableIndex = index - 1;
+      return GestureDetector(
+        onTap: _saving ? null : () => _writeBelowTable(tableIndex),
+        behavior: HitTestBehavior.translucent,
+        child: box,
+      );
+    }
+    return box;
   }
+
+  bool _tableHasFollowingBlock(int tableIndex) =>
+      tableIndex + 1 < _entries.length;
 
   int _proseMinLines(int index) {
     final afterTable = index > 0 && _entries[index - 1].isTable;
@@ -937,9 +948,11 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                             _firstProseBlock?.focusNode.requestFocus(),
                         decoration: _fieldDecoration('Título'),
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(
+                        height: AppSpacing.noteBodyTitleToFirstBlock,
+                      ),
                       for (var i = 0; i < _entries.length; i++) ...[
-                        if (i > 0) SizedBox(height: _gapBeforeBlock(i)),
+                        if (i > 0) _blockSeparator(i),
                         if (_entries[i].isProse)
                           NoteProseBlockField(
                             key: ValueKey(_entries[i].prose!.id),
@@ -958,7 +971,9 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                             state: _entries[i].table!,
                             enabled: !_saving,
                             onExitBelow: () => _exitTableBelow(i),
-                            onTapBelow: () => _writeBelowTable(i),
+                            onTapBelow: _tableHasFollowingBlock(i)
+                                ? null
+                                : () => _writeBelowTable(i),
                             onAddRow: () => _addTableRow(i),
                           )
                         else

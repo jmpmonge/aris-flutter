@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_spacing.dart';
 import 'note_body_format.dart';
 
 /// Tabla editable integrada en la nota amplia (v0.49.42).
@@ -27,7 +28,7 @@ class NoteTableBlockEditor extends StatelessWidget {
     color: AppColors.noteWideTextPrimary,
   );
 
-  static const InputDecoration _cellDecoration = InputDecoration(
+  static final InputDecoration _cellDecoration = InputDecoration(
     border: InputBorder.none,
     enabledBorder: InputBorder.none,
     focusedBorder: InputBorder.none,
@@ -35,7 +36,11 @@ class NoteTableBlockEditor extends StatelessWidget {
     filled: false,
     fillColor: Colors.transparent,
     isCollapsed: true,
-    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    isDense: true,
+    contentPadding: EdgeInsets.symmetric(
+      horizontal: 10,
+      vertical: AppSpacing.noteBodyTableCellPadV,
+    ),
     hintText: null,
   );
 
@@ -111,6 +116,7 @@ class NoteTableBlockEditor extends StatelessWidget {
                           enabled: enabled,
                           style: _cellStyle,
                           maxLines: 1,
+                          scrollPadding: EdgeInsets.zero,
                           keyboardType: TextInputType.text,
                           textInputAction: TextInputAction.next,
                           onSubmitted: (_) => _advanceFromCell(r, c),
@@ -129,7 +135,7 @@ class NoteTableBlockEditor extends StatelessWidget {
             behavior: HitTestBehavior.translucent,
             child: const SizedBox(
               width: double.infinity,
-              height: 8,
+              height: AppSpacing.noteBodyTableTapBelow,
             ),
           ),
       ],

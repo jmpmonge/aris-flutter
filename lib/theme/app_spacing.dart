@@ -208,4 +208,10 @@ abstract final class AppSpacing {
 
   /// Área mínima recomendada para targets (Human Interface Guidelines).
   static const double minTouchTarget = 44;
+
+  /// Nota amplia — valores locales de bloque (gaps entre bloques: [NoteBodyBlockSpacing]).
+  static const double noteBodyTitleToFirstBlock = 6;
+  static const double noteBodyTableCellPadV = 5;
+  /// Zona tap solo si la tabla no tiene bloque siguiente (evita sumar con el separador).
+  static const double noteBodyTableTapBelow = 8;
 }
