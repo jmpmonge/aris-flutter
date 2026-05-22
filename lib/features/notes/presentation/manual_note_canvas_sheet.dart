@@ -51,6 +51,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   int _nextChecklistLineId = 0;
   int _nextTableBlockId = 0;
   int _nextProseBlockId = 0;
+  final Set<String> _watchedProseAfterTableIds = {};
   final _titleFocus = FocusNode();
   bool _saving = false;
   bool _pinned = false;
@@ -79,6 +80,11 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
             NoteEditorBlock.table(_newTableBlock(segment.table!)),
           );
         }
+      }
+    }
+    for (var i = 0; i < _blocks.length; i++) {
+      if (_isProseRightAfterTable(i)) {
+        _watchProseAfterTable(i);
       }
     }
     if (widget._isNew) {
@@ -142,6 +148,56 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
       if (block.isProse) return block.prose;
     }
     return null;
+  }
+
+  /// Separación mínima entre bloques; tras tabla, sin hueco extra antes del texto.
+  double _gapBeforeBlock(int index) {
+    assert(index > 0);
+    final prev = _blocks[index - 1];
+    final curr = _blocks[index];
+    if (prev.isTable && curr.isProse) return 0;
+    if (prev.isProse && curr.isTable) return AppSpacing.xs;
+    if (prev.isTable || curr.isTable) return AppSpacing.xs;
+    return AppSpacing.md;
+  }
+
+  int _proseMinLines(int index) {
+    final afterTable = index > 0 && _blocks[index - 1].isTable;
+    if (afterTable) return 1;
+    final onlyBlock = _blocks.length == 1;
+    if (onlyBlock && index == 0) return 8;
+    return 1;
+  }
+
+  bool _isProseRightAfterTable(int index) {
+    return index > 0 && _blocks[index].isProse && _blocks[index - 1].isTable;
+  }
+
+  void _watchProseAfterTable(int index) {
+    final prose = _blocks[index].prose!;
+    if (!_watchedProseAfterTableIds.add(prose.id)) return;
+
+    void onFocusOrText() {
+      if (!mounted) return;
+      final idx = _blocks.indexWhere(
+        (b) => b.isProse && identical(b.prose, prose),
+      );
+      if (idx < 0 || !_isProseRightAfterTable(idx)) return;
+
+      if (prose.focusNode.hasFocus || prose.controller.text.trim().isNotEmpty) {
+        setState(() {});
+        return;
+      }
+
+      setState(() {
+        prose.dispose();
+        _blocks.removeAt(idx);
+        _watchedProseAfterTableIds.remove(prose.id);
+      });
+    }
+
+    prose.focusNode.addListener(onFocusOrText);
+    prose.controller.addListener(onFocusOrText);
   }
 
   NoteChecklistLineState _newChecklistLine(NoteChecklistItem item) {
@@ -288,13 +344,19 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
         index + 1,
         NoteEditorBlock.table(_newTableBlock(NoteTableBlock.empty())),
       );
-      _blocks.insert(index + 2, NoteEditorBlock.prose(_newProseBlock(after)));
+      if (after.isNotEmpty) {
+        final proseIndex = index + 2;
+        _blocks.insert(proseIndex, NoteEditorBlock.prose(_newProseBlock(after)));
+        _watchProseAfterTable(proseIndex);
+      }
     });
   }
 
   void _writeBelowTable(int tableIndex) {
     if (tableIndex + 1 < _blocks.length && _blocks[tableIndex + 1].isProse) {
-      final prose = _blocks[tableIndex + 1].prose!;
+      final proseIndex = tableIndex + 1;
+      final prose = _blocks[proseIndex].prose!;
+      _watchProseAfterTable(proseIndex);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) prose.focusNode.requestFocus();
       });
@@ -302,9 +364,11 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     }
 
     final prose = _newProseBlock('');
+    final insertIndex = tableIndex + 1;
     setState(() {
-      _blocks.insert(tableIndex + 1, NoteEditorBlock.prose(prose));
+      _blocks.insert(insertIndex, NoteEditorBlock.prose(prose));
     });
+    _watchProseAfterTable(insertIndex);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) prose.focusNode.requestFocus();
     });
@@ -547,19 +611,14 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                       ],
                       const SizedBox(height: AppSpacing.md),
                       for (var i = 0; i < _blocks.length; i++) ...[
-                        if (i > 0)
-                          SizedBox(
-                            height: _blocks[i].isTable || _blocks[i - 1].isTable
-                                ? AppSpacing.lg
-                                : AppSpacing.md,
-                          ),
+                        if (i > 0) SizedBox(height: _gapBeforeBlock(i)),
                         if (_blocks[i].isProse)
                           NoteProseBlockField(
                             key: ValueKey(_blocks[i].prose!.id),
                             controller: _blocks[i].prose!.controller,
                             focusNode: _blocks[i].prose!.focusNode,
                             enabled: !_saving,
-                            minLines: i == _blocks.length - 1 ? 8 : 1,
+                            minLines: _proseMinLines(i),
                             hintText: i == 0 && _blocks.length == 1
                                 ? 'Escribe la nota…'
                                 : null,

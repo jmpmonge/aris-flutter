@@ -122,7 +122,7 @@ class NoteTableBlockEditor extends StatelessWidget {
             behavior: HitTestBehavior.translucent,
             child: const SizedBox(
               width: double.infinity,
-              height: 36,
+              height: 8,
             ),
           ),
       ],
