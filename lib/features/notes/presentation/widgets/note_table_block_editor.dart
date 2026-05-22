@@ -46,13 +46,27 @@ class NoteTableBlockEditor extends StatelessWidget {
   }
 
   void _advanceFromCell(int row, int col) {
+    final text = state.rowControllers[row][col].text.trim();
+
+    // Primera celda vacía de fila recién creada → salir de la tabla.
+    if (text.isEmpty &&
+        col == 0 &&
+        state.pendingExitFirstCellRow == row) {
+      state.pendingExitFirstCellRow = null;
+      onExitBelow();
+      return;
+    }
+
+    if (text.isNotEmpty && state.pendingExitFirstCellRow == row) {
+      state.pendingExitFirstCellRow = null;
+    }
+
     final next = _nextCell(row, col);
     if (next != null) {
       state.focusCell(next.$1, next.$2);
       return;
     }
 
-    final text = state.rowControllers[row][col].text.trim();
     if (text.isNotEmpty) {
       onAddRow();
       return;
@@ -139,6 +153,9 @@ final class NoteTableBlockState {
   final List<List<TextEditingController>> rowControllers = [];
   final List<List<FocusNode>> focusNodes = [];
 
+  /// Fila nueva: si (row, 0) sigue vacía al pulsar Siguiente, salir de la tabla.
+  int? pendingExitFirstCellRow;
+
   int get rowCount => rowControllers.length;
 
   void _addRowFromData(List<String> row) {
@@ -165,6 +182,7 @@ final class NoteTableBlockState {
 
   void addRow() {
     _addRowFromData(List.filled(columns, ''));
+    pendingExitFirstCellRow = rowCount - 1;
   }
 
   bool isRowEmpty(int row) {
@@ -177,6 +195,7 @@ final class NoteTableBlockState {
   /// Quita la última fila si está vacía (p. ej. fila creada y abandonada).
   void removeLastRowIfEmpty() {
     if (rowCount <= 1 || !isLastRowEmpty) return;
+    pendingExitFirstCellRow = null;
     final row = rowCount - 1;
     for (final cell in rowControllers[row]) {
       cell.dispose();
