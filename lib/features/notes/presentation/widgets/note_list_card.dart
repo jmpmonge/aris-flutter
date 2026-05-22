@@ -17,11 +17,37 @@ class NoteListCard extends StatelessWidget {
   final Widget? trailing;
 
   static const double _radius = 14;
-  static const double _pinSize = 15;
+  static const double _pinSize = 14;
+  static const double _metaIconSize = 13;
+  static const int _maxVisibleTags = 2;
+
+  static const TextStyle _metaStyle = TextStyle(
+    fontSize: 11,
+    height: 1.2,
+    fontWeight: FontWeight.w500,
+    color: AppColors.noteWideTextMuted,
+  );
+
+  static const TextStyle _tagStyle = TextStyle(
+    fontSize: 11,
+    height: 1.2,
+    fontWeight: FontWeight.w500,
+    color: AppColors.noteListTagTint,
+  );
+
+  static const TextStyle _checklistStyle = TextStyle(
+    fontSize: 11,
+    height: 1.2,
+    fontWeight: FontWeight.w600,
+    color: AppColors.noteListChecklistTint,
+  );
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final tags = note.listDisplayTags;
+    final visibleTags = tags.take(_maxVisibleTags).toList();
+    final extraTags = tags.length - visibleTags.length;
 
     return Material(
       color: Colors.transparent,
@@ -34,7 +60,7 @@ class NoteListCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(_radius),
             border: Border.all(color: AppColors.noteListCardBorder),
           ),
-          padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -43,7 +69,7 @@ class NoteListCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Expanded(
                           child: Text(
@@ -57,12 +83,17 @@ class NoteListCard extends StatelessWidget {
                           ),
                         ),
                         if (note.pinned) ...[
-                          const SizedBox(width: 6),
-                          Icon(
+                          const SizedBox(width: 4),
+                          const Icon(
                             Icons.push_pin_rounded,
                             size: _pinSize,
                             color: AppColors.noteListPinTint,
                           ),
+                        ],
+                        if (note.listTimeLabel != null &&
+                            note.listTimeLabel!.isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          Text(note.listTimeLabel!, style: _metaStyle),
                         ],
                       ],
                     ),
@@ -79,6 +110,14 @@ class NoteListCard extends StatelessWidget {
                         ),
                       ),
                     ],
+                    if (note.hasListMetadataRow) ...[
+                      const SizedBox(height: 5),
+                      _MetadataRow(
+                        note: note,
+                        visibleTags: visibleTags,
+                        extraTags: extraTags,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -87,6 +126,52 @@ class NoteListCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _MetadataRow extends StatelessWidget {
+  const _MetadataRow({
+    required this.note,
+    required this.visibleTags,
+    required this.extraTags,
+  });
+
+  final NoteModel note;
+  final List<String> visibleTags;
+  final int extraTags;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 3,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        if (note.hasAttachments) ...[
+          const Icon(
+            Icons.attach_file_rounded,
+            size: NoteListCard._metaIconSize,
+            color: AppColors.noteWideTextMuted,
+          ),
+          Text(
+            note.attachmentName ?? 'Adjunto',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: NoteListCard._metaStyle,
+          ),
+        ],
+        for (final tag in visibleTags) Text(tag, style: NoteListCard._tagStyle),
+        if (extraTags > 0)
+          Text('+$extraTags', style: NoteListCard._tagStyle),
+        if (note.hasChecklist)
+          Text(
+            note.checklistItemCount > 0
+                ? '✓ ${note.checklistItemCount}'
+                : '✓',
+            style: NoteListCard._checklistStyle,
+          ),
+      ],
     );
   }
 }

@@ -6,17 +6,67 @@ class NoteModel {
     required this.body,
     this.quickLabel,
     this.pinned = false,
+    this.listTimeLabel,
+    this.hasAttachments = false,
+    this.attachmentName,
+    this.hasChecklist = false,
+    this.checklistItemCount = 0,
+    this.folderName,
+    this.tags = const [],
   });
 
   final String id;
   final String title;
   final String body;
 
-  /// Etiqueta opcional para chips rápidos (ej. «Compra»).
+  /// Etiqueta legacy (chips). Si [tags] está vacío, se muestra en listado como #tag.
   final String? quickLabel;
+
+  /// Etiquetas en listado (v0.49.43), p. ej. `aris` → `#aris`.
+  final List<String> tags;
 
   /// Fijada en listado (v0.49.43). Persistencia backend: futuro.
   final bool pinned;
+
+  /// Hora o «Hoy, 12:48» en la tarjeta del listado.
+  final String? listTimeLabel;
+
+  final bool hasAttachments;
+  final String? attachmentName;
+  final bool hasChecklist;
+  final int checklistItemCount;
+
+  /// Carpeta; no se muestra si es la general o «Notas».
+  final String? folderName;
+
+  bool get showFolderInList {
+    final f = folderName?.trim();
+    if (f == null || f.isEmpty) return false;
+    final lower = f.toLowerCase();
+    return lower != 'notas' && lower != 'general' && lower != 'todas';
+  }
+
+  static String normalizeListTag(String raw) {
+    final s = raw.trim();
+    if (s.isEmpty) return '';
+    return s.startsWith('#') ? s : '#$s';
+  }
+
+  /// Etiquetas normalizadas para la fila inferior del listado.
+  List<String> get listDisplayTags {
+    final out = <String>[];
+    for (final tag in tags) {
+      final n = normalizeListTag(tag);
+      if (n.isNotEmpty && !out.contains(n)) out.add(n);
+    }
+    if (out.isEmpty && quickLabel != null && quickLabel!.trim().isNotEmpty) {
+      out.add(normalizeListTag(quickLabel!));
+    }
+    return out;
+  }
+
+  bool get hasListMetadataRow =>
+      hasAttachments || listDisplayTags.isNotEmpty || hasChecklist;
 
   /// Línea compacta tipo Home.
   String get homePreviewLine {
@@ -30,6 +80,13 @@ class NoteModel {
     'body': body,
     if (quickLabel != null) 'quickLabel': quickLabel,
     if (pinned) 'pinned': true,
+    if (listTimeLabel != null) 'listTimeLabel': listTimeLabel,
+    if (hasAttachments) 'hasAttachments': true,
+    if (attachmentName != null) 'attachmentName': attachmentName,
+    if (hasChecklist) 'hasChecklist': true,
+    if (checklistItemCount > 0) 'checklistItemCount': checklistItemCount,
+    if (folderName != null) 'folderName': folderName,
+    if (tags.isNotEmpty) 'tags': tags,
   };
 
   factory NoteModel.fromJson(Map<String, dynamic> json) {
@@ -40,6 +97,24 @@ class NoteModel {
       body: json['body'] as String? ?? '',
       quickLabel: json['quickLabel'] as String?,
       pinned: pinnedRaw == true,
+      listTimeLabel: json['listTimeLabel'] as String?,
+      hasAttachments: json['hasAttachments'] == true,
+      attachmentName: json['attachmentName'] as String?,
+      hasChecklist: json['hasChecklist'] == true,
+      checklistItemCount: json['checklistItemCount'] as int? ?? 0,
+      folderName: json['folderName'] as String?,
+      tags: _parseTags(json),
     );
+  }
+
+  static List<String> _parseTags(Map<String, dynamic> json) {
+    final raw = json['tags'];
+    if (raw is List) {
+      return [
+        for (final item in raw)
+          if (item is String && item.trim().isNotEmpty) item.trim(),
+      ];
+    }
+    return const [];
   }
 }
