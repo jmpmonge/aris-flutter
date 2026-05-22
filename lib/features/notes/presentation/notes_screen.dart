@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 
 import '../../../core/models/note_model.dart';
 import '../../../core/repositories/repositories.dart';
-import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/home_aris_reply_card.dart';
-import 'manual_note_canvas_sheet.dart';
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import 'manual_note_canvas_sheet.dart';
+import 'widgets/note_list_card.dart';
 
 /// Notas — creación manual (+), listado y canal Aris (sin tags visibles, v0.49.15).
 class NotesScreen extends StatefulWidget {
@@ -67,6 +68,7 @@ class _NotesScreenState extends State<NotesScreen> {
 
   double _listBottomPadding(BuildContext context) {
     return HomeArisFixedInputBar.dockHeight +
+        AppSpacing.sm +
         AppSpacing.homeScrollBottomBreathing;
   }
 
@@ -133,7 +135,6 @@ class _NotesScreenState extends State<NotesScreen> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
     final recent = Repositories.note.getRecentNotes();
 
     return SafeArea(
@@ -158,16 +159,17 @@ class _NotesScreenState extends State<NotesScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.md,
-                    AppSpacing.md,
+                    AppSpacing.sm,
                     AppSpacing.md,
                     AppSpacing.xs,
                   ),
                   child: Text(
                     'Recientes',
                     style: text.labelSmall?.copyWith(
-                      letterSpacing: 1.1,
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      letterSpacing: 0.6,
+                      color: AppColors.noteListSectionLabel,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -183,34 +185,23 @@ class _NotesScreenState extends State<NotesScreen> {
                     itemBuilder: (context, i) {
                       final n = recent[i];
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                        child: AppCard(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                        child: NoteListCard(
+                          note: n,
                           onTap: () =>
                               ManualNoteCanvasSheet.openExisting(context, n),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(n.title, style: text.titleSmall),
-                                    if (n.body.isNotEmpty) ...[
-                                      const SizedBox(height: AppSpacing.xs),
-                                      Text(
-                                        n.body,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: text.bodyMedium?.copyWith(
-                                          color: scheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                              if (Repositories.note.readsFromBackend)
-                                PopupMenuButton<String>(
+                          trailing: Repositories.note.readsFromBackend
+                              ? PopupMenuButton<String>(
+                                  icon: Icon(
+                                    Icons.more_horiz_rounded,
+                                    size: 20,
+                                    color: AppColors.noteWideTextMuted,
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(
+                                    minWidth: 32,
+                                    minHeight: 32,
+                                  ),
                                   tooltip: 'Más opciones',
                                   enabled: !_busyNoteIds.contains(n.id),
                                   onSelected: (v) => _onRecentNoteMenu(v, n),
@@ -220,9 +211,8 @@ class _NotesScreenState extends State<NotesScreen> {
                                       child: Text('Eliminar'),
                                     ),
                                   ],
-                                ),
-                            ],
-                          ),
+                                )
+                              : null,
                         ),
                       );
                     },

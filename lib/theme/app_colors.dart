@@ -116,6 +116,12 @@ abstract final class AppColors {
   static const Color noteWideTextMuted = Color(0xFF6F7B8A);
   static const Color noteDestructive = Color(0xFFFF5A5A);
 
+  /// Listado de notas (v0.49.43) — tarjetas ligeras tipo Apple Notes.
+  static const Color noteListCardFill = noteWideSurface;
+  static const Color noteListCardBorder = Color(0x59243244);
+  static const Color noteListPinTint = Color(0x995EA8FF);
+  static const Color noteListSectionLabel = noteArisBlue;
+
   /// Sombra modo claro — tinte marino, visible sobre crema.
   static const Color shadowWarmLight = Color(0x45102A5C);
 

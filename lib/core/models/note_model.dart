@@ -5,6 +5,7 @@ class NoteModel {
     required this.title,
     required this.body,
     this.quickLabel,
+    this.pinned = false,
   });
 
   final String id;
@@ -13,6 +14,9 @@ class NoteModel {
 
   /// Etiqueta opcional para chips rápidos (ej. «Compra»).
   final String? quickLabel;
+
+  /// Fijada en listado (v0.49.43). Persistencia backend: futuro.
+  final bool pinned;
 
   /// Línea compacta tipo Home.
   String get homePreviewLine {
@@ -25,14 +29,17 @@ class NoteModel {
     'title': title,
     'body': body,
     if (quickLabel != null) 'quickLabel': quickLabel,
+    if (pinned) 'pinned': true,
   };
 
   factory NoteModel.fromJson(Map<String, dynamic> json) {
+    final pinnedRaw = json['pinned'] ?? json['isPinned'] ?? json['fixed'];
     return NoteModel(
       id: json['id'] as String,
       title: json['title'] as String,
       body: json['body'] as String? ?? '',
       quickLabel: json['quickLabel'] as String?,
+      pinned: pinnedRaw == true,
     );
   }
 }
