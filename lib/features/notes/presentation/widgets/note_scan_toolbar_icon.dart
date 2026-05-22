@@ -1,8 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'note_toolbar_icon_style.dart';
 
-/// Marco de escaneo: 4 esquinas parciales + líneas OCR (v0.49.41).
+/// Marco de escaneo: RRect con lados cortados en el centro (v0.49.41).
 class NoteScanToolbarIcon extends StatelessWidget {
   const NoteScanToolbarIcon({
     super.key,
@@ -31,8 +33,8 @@ class _NoteScanToolbarIconPainter extends CustomPainter {
   final Color color;
 
   static const double _inset = 4.0;
-  static const double _armLen = 5.0;
-  static const double _cornerRadius = 1.6;
+  static const double _cornerRadius = 4.5;
+  static const double _sideGap = 3.2;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -42,16 +44,25 @@ class _NoteScanToolbarIconPainter extends CustomPainter {
     final top = _inset;
     final right = size.width - _inset;
     final bottom = size.height - _inset;
+    final r = _cornerRadius;
+    final midX = (left + right) / 2;
+    final midY = (top + bottom) / 2;
 
-    _drawCornerTopLeft(canvas, paint, left, top);
-    _drawCornerTopRight(canvas, paint, right, top);
-    _drawCornerBottomLeft(canvas, paint, left, bottom);
-    _drawCornerBottomRight(canvas, paint, right, bottom);
+    _drawScanFrame(
+      canvas,
+      paint,
+      left: left,
+      top: top,
+      right: right,
+      bottom: bottom,
+      radius: r,
+      midX: midX,
+      midY: midY,
+    );
 
     final lineLeft = left + 4.5;
     final lineRight = right - 4.5;
     final shortRight = lineLeft + (lineRight - lineLeft) * 0.52;
-    final midY = (top + bottom) / 2;
 
     final y1 = midY - 3.2;
     final y2 = midY;
@@ -62,78 +73,63 @@ class _NoteScanToolbarIconPainter extends CustomPainter {
     canvas.drawLine(Offset(lineLeft, y3), Offset(shortRight, y3), paint);
   }
 
-  static void _drawCornerTopLeft(
+  static void _drawScanFrame(
     Canvas canvas,
-    Paint paint,
-    double left,
-    double top,
-  ) {
-    final r = _cornerRadius;
-    final path = Path()
-      ..moveTo(left + _armLen, top)
-      ..lineTo(left + r, top)
-      ..arcToPoint(
-        Offset(left, top + r),
-        radius: const Radius.circular(_cornerRadius),
-      )
-      ..lineTo(left, top + _armLen);
-    canvas.drawPath(path, paint);
-  }
+    Paint paint, {
+    required double left,
+    required double top,
+    required double right,
+    required double bottom,
+    required double radius,
+    required double midX,
+    required double midY,
+  }) {
+    final g = _sideGap;
+    final r = radius;
 
-  static void _drawCornerTopRight(
-    Canvas canvas,
-    Paint paint,
-    double right,
-    double top,
-  ) {
-    final r = _cornerRadius;
-    final path = Path()
-      ..moveTo(right - _armLen, top)
-      ..lineTo(right - r, top)
-      ..arcToPoint(
-        Offset(right, top + r),
-        radius: const Radius.circular(_cornerRadius),
-        clockwise: false,
-      )
-      ..lineTo(right, top + _armLen);
-    canvas.drawPath(path, paint);
-  }
+    // Esquina superior izquierda
+    canvas.drawArc(
+      Rect.fromLTWH(left, top, 2 * r, 2 * r),
+      math.pi,
+      math.pi / 2,
+      false,
+      paint,
+    );
+    canvas.drawLine(Offset(left + r, top), Offset(midX - g, top), paint);
+    canvas.drawLine(Offset(left, top + r), Offset(left, midY - g), paint);
 
-  static void _drawCornerBottomLeft(
-    Canvas canvas,
-    Paint paint,
-    double left,
-    double bottom,
-  ) {
-    final r = _cornerRadius;
-    final path = Path()
-      ..moveTo(left + _armLen, bottom)
-      ..lineTo(left + r, bottom)
-      ..arcToPoint(
-        Offset(left, bottom - r),
-        radius: const Radius.circular(_cornerRadius),
-        clockwise: false,
-      )
-      ..lineTo(left, bottom - _armLen);
-    canvas.drawPath(path, paint);
-  }
+    // Esquina superior derecha
+    canvas.drawArc(
+      Rect.fromLTWH(right - 2 * r, top, 2 * r, 2 * r),
+      -math.pi / 2,
+      math.pi / 2,
+      false,
+      paint,
+    );
+    canvas.drawLine(Offset(midX + g, top), Offset(right - r, top), paint);
+    canvas.drawLine(Offset(right, top + r), Offset(right, midY - g), paint);
 
-  static void _drawCornerBottomRight(
-    Canvas canvas,
-    Paint paint,
-    double right,
-    double bottom,
-  ) {
-    final r = _cornerRadius;
-    final path = Path()
-      ..moveTo(right - _armLen, bottom)
-      ..lineTo(right - r, bottom)
-      ..arcToPoint(
-        Offset(right, bottom - r),
-        radius: const Radius.circular(_cornerRadius),
-      )
-      ..lineTo(right, bottom - _armLen);
-    canvas.drawPath(path, paint);
+    // Esquina inferior derecha
+    canvas.drawArc(
+      Rect.fromLTWH(right - 2 * r, bottom - 2 * r, 2 * r, 2 * r),
+      0,
+      math.pi / 2,
+      false,
+      paint,
+    );
+    canvas.drawLine(Offset(right, midY + g), Offset(right, bottom - r), paint);
+    canvas.drawLine(Offset(right - r, bottom), Offset(midX + g, bottom), paint);
+
+    // Esquina inferior izquierda
+    canvas.drawArc(
+      Rect.fromLTWH(left, bottom - 2 * r, 2 * r, 2 * r),
+      math.pi / 2,
+      math.pi / 2,
+      false,
+      paint,
+    );
+    canvas.drawLine(Offset(midX - g, bottom), Offset(left + r, bottom), paint);
+    canvas.drawLine(Offset(left, midY + g), Offset(left, bottom - r), paint);
   }
 
   @override

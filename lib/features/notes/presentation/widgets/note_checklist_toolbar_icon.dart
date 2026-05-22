@@ -36,9 +36,9 @@ class _NoteChecklistToolbarIconPainter extends CustomPainter {
   static const double _lineWidth = 9.5;
   static const double _columnGap = 7.0;
 
-  /// Hueco sutil arriba-derecha, donde cruza el trazo oblicuo del check.
-  static const double _gapCenter = -0.66;
-  static const double _gapHalf = 0.17;
+  /// Hueco visible (~55°) en cuadrante superior derecho.
+  static const double _gapCenter = -0.72;
+  static const double _gapHalf = 0.48;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -68,9 +68,12 @@ class _NoteChecklistToolbarIconPainter extends CustomPainter {
         );
 
         final check = Path()
-          ..moveTo(center.dx - _circleRadius * 0.38, row.cy + 0.35)
-          ..lineTo(center.dx - _circleRadius * 0.02, row.cy + _circleRadius * 0.32)
-          ..lineTo(center.dx + _circleRadius * 0.44, row.cy - _circleRadius * 0.34);
+          ..moveTo(center.dx - _circleRadius * 0.42, row.cy + 0.42)
+          ..lineTo(center.dx + _circleRadius * 0.06, row.cy + _circleRadius * 0.18)
+          ..lineTo(
+            center.dx + _circleRadius * 0.64,
+            row.cy - _circleRadius * 0.54,
+          );
         canvas.drawPath(check, stroke);
       } else {
         canvas.drawCircle(center, _circleRadius, stroke);
