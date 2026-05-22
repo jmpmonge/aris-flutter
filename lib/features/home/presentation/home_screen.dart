@@ -21,14 +21,10 @@ class HomeScreen extends StatefulWidget {
     super.key,
     this.onOpenCalendar,
     this.onOpenTasks,
-    this.onOpenMail,
-    this.onOpenSettings,
   });
 
   final VoidCallback? onOpenCalendar;
   final VoidCallback? onOpenTasks;
-  final VoidCallback? onOpenMail;
-  final VoidCallback? onOpenSettings;
 
   @override
   State<HomeScreen> createState() => HomeScreenState();
@@ -309,7 +305,7 @@ class HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          HomeFixedDateHeader(onOpenSettings: widget.onOpenSettings),
+          const HomeFixedDateHeader(),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -352,7 +348,6 @@ class HomeScreenState extends State<HomeScreen> {
                       maxMailItems: visibleCounts.mailItems,
                       onOpenCalendar: widget.onOpenCalendar,
                       onOpenTasks: widget.onOpenTasks,
-                      onOpenMail: widget.onOpenMail,
                     ),
                     SizedBox(
                       height: HomeScrollLayout.sectionGapBeforeAris(context),

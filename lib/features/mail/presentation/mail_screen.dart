@@ -5,7 +5,8 @@ import '../../../shared/widgets/app_header.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Mail — sección principal del shell (v0.49.29); sin conexión real todavía.
+/// Mail — fuera de la navegación v1; módulo futuro (v0.49.40).
+/// Accesible desde Perfil → Conexiones u otras rutas secundarias.
 class MailScreen extends StatelessWidget {
   const MailScreen({super.key});
 
