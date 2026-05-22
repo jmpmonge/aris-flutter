@@ -10,6 +10,7 @@ import '../../../theme/app_spacing.dart';
 import 'widgets/note_body_format.dart';
 import 'widgets/note_checklist_line.dart';
 import 'widgets/note_editor_blocks.dart';
+import 'widgets/note_editor_snapshot.dart';
 import 'widgets/note_prose_block_field.dart';
 import 'widgets/note_table_block_editor.dart';
 import 'widgets/note_wide_editor_toolbar.dart';
@@ -52,9 +53,19 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   int _nextTableBlockId = 0;
   int _nextProseBlockId = 0;
   final Set<String> _watchedProseAfterTableIds = {};
+  final Set<String> _keptProseBelowTableIds = {};
   final _titleFocus = FocusNode();
+  final List<NoteEditorSnapshot> _undoStack = [];
+  final List<NoteEditorSnapshot> _redoStack = [];
+  late NoteEditorSnapshot _historyPresent;
+  Timer? _historyDebounce;
+  bool _historyPaused = false;
+  final List<VoidCallback> _editListenerRemovers = [];
   bool _saving = false;
   bool _pinned = false;
+
+  bool get _canUndo => _undoStack.isNotEmpty;
+  bool get _canRedo => _redoStack.isNotEmpty;
 
   static const _noteBackendFail =
       'No he podido guardar la nota. Revisa la conexión con el backend.';
@@ -87,6 +98,8 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
         _watchProseAfterTable(i);
       }
     }
+    _historyPresent = _captureSnapshot();
+    _attachEditListeners();
     if (widget._isNew) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _titleFocus.requestFocus();
@@ -96,6 +109,8 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
 
   @override
   void dispose() {
+    _historyDebounce?.cancel();
+    _detachEditListeners();
     _title.dispose();
     _titleFocus.dispose();
     for (final line in _checklistLines) {
@@ -184,7 +199,9 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
       );
       if (idx < 0 || !_isProseRightAfterTable(idx)) return;
 
-      if (prose.focusNode.hasFocus || prose.controller.text.trim().isNotEmpty) {
+      if (prose.focusNode.hasFocus ||
+          prose.controller.text.trim().isNotEmpty ||
+          _keptProseBelowTableIds.contains(prose.id)) {
         setState(() {});
         return;
       }
@@ -215,6 +232,149 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
         for (final line in _checklistLines)
           NoteChecklistItem(text: line.controller.text, done: line.item.done),
       ];
+
+  NoteEditorSnapshot _captureSnapshot() => NoteEditorSnapshot.fromDocument(
+        title: _title.text,
+        checklist: _checklistSnapshot,
+        segments: _segmentsSnapshot,
+      );
+
+  void _attachEditListeners() {
+    void listen(VoidCallback handler) {
+      _editListenerRemovers.add(handler);
+    }
+
+    void onEdit() => _scheduleHistoryRecord();
+
+    _title.addListener(onEdit);
+    listen(() => _title.removeListener(onEdit));
+
+    for (final line in _checklistLines) {
+      line.controller.addListener(onEdit);
+      listen(() => line.controller.removeListener(onEdit));
+    }
+    for (final block in _blocks) {
+      if (block.isProse) {
+        block.prose!.controller.addListener(onEdit);
+        listen(() => block.prose!.controller.removeListener(onEdit));
+      } else {
+        for (final row in block.table!.rowControllers) {
+          for (final cell in row) {
+            cell.addListener(onEdit);
+            listen(() => cell.removeListener(onEdit));
+          }
+        }
+      }
+    }
+  }
+
+  void _detachEditListeners() {
+    for (final remove in _editListenerRemovers) {
+      remove();
+    }
+    _editListenerRemovers.clear();
+  }
+
+  void _scheduleHistoryRecord() {
+    if (_historyPaused) return;
+    _historyDebounce?.cancel();
+    _historyDebounce = Timer(const Duration(milliseconds: 400), () {
+      if (!mounted || _historyPaused) return;
+      _commitHistoryRecord();
+    });
+  }
+
+  void _commitHistoryRecord() {
+    final snap = _captureSnapshot();
+    if (snap == _historyPresent) return;
+    _undoStack.add(_historyPresent);
+    _historyPresent = snap;
+    _redoStack.clear();
+    setState(() {});
+  }
+
+  void _recordHistoryBeforeMutation() {
+    if (_historyPaused) return;
+    _historyDebounce?.cancel();
+    final snap = _captureSnapshot();
+    if (snap == _historyPresent) return;
+    _undoStack.add(_historyPresent);
+    _historyPresent = snap;
+    _redoStack.clear();
+  }
+
+  void _undo() {
+    if (!_canUndo) return;
+    _historyPaused = true;
+    _historyDebounce?.cancel();
+    final current = _captureSnapshot();
+    _redoStack.add(current);
+    final previous = _undoStack.removeLast();
+    _historyPresent = previous;
+    _restoreFromSnapshot(previous);
+    _historyPaused = false;
+    setState(() {});
+  }
+
+  void _redo() {
+    if (!_canRedo) return;
+    _historyPaused = true;
+    _historyDebounce?.cancel();
+    final current = _captureSnapshot();
+    _undoStack.add(current);
+    final next = _redoStack.removeLast();
+    _historyPresent = next;
+    _restoreFromSnapshot(next);
+    _historyPaused = false;
+    setState(() {});
+  }
+
+  void _clearEditorContent() {
+    _detachEditListeners();
+    for (final line in _checklistLines) {
+      line.dispose();
+    }
+    _checklistLines.clear();
+    for (final block in _blocks) {
+      if (block.isProse) {
+        block.prose!.dispose();
+      } else {
+        block.table!.dispose();
+      }
+    }
+    _blocks.clear();
+    _watchedProseAfterTableIds.clear();
+    _keptProseBelowTableIds.clear();
+  }
+
+  void _restoreFromSnapshot(NoteEditorSnapshot snap) {
+    _historyPaused = true;
+    _clearEditorContent();
+    _title.text = snap.title;
+    for (final item in snap.checklist) {
+      _checklistLines.add(_newChecklistLine(item));
+    }
+    if (snap.segments.isEmpty) {
+      _blocks.add(NoteEditorBlock.prose(_newProseBlock()));
+    } else {
+      for (final segment in snap.segments) {
+        if (segment.isProse) {
+          _blocks.add(NoteEditorBlock.prose(_newProseBlock(segment.text!)));
+        } else {
+          _blocks.add(
+            NoteEditorBlock.table(_newTableBlock(segment.table!)),
+          );
+        }
+      }
+    }
+    for (var i = 0; i < _blocks.length; i++) {
+      if (_isProseRightAfterTable(i)) {
+        _watchProseAfterTable(i);
+      }
+    }
+    _historyPaused = false;
+    _attachEditListeners();
+  }
 
   InputDecoration _fieldDecoration(String hint) {
     return InputDecoration(
@@ -278,7 +438,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     }
   }
 
-  Future<void> _onBack() async {
+  Future<void> _onOk() async {
     if (_saving) return;
     final ok = await _persist();
     if (!mounted) return;
@@ -289,31 +449,47 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     }
   }
 
+  Future<void> _onBack() => _onOk();
+
   void _placeholderTool(String feature) {
     _briefSnack('$feature · próximamente');
   }
 
   void _addChecklistItem() {
+    _recordHistoryBeforeMutation();
     final line = _newChecklistLine(const NoteChecklistItem(text: ''));
     setState(() => _checklistLines.add(line));
+    _attachEditListenersForChecklistLine(line);
+    _commitHistoryRecord();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) line.focusNode.requestFocus();
     });
   }
 
   void _insertChecklistAfter(int index) {
+    _recordHistoryBeforeMutation();
     final line = _newChecklistLine(const NoteChecklistItem(text: ''));
     setState(() => _checklistLines.insert(index + 1, line));
+    _attachEditListenersForChecklistLine(line);
+    _commitHistoryRecord();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) line.focusNode.requestFocus();
     });
   }
 
+  void _attachEditListenersForChecklistLine(NoteChecklistLineState line) {
+    void onEdit() => _scheduleHistoryRecord();
+    line.controller.addListener(onEdit);
+    _editListenerRemovers.add(() => line.controller.removeListener(onEdit));
+  }
+
   void _toggleChecklistLine(int index) {
+    _recordHistoryBeforeMutation();
     setState(() {
       final line = _checklistLines[index];
       line.item = line.item.copyWith(done: !line.item.done);
     });
+    _commitHistoryRecord();
   }
 
   void _insertTable() {
@@ -322,9 +498,12 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
       _insertTableAtProse(proseIndex);
       return;
     }
+    _recordHistoryBeforeMutation();
     setState(() {
       _blocks.add(NoteEditorBlock.table(_newTableBlock(NoteTableBlock.empty())));
     });
+    _attachEditListenersForTable(_blocks.last.table!);
+    _commitHistoryRecord();
   }
 
   void _insertTableAtProse(int index) {
@@ -338,6 +517,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     final before = text.substring(0, offset);
     final after = text.substring(offset);
 
+    _recordHistoryBeforeMutation();
     setState(() {
       controller.text = before;
       _blocks.insert(
@@ -346,16 +526,22 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
       );
       if (after.isNotEmpty) {
         final proseIndex = index + 2;
-        _blocks.insert(proseIndex, NoteEditorBlock.prose(_newProseBlock(after)));
+        final prose = _newProseBlock(after);
+        _blocks.insert(proseIndex, NoteEditorBlock.prose(prose));
+        _keptProseBelowTableIds.add(prose.id);
         _watchProseAfterTable(proseIndex);
+        _attachEditListenersForProse(prose);
       }
     });
+    _attachEditListenersForTable(_blocks[index + 1].table!);
+    _commitHistoryRecord();
   }
 
   void _writeBelowTable(int tableIndex) {
     if (tableIndex + 1 < _blocks.length && _blocks[tableIndex + 1].isProse) {
       final proseIndex = tableIndex + 1;
       final prose = _blocks[proseIndex].prose!;
+      _keptProseBelowTableIds.add(prose.id);
       _watchProseAfterTable(proseIndex);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) prose.focusNode.requestFocus();
@@ -363,12 +549,16 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
       return;
     }
 
+    _recordHistoryBeforeMutation();
     final prose = _newProseBlock('');
     final insertIndex = tableIndex + 1;
     setState(() {
       _blocks.insert(insertIndex, NoteEditorBlock.prose(prose));
     });
+    _keptProseBelowTableIds.add(prose.id);
     _watchProseAfterTable(insertIndex);
+    _attachEditListenersForProse(prose);
+    _commitHistoryRecord();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) prose.focusNode.requestFocus();
     });
@@ -376,10 +566,29 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
 
   void _addTableRow(int blockIndex) {
     final table = _blocks[blockIndex].table!;
+    _recordHistoryBeforeMutation();
     setState(() => table.addRow());
+    _attachEditListenersForTable(table);
+    _commitHistoryRecord();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) table.focusCell(table.rowCount - 1, 0);
     });
+  }
+
+  void _attachEditListenersForProse(NoteProseBlockState prose) {
+    void onEdit() => _scheduleHistoryRecord();
+    prose.controller.addListener(onEdit);
+    _editListenerRemovers.add(() => prose.controller.removeListener(onEdit));
+  }
+
+  void _attachEditListenersForTable(NoteTableBlockState table) {
+    void onEdit() => _scheduleHistoryRecord();
+    for (final row in table.rowControllers) {
+      for (final cell in row) {
+        cell.addListener(onEdit);
+        _editListenerRemovers.add(() => cell.removeListener(onEdit));
+      }
+    }
   }
 
   void _showArisActions() {
@@ -450,6 +659,24 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
+              leading: const Icon(Icons.ios_share_rounded),
+              title: const Text('Compartir'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _placeholderTool('Compartir');
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                _pinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
+              ),
+              title: Text(_pinned ? 'Desfijar nota' : 'Fijar nota'),
+              onTap: () {
+                Navigator.pop(ctx);
+                setState(() => _pinned = !_pinned);
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.label_outline_rounded),
               title: const Text('Etiquetas'),
               onTap: () {
@@ -466,13 +693,11 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
               },
             ),
             ListTile(
-              leading: Icon(
-                _pinned ? Icons.push_pin : Icons.push_pin_outlined,
-              ),
-              title: Text(_pinned ? 'Desfijar' : 'Fijar nota'),
+              leading: const Icon(Icons.copy_outlined),
+              title: const Text('Duplicar'),
               onTap: () {
                 Navigator.pop(ctx);
-                setState(() => _pinned = !_pinned);
+                _placeholderTool('Duplicar');
               },
             ),
             ListTile(
@@ -567,12 +792,14 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _NoteWideTopBar(
-                pinned: _pinned,
                 saving: _saving,
+                canUndo: _canUndo,
+                canRedo: _canRedo,
                 onBack: _onBack,
-                onTogglePin: () => setState(() => _pinned = !_pinned),
-                onShare: () => _placeholderTool('Compartir'),
+                onUndo: _undo,
+                onRedo: _redo,
                 onMore: _showMoreMenu,
+                onOk: _onOk,
               ),
               Expanded(
                 child: SingleChildScrollView(
@@ -655,25 +882,31 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
 
 class _NoteWideTopBar extends StatelessWidget {
   const _NoteWideTopBar({
-    required this.pinned,
     required this.saving,
+    required this.canUndo,
+    required this.canRedo,
     required this.onBack,
-    required this.onTogglePin,
-    required this.onShare,
+    required this.onUndo,
+    required this.onRedo,
     required this.onMore,
+    required this.onOk,
   });
 
-  final bool pinned;
   final bool saving;
+  final bool canUndo;
+  final bool canRedo;
   final VoidCallback onBack;
-  final VoidCallback onTogglePin;
-  final VoidCallback onShare;
+  final VoidCallback onUndo;
+  final VoidCallback onRedo;
   final VoidCallback onMore;
+  final VoidCallback onOk;
+
+  static const Color _disabledIcon = Color(0x66A6B0BE);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 4, 8, 0),
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
       child: Row(
         children: [
           IconButton(
@@ -687,24 +920,26 @@ class _NoteWideTopBar extends StatelessWidget {
           ),
           const Spacer(),
           IconButton(
-            onPressed: saving ? null : onTogglePin,
+            onPressed: saving || !canUndo ? null : onUndo,
             icon: Icon(
-              pinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
+              Icons.undo_rounded,
               size: 22,
-              color: pinned
+              color: canUndo && !saving
                   ? AppColors.noteArisBlue
-                  : AppColors.noteWideTextSecondary,
+                  : _disabledIcon,
             ),
-            tooltip: pinned ? 'Desfijar' : 'Fijar',
+            tooltip: 'Deshacer',
           ),
           IconButton(
-            onPressed: saving ? null : onShare,
-            icon: const Icon(
-              Icons.ios_share_rounded,
+            onPressed: saving || !canRedo ? null : onRedo,
+            icon: Icon(
+              Icons.redo_rounded,
               size: 22,
-              color: AppColors.noteWideTextSecondary,
+              color: canRedo && !saving
+                  ? AppColors.noteArisBlue
+                  : _disabledIcon,
             ),
-            tooltip: 'Compartir',
+            tooltip: 'Rehacer',
           ),
           IconButton(
             onPressed: saving ? null : onMore,
@@ -714,6 +949,22 @@ class _NoteWideTopBar extends StatelessWidget {
               color: AppColors.noteWideTextSecondary,
             ),
             tooltip: 'Más opciones',
+          ),
+          TextButton(
+            onPressed: saving ? null : onOk,
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.noteArisBlue,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              minimumSize: const Size(44, 40),
+            ),
+            child: Text(
+              'OK',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: saving ? _disabledIcon : AppColors.noteArisBlue,
+              ),
+            ),
           ),
         ],
       ),
