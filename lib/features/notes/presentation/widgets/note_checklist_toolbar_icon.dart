@@ -1,74 +1,73 @@
 import 'package:flutter/material.dart';
 
-/// Checklist toolbar: 2 círculos + 2 líneas (referencia v0.49.41).
+import 'note_toolbar_icon_style.dart';
+
+/// Checklist: 2 círculos (primero con check) + 2 líneas (v0.49.41).
 class NoteChecklistToolbarIcon extends StatelessWidget {
   const NoteChecklistToolbarIcon({
     super.key,
     required this.color,
-    this.size = 28,
+    this.size = NoteToolbarIconStyle.size,
   });
 
   final Color color;
   final double size;
-
-  static const double _circleSize = 5;
-  static const double _lineWidth = 14;
-  static const double _lineHeight = 2;
-  static const double _columnGap = 5;
-  static const double _rowGap = 7;
-  static const double _strokeWidth = 1.5;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: size,
       height: size,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _ChecklistToolbarRow(color: color),
-            const SizedBox(height: _rowGap),
-            _ChecklistToolbarRow(color: color),
-          ],
-        ),
+      child: CustomPaint(
+        painter: _NoteChecklistToolbarIconPainter(color: color),
       ),
     );
   }
 }
 
-class _ChecklistToolbarRow extends StatelessWidget {
-  const _ChecklistToolbarRow({required this.color});
+class _NoteChecklistToolbarIconPainter extends CustomPainter {
+  _NoteChecklistToolbarIconPainter({required this.color});
 
   final Color color;
 
+  static const double _circleRadius = 3.6;
+  static const double _lineWidth = 11;
+  static const double _columnGap = 4.5;
+
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          width: NoteChecklistToolbarIcon._circleSize,
-          height: NoteChecklistToolbarIcon._circleSize,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: color,
-              width: NoteChecklistToolbarIcon._strokeWidth,
-            ),
-          ),
-        ),
-        const SizedBox(width: NoteChecklistToolbarIcon._columnGap),
-        Container(
-          width: NoteChecklistToolbarIcon._lineWidth,
-          height: NoteChecklistToolbarIcon._lineHeight,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(1),
-          ),
-        ),
-      ],
-    );
+  void paint(Canvas canvas, Size size) {
+    final stroke = NoteToolbarIconStyle.stroke(color);
+
+    const rows = [
+      (cy: 9.5, checked: true),
+      (cy: 18.5, checked: false),
+    ];
+
+    final circleCx = _circleRadius + 2;
+
+    for (final row in rows) {
+      final center = Offset(circleCx, row.cy);
+      canvas.drawCircle(center, _circleRadius, stroke);
+
+      if (row.checked) {
+        final check = Path()
+          ..moveTo(center.dx - _circleRadius * 0.5, row.cy)
+          ..lineTo(center.dx - _circleRadius * 0.08, row.cy + _circleRadius * 0.52)
+          ..lineTo(center.dx + _circleRadius * 0.58, row.cy - _circleRadius * 0.42);
+        canvas.drawPath(check, stroke);
+      }
+
+      final lineLeft = circleCx + _circleRadius + _columnGap;
+      final lineRight = lineLeft + _lineWidth;
+      canvas.drawLine(
+        Offset(lineLeft, row.cy),
+        Offset(lineRight, row.cy),
+        stroke,
+      );
+    }
   }
+
+  @override
+  bool shouldRepaint(covariant _NoteChecklistToolbarIconPainter old) =>
+      old.color != color;
 }

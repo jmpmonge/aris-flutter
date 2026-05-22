@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 
-/// Clip inclinado — `attach_file_rounded` rotado (referencia v0.49.41).
+import 'note_toolbar_icon_style.dart';
+
+/// Clip inclinado hacia la derecha (v0.49.41).
 class NoteAttachToolbarIcon extends StatelessWidget {
   const NoteAttachToolbarIcon({
     super.key,
     required this.color,
-    this.size = 28,
+    this.size = NoteToolbarIconStyle.size,
   });
 
   final Color color;
   final double size;
 
-  static const double _iconSize = 22;
-  static const double _rotationRadians = -0.45;
+  static const double _iconSize = 21;
+  static const double _rotationRadians = 0.35;
 
   @override
   Widget build(BuildContext context) {

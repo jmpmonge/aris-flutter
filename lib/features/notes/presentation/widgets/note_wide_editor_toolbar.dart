@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import 'note_attach_toolbar_icon.dart';
 import 'note_checklist_toolbar_icon.dart';
+import 'note_scan_toolbar_icon.dart';
+import 'note_table_toolbar_icon.dart';
 
 /// Barra inferior de herramientas — nota amplia (v0.49.41).
 class NoteWideEditorToolbar extends StatelessWidget {
@@ -44,26 +46,30 @@ class NoteWideEditorToolbar extends StatelessWidget {
               active: checklistActive,
               child: NoteChecklistToolbarIcon(
                 color: checklistActive
-                    ? AppColors.noteArisBlue
-                    : AppColors.noteWideTextSecondary,
+                    ? AppColors.noteArisSky
+                    : AppColors.noteWideTextMuted,
               ),
             ),
             _ToolIcon(
               tooltip: 'Adjuntar',
               onPressed: onAttach,
               child: NoteAttachToolbarIcon(
-                color: AppColors.noteWideTextSecondary,
+                color: AppColors.noteWideTextMuted,
               ),
             ),
             _ToolIcon(
-              icon: Icons.table_chart_outlined,
               tooltip: 'Tabla',
               onPressed: onTable,
+              child: NoteTableToolbarIcon(
+                color: AppColors.noteWideTextMuted,
+              ),
             ),
             _ToolIcon(
-              icon: Icons.document_scanner_outlined,
               tooltip: 'Escanear',
               onPressed: onScan,
+              child: NoteScanToolbarIcon(
+                color: AppColors.noteWideTextMuted,
+              ),
             ),
             _ToolIcon(
               icon: Icons.auto_awesome_outlined,
@@ -95,7 +101,7 @@ class _ToolIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color =
-        active ? AppColors.noteArisBlue : AppColors.noteWideTextSecondary;
+        active ? AppColors.noteArisSky : AppColors.noteWideTextMuted;
     return IconButton(
       onPressed: onPressed,
       tooltip: tooltip,
