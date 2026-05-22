@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/models/event_model.dart';
+import 'widgets/calendar_event_icon.dart';
 
-/// Icono + etiqueta para bloques de la rejilla Semana (v0.49.8).
+/// Icono + etiqueta para bloques de la rejilla Semana (v0.49.45).
 class CalendarWeekEventBadge {
   const CalendarWeekEventBadge({
     required this.icon,
@@ -17,28 +18,11 @@ class CalendarWeekEventBadge {
   final bool fromBackendFields;
 }
 
-/// Resuelve badge semanal: campos backend opcionales o fallback fijo.
+/// Resuelve badge semanal: campos backend opcionales o inferencia local.
 abstract final class CalendarWeekEventBadgeResolver {
   CalendarWeekEventBadgeResolver._();
 
   static const int _maxLabelChars = 8;
-
-  static const Map<String, IconData> _iconByBackendKey = {
-    'coffee': Icons.local_cafe_outlined,
-    'cafe': Icons.local_cafe_outlined,
-    'café': Icons.local_cafe_outlined,
-    'sync': Icons.sync_rounded,
-    'meal': Icons.restaurant_outlined,
-    'comer': Icons.restaurant_outlined,
-    'comida': Icons.restaurant_outlined,
-    'send': Icons.send_rounded,
-    'envio': Icons.send_rounded,
-    'envío': Icons.send_rounded,
-    'gym': Icons.fitness_center_outlined,
-    'shopping': Icons.shopping_cart_outlined,
-    'super': Icons.shopping_cart_outlined,
-    'evento': Icons.event_rounded,
-  };
 
   static CalendarWeekEventBadge resolve(EventModel event) {
     final iconKey = event.weekIconKey?.trim();
@@ -48,7 +32,7 @@ abstract final class CalendarWeekEventBadgeResolver {
 
     if (hasIconKey || hasLabelText) {
       return CalendarWeekEventBadge(
-        icon: _iconFromBackendKey(iconKey) ?? Icons.event_rounded,
+        icon: CalendarEventIconResolver.resolve(event),
         label: _clipLabel(
           hasLabelText ? labelText : _fallbackLabelFromTitle(event.title),
         ),
@@ -57,15 +41,10 @@ abstract final class CalendarWeekEventBadgeResolver {
     }
 
     return CalendarWeekEventBadge(
-      icon: Icons.event_rounded,
+      icon: CalendarEventIconResolver.resolve(event),
       label: _clipLabel(_fallbackLabelFromTitle(event.title)),
       fromBackendFields: false,
     );
-  }
-
-  static IconData? _iconFromBackendKey(String? key) {
-    if (key == null || key.isEmpty) return null;
-    return _iconByBackendKey[key.toLowerCase()];
   }
 
   static String _fallbackLabelFromTitle(String title) {

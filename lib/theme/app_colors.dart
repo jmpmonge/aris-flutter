@@ -143,6 +143,23 @@ abstract final class AppColors {
   static const Color taskListChipText = noteArisSky;
   static const Color taskListChipIcon = noteArisBlue;
 
+  /// Calendario (v0.49.45) — coherente con Notas/Tareas en oscuro Aris.
+  static const Color calendarListCanvas = noteWideCanvas;
+  static const Color calendarListCardFill = noteWideSurface;
+  static const Color calendarListCardExpanded = Color(0xFF131E2A);
+  static const Color calendarListBorderNormal = Color(0x40243244);
+  static const Color calendarListBorderSelected = Color(0x665EA8FF);
+  static const Color calendarListElevated = Color(0xFF151F2B);
+  static const Color calendarListSectionLabel = noteArisBlue;
+  static const Color calendarListTextPrimary = noteWideTextPrimary;
+  static const Color calendarListTextSecondary = noteWideTextSecondary;
+  static const Color calendarListTextMuted = noteWideTextMuted;
+  static const Color calendarListAccent = noteArisBlue;
+  static const Color calendarListAccentSky = noteArisSky;
+  static const Color calendarListDestructive = noteDestructive;
+  static const Color calendarListTimelineDot = noteArisBlue;
+  static const Color calendarListEventDotMuted = Color(0xFF6F7B8A);
+
   /// Espaciado tarjeta desplegada (v0.49.44 paso 4).
   static const double taskListExpandedPadH = 17;
   static const double taskListExpandedPadV = 15;

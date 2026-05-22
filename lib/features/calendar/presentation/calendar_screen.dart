@@ -3,15 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../core/repositories/repositories.dart';
-import 'calendar_body_views.dart';
-import 'calendar_event_sheet.dart';
-import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../shared/widgets/local_action_form_sheet.dart';
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import 'calendar_body_views.dart';
 
-/// Calendario — input fijo de Aris al pie como Home (v0.49.11).
+/// Calendario — vistas Día/Semana/Mes refinadas (v0.49.45).
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
 
@@ -39,8 +38,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void _onCalendarReads() => setState(() {});
 
   double _listBottomPadding(BuildContext context) {
-    return HomeArisFixedInputBar.dockHeight +
+    final base = HomeArisFixedInputBar.dockHeight +
         AppSpacing.homeScrollBottomBreathing;
+    if (_view == 0) return base + AppSpacing.lg;
+    return base;
   }
 
   Future<void> _sendArisMessage(String text) async {
@@ -59,18 +60,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
+    final repo = Repositories.calendar;
 
     final calendarBody = switch (_view) {
-      0 => CalendarDayView(
-          events: Repositories.calendar.getTodayEvents(),
-        ),
-      1 => CalendarWeekView(
-          weekStart: mondayOfWeek(DateTime.now()),
-          calendarRepository: Repositories.calendar,
-        ),
-      _ => CalendarMonthView(calendarRepository: Repositories.calendar),
+      0 => CalendarDayView(calendarRepository: repo),
+      1 => CalendarWeekView(calendarRepository: repo),
+      _ => CalendarMonthView(calendarRepository: repo),
     };
 
     return SafeArea(
@@ -105,79 +100,27 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ],
                     selected: {_view},
                     onSelectionChanged: (s) => setState(() => _view = s.first),
+                    style: ButtonStyle(
+                      visualDensity: VisualDensity.compact,
+                      foregroundColor: WidgetStateProperty.resolveWith((s) {
+                        if (s.contains(WidgetState.selected)) {
+                          return AppColors.calendarListCanvas;
+                        }
+                        return AppColors.calendarListTextSecondary;
+                      }),
+                      backgroundColor: WidgetStateProperty.resolveWith((s) {
+                        if (s.contains(WidgetState.selected)) {
+                          return AppColors.calendarListAccent;
+                        }
+                        return AppColors.calendarListElevated;
+                      }),
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 calendarBody,
-                if (Repositories.calendar.readsFromBackend &&
-                    Repositories.calendar.allBackendEvents.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.lg),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                    ),
-                    child: Text(
-                      'Todos los eventos del servidor',
-                      style: text.labelSmall?.copyWith(
-                        letterSpacing: 0.8,
-                        color: scheme.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  ...Repositories.calendar.allBackendEvents.map((e) {
-                    final dateLabel = e.dateIso?.isNotEmpty == true
-                        ? e.dateIso!
-                        : e.visibleDateLabel.isNotEmpty
-                        ? e.visibleDateLabel
-                        : '—';
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.md,
-                        0,
-                        AppSpacing.md,
-                        AppSpacing.sm,
-                      ),
-                      child: AppCard(
-                        padding: const EdgeInsets.all(AppSpacing.sm),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    e.title,
-                                    style: text.titleSmall,
-                                  ),
-                                  const SizedBox(height: AppSpacing.xxs),
-                                  Text(
-                                    '$dateLabel · ${e.timeHm}',
-                                    style: text.bodySmall?.copyWith(
-                                      color: scheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                  if (e.detail.isNotEmpty)
-                                    Text(
-                                      e.detail,
-                                      style: text.bodySmall?.copyWith(
-                                        color: scheme.onSurfaceVariant
-                                            .withValues(alpha: 0.7),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            if (calendarShouldShowBackendActions(e))
-                              calendarBackendEventOverflowMenu(context, e),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                ],
+                if (repo.readsFromBackend)
+                  CalendarTextualBackendEventsPanel(repository: repo),
               ],
             ),
           ),
