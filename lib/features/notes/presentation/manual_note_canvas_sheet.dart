@@ -195,26 +195,75 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
 
   bool get _hasChecklistEntries => _entries.any((e) => e.isChecklist);
 
-  /// Separador único entre bloques (sin padding vertical extra en cada bloque).
-  Widget _blockSeparator(int index) {
-    assert(index > 0);
-    final prev = _entries[index - 1];
-    final curr = _entries[index];
-    final gap = NoteBodyBlockSpacing.spacingBetweenBlocks(
-      prev.kind,
-      curr.kind,
+  /// Hueco **después** de [previousIndex] hacia el bloque siguiente.
+  /// Usa `previous.kind → next.kind` (orden no invertido).
+  Widget _gapAfterBlock(int previousIndex) {
+    final nextIndex = previousIndex + 1;
+    assert(nextIndex < _entries.length);
+    final previous = _entries[previousIndex];
+    final next = _entries[nextIndex];
+    final gap = NoteBodyBlockSpacing.gapBetween(
+      previous.kind,
+      next.kind,
     );
     final box = SizedBox(width: double.infinity, height: gap);
 
-    if (prev.isTable && curr.isProse) {
-      final tableIndex = index - 1;
+    if (previous.isTable && next.isProse) {
       return GestureDetector(
-        onTap: _saving ? null : () => _writeBelowTable(tableIndex),
+        onTap: _saving ? null : () => _writeBelowTable(previousIndex),
         behavior: HitTestBehavior.translucent,
         child: box,
       );
     }
     return box;
+  }
+
+  Widget _buildBodyBlock(int index) {
+    final Widget block;
+    if (_entries[index].isProse) {
+      block = NoteProseBlockField(
+        key: ValueKey(_entries[index].prose!.id),
+        controller: _entries[index].prose!.controller,
+        focusNode: _entries[index].prose!.focusNode,
+        enabled: !_saving,
+        minLines: _proseMinLines(index),
+        hintText: _entries.length == 1 && _entries[index].isProse
+            ? 'Escribe la nota…'
+            : null,
+      );
+    } else if (_entries[index].isTable) {
+      block = NoteTableBlockEditor(
+        key: ValueKey(_entries[index].table!.id),
+        state: _entries[index].table!,
+        enabled: !_saving,
+        onExitBelow: () => _exitTableBelow(index),
+        onTapBelow: _tableHasFollowingBlock(index)
+            ? null
+            : () => _writeBelowTable(index),
+        onAddRow: () => _addTableRow(index),
+      );
+    } else {
+      block = NoteChecklistLine(
+        key: ValueKey(_entries[index].checklist!.id),
+        controller: _entries[index].checklist!.controller,
+        focusNode: _entries[index].checklist!.focusNode,
+        done: _entries[index].checklist!.item.done,
+        enabled: !_saving,
+        onToggle: () => _toggleChecklistLine(index),
+        onEnter: () => _onChecklistEnter(index),
+      );
+    }
+
+    if (index >= _entries.length - 1) return block;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        block,
+        _gapAfterBlock(index),
+      ],
+    );
   }
 
   bool _tableHasFollowingBlock(int tableIndex) =>
@@ -954,42 +1003,8 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                       const SizedBox(
                         height: AppSpacing.noteBodyTitleToFirstBlock,
                       ),
-                      for (var i = 0; i < _entries.length; i++) ...[
-                        if (i > 0) _blockSeparator(i),
-                        if (_entries[i].isProse)
-                          NoteProseBlockField(
-                            key: ValueKey(_entries[i].prose!.id),
-                            controller: _entries[i].prose!.controller,
-                            focusNode: _entries[i].prose!.focusNode,
-                            enabled: !_saving,
-                            minLines: _proseMinLines(i),
-                            hintText: _entries.length == 1 &&
-                                    _entries[i].isProse
-                                ? 'Escribe la nota…'
-                                : null,
-                          )
-                        else if (_entries[i].isTable)
-                          NoteTableBlockEditor(
-                            key: ValueKey(_entries[i].table!.id),
-                            state: _entries[i].table!,
-                            enabled: !_saving,
-                            onExitBelow: () => _exitTableBelow(i),
-                            onTapBelow: _tableHasFollowingBlock(i)
-                                ? null
-                                : () => _writeBelowTable(i),
-                            onAddRow: () => _addTableRow(i),
-                          )
-                        else
-                          NoteChecklistLine(
-                            key: ValueKey(_entries[i].checklist!.id),
-                            controller: _entries[i].checklist!.controller,
-                            focusNode: _entries[i].checklist!.focusNode,
-                            done: _entries[i].checklist!.item.done,
-                            enabled: !_saving,
-                            onToggle: () => _toggleChecklistLine(i),
-                            onEnter: () => _onChecklistEnter(i),
-                          ),
-                      ],
+                      for (var i = 0; i < _entries.length; i++)
+                        _buildBodyBlock(i),
                     ],
                   ),
                 ),

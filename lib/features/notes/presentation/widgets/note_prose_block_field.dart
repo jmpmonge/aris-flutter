@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../theme/app_colors.dart';
 
-/// Bloque de texto libre en la nota amplia (v0.49.42).
+/// Bloque de texto libre multilínea en la nota amplia (v0.49.42–v0.49.43).
 class NoteProseBlockField extends StatelessWidget {
   const NoteProseBlockField({
     super.key,
@@ -23,35 +23,41 @@ class NoteProseBlockField extends StatelessWidget {
 
   static const TextStyle bodyStyle = TextStyle(
     fontSize: 17,
-    height: 1.55,
+    height: 1.22,
     fontWeight: FontWeight.w400,
     color: AppColors.noteWideTextPrimary,
   );
 
   @override
   Widget build(BuildContext context) {
-    final field = TextField(
-      controller: controller,
-      focusNode: focusNode,
-      style: bodyStyle,
-      enabled: enabled,
-      minLines: minLines,
-      maxLines: null,
-      keyboardType: TextInputType.multiline,
-      scrollPadding: EdgeInsets.zero,
-      decoration: InputDecoration(
-        isDense: true,
-        border: InputBorder.none,
-        enabledBorder: InputBorder.none,
-        focusedBorder: InputBorder.none,
-        filled: false,
-        hintText: hintText,
-        hintStyle: const TextStyle(
-          color: AppColors.noteWideTextMuted,
-          fontWeight: FontWeight.w500,
+    final field = DefaultTextHeightBehavior(
+      textHeightBehavior: const TextHeightBehavior(
+        applyHeightToFirstAscent: false,
+        applyHeightToLastDescent: false,
+      ),
+      child: TextField(
+        controller: controller,
+        focusNode: focusNode,
+        style: bodyStyle,
+        enabled: enabled,
+        minLines: minLines,
+        maxLines: null,
+        keyboardType: TextInputType.multiline,
+        scrollPadding: EdgeInsets.zero,
+        decoration: InputDecoration(
+          isDense: true,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          filled: false,
+          hintText: hintText,
+          hintStyle: const TextStyle(
+            color: AppColors.noteWideTextMuted,
+            fontWeight: FontWeight.w500,
+          ),
+          contentPadding: EdgeInsets.zero,
+          isCollapsed: true,
         ),
-        contentPadding: EdgeInsets.zero,
-        isCollapsed: true,
       ),
     );
 

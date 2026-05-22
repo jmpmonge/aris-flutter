@@ -2,9 +2,9 @@ import 'note_editor_blocks.dart';
 
 /// Hueco vertical entre bloques del cuerpo de la nota amplia (v0.49.43).
 ///
-/// Única fuente de verdad para transiciones entre bloques. El render en
-/// [ManualNoteCanvasSheet] solo aplica estos valores vía `_blockSeparator`;
-/// no hay gaps simétricos ni constantes duplicadas en [AppSpacing].
+/// Única fuente de verdad para transiciones entre bloques. El render aplica
+/// [gapBetween] **después** del bloque anterior vía `_gapAfterBlock`.
+/// No aplica a saltos de línea dentro de un mismo bloque prose.
 abstract final class NoteBodyBlockSpacing {
   NoteBodyBlockSpacing._();
 
@@ -12,11 +12,12 @@ abstract final class NoteBodyBlockSpacing {
   static const double tableToProse = 8;
   static const double proseToChecklist = 2;
   static const double checklistToProse = 8;
-  static const double proseToProse = 6;
-  static const double checklistToChecklist = 4;
   static const double tableToChecklist = 8;
   static const double checklistToTable = 8;
   static const double tableToTable = 8;
+  static const double checklistToChecklist = 4;
+  /// Solo bloques prose independientes (p. ej. tras insertar tabla/checklist).
+  static const double proseToProse = 0;
 
   /// Separación según bloque anterior → bloque actual (asimétrico por diseño).
   static double gapBetween(
@@ -32,23 +33,23 @@ abstract final class NoteBodyBlockSpacing {
   ) {
     switch ((previous, current)) {
       case (NoteEditorBlockKind.prose, NoteEditorBlockKind.table):
-        return proseToTable;
+        return NoteBodyBlockSpacing.proseToTable;
       case (NoteEditorBlockKind.table, NoteEditorBlockKind.prose):
-        return tableToProse;
+        return NoteBodyBlockSpacing.tableToProse;
       case (NoteEditorBlockKind.prose, NoteEditorBlockKind.checklist):
-        return proseToChecklist;
+        return NoteBodyBlockSpacing.proseToChecklist;
       case (NoteEditorBlockKind.checklist, NoteEditorBlockKind.prose):
-        return checklistToProse;
+        return NoteBodyBlockSpacing.checklistToProse;
       case (NoteEditorBlockKind.prose, NoteEditorBlockKind.prose):
-        return proseToProse;
+        return NoteBodyBlockSpacing.proseToProse;
       case (NoteEditorBlockKind.checklist, NoteEditorBlockKind.table):
-        return checklistToTable;
+        return NoteBodyBlockSpacing.checklistToTable;
       case (NoteEditorBlockKind.table, NoteEditorBlockKind.checklist):
-        return tableToChecklist;
+        return NoteBodyBlockSpacing.tableToChecklist;
       case (NoteEditorBlockKind.table, NoteEditorBlockKind.table):
-        return tableToTable;
+        return NoteBodyBlockSpacing.tableToTable;
       case (NoteEditorBlockKind.checklist, NoteEditorBlockKind.checklist):
-        return checklistToChecklist;
+        return NoteBodyBlockSpacing.checklistToChecklist;
     }
   }
 }
