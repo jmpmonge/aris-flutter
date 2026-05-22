@@ -8,6 +8,7 @@ import '../../../core/services/local_action_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import 'widgets/note_body_format.dart';
+import 'widgets/note_checklist_line.dart';
 import 'widgets/note_wide_editor_toolbar.dart';
 
 /// Lienzo de nota amplia — estilo Apple Notes / Aris oscuro (v0.49.41).
@@ -43,7 +44,8 @@ class _NoteWideEditorPage extends StatefulWidget {
 class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   late final TextEditingController _title;
   late final TextEditingController _prose;
-  late List<NoteChecklistItem> _checklist;
+  final List<NoteChecklistLineState> _checklistLines = [];
+  int _nextChecklistLineId = 0;
   final _titleFocus = FocusNode();
   final _proseFocus = FocusNode();
   bool _saving = false;
@@ -60,7 +62,9 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     final parsed = NoteBodyFormat.parse(widget.existing?.body ?? '');
     _title = TextEditingController(text: widget.existing?.title ?? '');
     _prose = TextEditingController(text: parsed.prose);
-    _checklist = List<NoteChecklistItem>.from(parsed.checklist);
+    for (final item in parsed.checklist) {
+      _checklistLines.add(_newChecklistLine(item));
+    }
     if (widget._isNew) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _titleFocus.requestFocus();
@@ -74,8 +78,27 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     _prose.dispose();
     _titleFocus.dispose();
     _proseFocus.dispose();
+    for (final line in _checklistLines) {
+      line.dispose();
+    }
     super.dispose();
   }
+
+  NoteChecklistLineState _newChecklistLine(NoteChecklistItem item) {
+    final line = NoteChecklistLineState(
+      id: 'cl-${_nextChecklistLineId++}',
+      item: item,
+    );
+    line.controller.addListener(() {
+      line.item = line.item.copyWith(text: line.controller.text);
+    });
+    return line;
+  }
+
+  List<NoteChecklistItem> get _checklistSnapshot => [
+        for (final line in _checklistLines)
+          NoteChecklistItem(text: line.controller.text, done: line.item.done),
+      ];
 
   InputDecoration _fieldDecoration(String hint) {
     return InputDecoration(
@@ -109,7 +132,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   }
 
   String _mergedBody() => NoteBodyFormat.merge(
-        checklist: _checklist,
+        checklist: _checklistSnapshot,
         prose: _prose.text,
       );
 
@@ -155,8 +178,25 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   }
 
   void _addChecklistItem() {
+    final line = _newChecklistLine(const NoteChecklistItem(text: ''));
+    setState(() => _checklistLines.add(line));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) line.focusNode.requestFocus();
+    });
+  }
+
+  void _insertChecklistAfter(int index) {
+    final line = _newChecklistLine(const NoteChecklistItem(text: ''));
+    setState(() => _checklistLines.insert(index + 1, line));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) line.focusNode.requestFocus();
+    });
+  }
+
+  void _toggleChecklistLine(int index) {
     setState(() {
-      _checklist = [..._checklist, const NoteChecklistItem(text: '')];
+      final line = _checklistLines[index];
+      line.item = line.item.copyWith(done: !line.item.done);
     });
   }
 
@@ -380,36 +420,18 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                         onSubmitted: (_) => _proseFocus.requestFocus(),
                         decoration: _fieldDecoration('Título'),
                       ),
-                      if (_checklist.isNotEmpty) ...[
+                      if (_checklistLines.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.md),
-                        ..._checklist.asMap().entries.map(
-                          (e) => _ChecklistRow(
-                            key: ValueKey(
-                              'check-${e.key}-${e.value.done}-${e.value.text}',
-                            ),
-                            item: e.value,
-                            onTextChanged: (v) {
-                              setState(() {
-                                _checklist[e.key] =
-                                    e.value.copyWith(text: v);
-                              });
-                            },
-                            onToggle: () {
-                              setState(() {
-                                _checklist[e.key] = e.value.copyWith(
-                                  done: !e.value.done,
-                                );
-                              });
-                            },
-                            onRemove: () {
-                              setState(() {
-                                _checklist = List<NoteChecklistItem>.from(
-                                  _checklist,
-                                )..removeAt(e.key);
-                              });
-                            },
+                        for (var i = 0; i < _checklistLines.length; i++)
+                          NoteChecklistLine(
+                            key: ValueKey(_checklistLines[i].id),
+                            controller: _checklistLines[i].controller,
+                            focusNode: _checklistLines[i].focusNode,
+                            done: _checklistLines[i].item.done,
+                            enabled: !_saving,
+                            onToggle: () => _toggleChecklistLine(i),
+                            onEnter: () => _insertChecklistAfter(i),
                           ),
-                        ),
                       ],
                       const SizedBox(height: AppSpacing.md),
                       TextField(
@@ -427,7 +449,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                 ),
               ),
               NoteWideEditorToolbar(
-                checklistActive: _checklist.isNotEmpty,
+                checklistActive: _checklistLines.isNotEmpty,
                 onChecklist: _addChecklistItem,
                 onAttach: () => _placeholderTool('Adjuntar'),
                 onTable: () => _placeholderTool('Tabla'),
@@ -503,115 +525,6 @@ class _NoteWideTopBar extends StatelessWidget {
               color: AppColors.noteWideTextSecondary,
             ),
             tooltip: 'Más opciones',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ChecklistRow extends StatefulWidget {
-  const _ChecklistRow({
-    super.key,
-    required this.item,
-    required this.onTextChanged,
-    required this.onToggle,
-    required this.onRemove,
-  });
-
-  final NoteChecklistItem item;
-  final ValueChanged<String> onTextChanged;
-  final VoidCallback onToggle;
-  final VoidCallback onRemove;
-
-  @override
-  State<_ChecklistRow> createState() => _ChecklistRowState();
-}
-
-class _ChecklistRowState extends State<_ChecklistRow> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.item.text);
-  }
-
-  @override
-  void didUpdateWidget(covariant _ChecklistRow oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.item.text != widget.item.text &&
-        _controller.text != widget.item.text) {
-      _controller.text = widget.item.text;
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final done = widget.item.done;
-    final textColor =
-        done ? AppColors.noteWideTextMuted : AppColors.noteWideTextPrimary;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 1),
-            child: Material(
-              type: MaterialType.transparency,
-              child: InkWell(
-                onTap: widget.onToggle,
-                borderRadius: BorderRadius.circular(20),
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Icon(
-                    done
-                        ? Icons.check_circle_rounded
-                        : Icons.circle_outlined,
-                    size: 20,
-                    color: done
-                        ? AppColors.noteArisBlue
-                        : AppColors.noteWideTextMuted,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              onChanged: widget.onTextChanged,
-              style: TextStyle(
-                fontSize: 16,
-                height: 1.4,
-                color: textColor,
-                decoration: done ? TextDecoration.lineThrough : null,
-                decorationColor: AppColors.noteWideTextMuted,
-              ),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: widget.onRemove,
-            icon: const Icon(
-              Icons.close_rounded,
-              size: 18,
-              color: AppColors.noteWideTextMuted,
-            ),
-            visualDensity: VisualDensity.compact,
           ),
         ],
       ),
