@@ -105,6 +105,16 @@ abstract final class AppColors {
   static const Color danger = Color(0xFFB3261E);
   static const Color success = Color(0xFF25A66A);
 
+  /// Nota amplia (v0.49.41) — lienzo tipo Apple Notes en oscuro Aris.
+  static const Color noteWideCanvas = Color(0xFF07111D);
+  static const Color noteWideSurface = Color(0xFF111A25);
+  static const Color noteWideBorder = Color(0xFF243244);
+  static const Color noteArisBlue = Color(0xFF5EA8FF);
+  static const Color noteArisSky = Color(0xFF8FCBFF);
+  static const Color noteWideTextPrimary = Color(0xFFF2F6FA);
+  static const Color noteWideTextSecondary = Color(0xFFA6B0BE);
+  static const Color noteWideTextMuted = Color(0xFF6F7B8A);
+
   /// Sombra modo claro — tinte marino, visible sobre crema.
   static const Color shadowWarmLight = Color(0x45102A5C);
 
