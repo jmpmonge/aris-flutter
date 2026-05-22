@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../theme/app_colors.dart';
+import 'note_attach_toolbar_icon.dart';
 import 'note_checklist_toolbar_icon.dart';
 
 /// Barra inferior de herramientas — nota amplia (v0.49.41).
@@ -48,9 +49,11 @@ class NoteWideEditorToolbar extends StatelessWidget {
               ),
             ),
             _ToolIcon(
-              icon: Icons.attach_file,
               tooltip: 'Adjuntar',
               onPressed: onAttach,
+              child: NoteAttachToolbarIcon(
+                color: AppColors.noteWideTextSecondary,
+              ),
             ),
             _ToolIcon(
               icon: Icons.table_chart_outlined,

@@ -36,15 +36,15 @@ class _NoteChecklistToolbarIconPainter extends CustomPainter {
       ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round;
 
-    const rows = 3;
-    final rowH = size.height / (rows + 0.5);
-    final r = size.width * 0.11;
-    final cx = r + 1;
+    const rows = 2;
+    final r = size.width * 0.1;
+    final cx = r + 1.2;
     final lineLeft = cx + r + 2.5;
     final lineRight = size.width - 1;
+    final centers = [size.height * 0.38, size.height * 0.68];
 
     for (var i = 0; i < rows; i++) {
-      final cy = rowH * (i + 0.85);
+      final cy = centers[i];
       canvas.drawCircle(Offset(cx, cy), r, paint);
       canvas.drawLine(
         Offset(lineLeft, cy),

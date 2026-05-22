@@ -422,32 +422,6 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                         keyboardType: TextInputType.multiline,
                         decoration: _fieldDecoration('Escribe la nota…'),
                       ),
-                      const SizedBox(height: AppSpacing.lg),
-                      Center(
-                        child: TextButton.icon(
-                          onPressed: _saving ? null : _showArisActions,
-                          icon: const Icon(
-                            Icons.auto_awesome_outlined,
-                            size: 18,
-                            color: AppColors.noteArisBlue,
-                          ),
-                          label: const Text(
-                            'Preguntar a Aris',
-                            style: TextStyle(
-                              color: AppColors.noteArisBlue,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 15,
-                            ),
-                          ),
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppColors.noteArisBlue,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
