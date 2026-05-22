@@ -5,7 +5,7 @@ abstract final class NoteToolbarIconStyle {
   NoteToolbarIconStyle._();
 
   static const double size = 28;
-  static const double strokeWidth = 2;
+  static const double strokeWidth = 1.9;
 
   static Paint stroke(Color color) {
     return Paint()

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'note_toolbar_icon_style.dart';
 
-/// Documento escaneado: marco suave + 2 líneas y media (v0.49.41).
+/// Marco de escaneo con esquinas parciales + líneas OCR (v0.49.41).
 class NoteScanToolbarIcon extends StatelessWidget {
   const NoteScanToolbarIcon({
     super.key,
@@ -30,30 +30,62 @@ class _NoteScanToolbarIconPainter extends CustomPainter {
 
   final Color color;
 
+  static const double _cornerLen = 5.0;
+  static const double _inset = 4.0;
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = NoteToolbarIconStyle.stroke(color);
-    const inset = 3.5;
-    const radius = 3.5;
-    const innerPad = 5.0;
 
-    final frame = RRect.fromRectAndRadius(
-      Rect.fromLTWH(inset, inset, size.width - inset * 2, size.height - inset * 2),
-      const Radius.circular(radius),
+    final left = _inset;
+    final top = _inset;
+    final right = size.width - _inset;
+    final bottom = size.height - _inset;
+
+    _drawScanCorners(
+      canvas,
+      paint,
+      left: left,
+      top: top,
+      right: right,
+      bottom: bottom,
+      len: _cornerLen,
     );
-    canvas.drawRRect(frame, paint);
 
-    final lineLeft = inset + innerPad;
-    final lineRight = size.width - inset - innerPad;
-    final shortRight = lineLeft + (lineRight - lineLeft) * 0.55;
+    final lineLeft = left + 5;
+    final lineRight = right - 5;
+    final shortRight = lineLeft + (lineRight - lineLeft) * 0.52;
 
     const y1 = 11.0;
-    const y2 = 15.0;
-    const y3 = 19.0;
+    const y2 = 14.8;
+    const y3 = 18.6;
 
     canvas.drawLine(Offset(lineLeft, y1), Offset(lineRight, y1), paint);
     canvas.drawLine(Offset(lineLeft, y2), Offset(lineRight, y2), paint);
     canvas.drawLine(Offset(lineLeft, y3), Offset(shortRight, y3), paint);
+  }
+
+  static void _drawScanCorners(
+    Canvas canvas,
+    Paint paint, {
+    required double left,
+    required double top,
+    required double right,
+    required double bottom,
+    required double len,
+  }) {
+    // Superior izquierda
+    canvas.drawLine(Offset(left, top), Offset(left + len, top), paint);
+    canvas.drawLine(Offset(left, top), Offset(left, top + len), paint);
+    // Superior derecha
+    canvas.drawLine(Offset(right - len, top), Offset(right, top), paint);
+    canvas.drawLine(Offset(right, top), Offset(right, top + len), paint);
+    // Inferior izquierda
+    canvas.drawLine(Offset(left, bottom - len), Offset(left, bottom), paint);
+    canvas.drawLine(Offset(left, bottom), Offset(left + len, bottom), paint);
+    // Inferior derecha
+    canvas.drawLine(Offset(right, bottom - len), Offset(right, bottom), paint);
+    canvas.drawLine(Offset(right - len, bottom), Offset(right, bottom), paint);
   }
 
   @override

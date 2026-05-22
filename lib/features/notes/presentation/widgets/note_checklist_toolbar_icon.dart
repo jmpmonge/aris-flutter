@@ -30,20 +30,20 @@ class _NoteChecklistToolbarIconPainter extends CustomPainter {
 
   final Color color;
 
-  static const double _circleRadius = 3.6;
-  static const double _lineWidth = 11;
-  static const double _columnGap = 4.5;
+  static const double _circleRadius = 3.8;
+  static const double _lineWidth = 10;
+  static const double _columnGap = 6.5;
 
   @override
   void paint(Canvas canvas, Size size) {
     final stroke = NoteToolbarIconStyle.stroke(color);
 
     const rows = [
-      (cy: 9.5, checked: true),
-      (cy: 18.5, checked: false),
+      (cy: 9.2, checked: true),
+      (cy: 18.8, checked: false),
     ];
 
-    final circleCx = _circleRadius + 2;
+    final circleCx = _circleRadius + 1.8;
 
     for (final row in rows) {
       final center = Offset(circleCx, row.cy);
@@ -51,9 +51,9 @@ class _NoteChecklistToolbarIconPainter extends CustomPainter {
 
       if (row.checked) {
         final check = Path()
-          ..moveTo(center.dx - _circleRadius * 0.5, row.cy)
-          ..lineTo(center.dx - _circleRadius * 0.08, row.cy + _circleRadius * 0.52)
-          ..lineTo(center.dx + _circleRadius * 0.58, row.cy - _circleRadius * 0.42);
+          ..moveTo(center.dx - _circleRadius * 0.42, row.cy + 0.2)
+          ..lineTo(center.dx - _circleRadius * 0.05, row.cy + _circleRadius * 0.38)
+          ..lineTo(center.dx + _circleRadius * 0.48, row.cy - _circleRadius * 0.36);
         canvas.drawPath(check, stroke);
       }
 

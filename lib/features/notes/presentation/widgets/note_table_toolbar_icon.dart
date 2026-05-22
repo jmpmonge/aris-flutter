@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'note_toolbar_icon_style.dart';
 
-/// Rejilla 3×2 suave (v0.49.41).
+/// Tabla 2×3, proporción horizontal (v0.49.41).
 class NoteTableToolbarIcon extends StatelessWidget {
   const NoteTableToolbarIcon({
     super.key,
@@ -30,25 +30,28 @@ class _NoteTableToolbarIconPainter extends CustomPainter {
 
   final Color color;
 
+  static const double _tableWidth = 26;
+  static const double _tableHeight = 22;
+  static const double _radius = 3.5;
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = NoteToolbarIconStyle.stroke(color);
-    const inset = 4.0;
-    const radius = 3.0;
+
+    final left = (size.width - _tableWidth) / 2;
+    final top = (size.height - _tableHeight) / 2;
+    final right = left + _tableWidth;
+    final bottom = top + _tableHeight;
 
     final outer = RRect.fromRectAndRadius(
-      Rect.fromLTWH(inset, inset, size.width - inset * 2, size.height - inset * 2),
-      const Radius.circular(radius),
+      Rect.fromLTRB(left, top, right, bottom),
+      const Radius.circular(_radius),
     );
     canvas.drawRRect(outer, paint);
 
-    final left = inset;
-    final right = size.width - inset;
-    final top = inset;
-    final bottom = size.height - inset;
     final midX = (left + right) / 2;
-    final row1Y = top + (bottom - top) / 3;
-    final row2Y = top + (bottom - top) * 2 / 3;
+    final row1Y = top + _tableHeight / 3;
+    final row2Y = top + _tableHeight * 2 / 3;
 
     canvas.drawLine(Offset(midX, top), Offset(midX, bottom), paint);
     canvas.drawLine(Offset(left, row1Y), Offset(right, row1Y), paint);
