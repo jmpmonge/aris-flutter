@@ -9,7 +9,6 @@ import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import 'manual_note_canvas_sheet.dart';
-import 'note_list_visual_mock.dart';
 import 'widgets/note_list_card.dart';
 
 /// Notas — creación manual (+), listado y canal Aris (sin tags visibles, v0.49.15).
@@ -87,28 +86,11 @@ class _NotesScreenState extends State<NotesScreen> {
     Repositories.assistant.sendVoicePendingNotice();
   }
 
-  // MOCK VISUAL TEMPORAL v0.49.43
-  List<NoteModel> _notesForList() {
-    final recent = Repositories.note.getRecentNotes()
-        .where((n) => !NoteListVisualMock.isMock(n))
-        .toList();
-    if (!NoteListVisualMock.enabled) return recent;
-    return [NoteListVisualMock.note, ...recent];
-  }
-
   void _onNoteTap(NoteModel n) {
-    if (NoteListVisualMock.isMock(n)) {
-      _briefSnack(
-        context,
-        message: 'Mock visual v0.49.43 — solo validación de listado.',
-      );
-      return;
-    }
     unawaited(ManualNoteCanvasSheet.openExisting(context, n));
   }
 
   Future<void> _onRecentNoteMenu(String action, NoteModel n) async {
-    if (NoteListVisualMock.isMock(n)) return;
     if (action == 'delete') {
       await _deleteBackendNote(n);
     }
@@ -157,7 +139,7 @@ class _NotesScreenState extends State<NotesScreen> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final recent = _notesForList();
+    final recent = Repositories.note.getRecentNotes();
 
     return SafeArea(
       top: true,
@@ -211,8 +193,7 @@ class _NotesScreenState extends State<NotesScreen> {
                         child: NoteListCard(
                           note: n,
                           onTap: () => _onNoteTap(n),
-                          trailing: Repositories.note.readsFromBackend &&
-                                  !NoteListVisualMock.isMock(n)
+                          trailing: Repositories.note.readsFromBackend
                               ? PopupMenuButton<String>(
                                   icon: Icon(
                                     Icons.more_horiz_rounded,
