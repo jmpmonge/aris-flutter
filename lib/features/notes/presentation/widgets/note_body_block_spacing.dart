@@ -1,33 +1,54 @@
 import 'note_editor_blocks.dart';
 
-/// Hueco visual entre bloques del cuerpo de la nota amplia (v0.49.43).
-/// Única fuente de verdad: el render solo usa [gapBetween] vía separador en columna.
+/// Hueco vertical entre bloques del cuerpo de la nota amplia (v0.49.43).
+///
+/// Única fuente de verdad para transiciones entre bloques. El render en
+/// [ManualNoteCanvasSheet] solo aplica estos valores vía `_blockSeparator`;
+/// no hay gaps simétricos ni constantes duplicadas en [AppSpacing].
 abstract final class NoteBodyBlockSpacing {
   NoteBodyBlockSpacing._();
 
+  static const double proseToTable = 2;
+  static const double tableToProse = 8;
+  static const double proseToChecklist = 2;
+  static const double checklistToProse = 8;
+  static const double proseToProse = 6;
+  static const double checklistToChecklist = 4;
+  static const double tableToChecklist = 8;
+  static const double checklistToTable = 8;
+  static const double tableToTable = 8;
+
+  /// Separación según bloque anterior → bloque actual (asimétrico por diseño).
   static double gapBetween(
+    NoteEditorBlockKind previous,
+    NoteEditorBlockKind current,
+  ) =>
+      spacingBetweenBlocks(previous, current);
+
+  /// Alias explícito para el render de la columna de bloques.
+  static double spacingBetweenBlocks(
     NoteEditorBlockKind previous,
     NoteEditorBlockKind current,
   ) {
     switch ((previous, current)) {
       case (NoteEditorBlockKind.prose, NoteEditorBlockKind.table):
-        return 4;
+        return proseToTable;
       case (NoteEditorBlockKind.table, NoteEditorBlockKind.prose):
-        return 10;
+        return tableToProse;
       case (NoteEditorBlockKind.prose, NoteEditorBlockKind.checklist):
-        return 4;
+        return proseToChecklist;
       case (NoteEditorBlockKind.checklist, NoteEditorBlockKind.prose):
-        return 10;
+        return checklistToProse;
       case (NoteEditorBlockKind.prose, NoteEditorBlockKind.prose):
-        return 6;
+        return proseToProse;
       case (NoteEditorBlockKind.checklist, NoteEditorBlockKind.table):
-        return 8;
+        return checklistToTable;
       case (NoteEditorBlockKind.table, NoteEditorBlockKind.checklist):
-        return 8;
+        return tableToChecklist;
       case (NoteEditorBlockKind.table, NoteEditorBlockKind.table):
-        return 8;
+        return tableToTable;
       case (NoteEditorBlockKind.checklist, NoteEditorBlockKind.checklist):
-        return 2;
+        return checklistToChecklist;
     }
   }
 }

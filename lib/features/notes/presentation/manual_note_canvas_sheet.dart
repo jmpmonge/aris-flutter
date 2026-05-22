@@ -200,7 +200,10 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     assert(index > 0);
     final prev = _entries[index - 1];
     final curr = _entries[index];
-    final gap = NoteBodyBlockSpacing.gapBetween(prev.kind, curr.kind);
+    final gap = NoteBodyBlockSpacing.spacingBetweenBlocks(
+      prev.kind,
+      curr.kind,
+    );
     final box = SizedBox(width: double.infinity, height: gap);
 
     if (prev.isTable && curr.isProse) {
