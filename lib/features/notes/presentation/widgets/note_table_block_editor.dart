@@ -23,7 +23,8 @@ class NoteTableBlockEditor extends StatelessWidget {
 
   static const TextStyle _cellStyle = TextStyle(
     fontSize: 17,
-    height: 1.45,
+    height: 1.26,
+    leadingDistribution: TextLeadingDistribution.even,
     fontWeight: FontWeight.w400,
     color: AppColors.noteWideTextPrimary,
   );

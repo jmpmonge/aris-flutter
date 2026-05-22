@@ -127,7 +127,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   NoteProseBlockState _newProseBlock([String text = '']) {
     return NoteProseBlockState(
       id: 'pb-${_nextProseBlockId++}',
-      text: text,
+      text: NoteBodyFormat.normalizeProseLineBreaks(text),
     );
   }
 

@@ -116,6 +116,12 @@ abstract final class NoteBodyFormat {
     return entries;
   }
 
+  /// Salto único `\n` — quita `\n\n` legacy (líneas vacías editables fantasma).
+  static String normalizeProseLineBreaks(String text) {
+    if (text.isEmpty) return text;
+    return text.replaceAll('\r\n', '\n').replaceAll(RegExp(r'\n{2,}'), '\n');
+  }
+
   static String mergeOrdered(List<NoteOrderedEntry> entries) {
     final parts = <String>[
       for (final entry in entries)

@@ -2,6 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../../../../theme/app_colors.dart';
 
+/// Ritmo de línea dentro del bloque prose (v0.49.43).
+/// Intro inserta `\n` normal; el aire visual viene de [bodyLineHeight].
+abstract final class NoteProseBodyTypography {
+  static const double fontSize = 17;
+  static const double bodyLineHeight = 1.26;
+
+  static const TextStyle bodyStyle = TextStyle(
+    fontSize: fontSize,
+    height: bodyLineHeight,
+    leadingDistribution: TextLeadingDistribution.even,
+    fontWeight: FontWeight.w400,
+    color: AppColors.noteWideTextPrimary,
+  );
+}
+
 /// Bloque de texto libre multilínea en la nota amplia (v0.49.42–v0.49.43).
 class NoteProseBlockField extends StatelessWidget {
   const NoteProseBlockField({
@@ -21,12 +36,7 @@ class NoteProseBlockField extends StatelessWidget {
   final String? hintText;
   final VoidCallback? onTap;
 
-  static const TextStyle bodyStyle = TextStyle(
-    fontSize: 17,
-    height: 1.22,
-    fontWeight: FontWeight.w400,
-    color: AppColors.noteWideTextPrimary,
-  );
+  static const TextStyle bodyStyle = NoteProseBodyTypography.bodyStyle;
 
   @override
   Widget build(BuildContext context) {
