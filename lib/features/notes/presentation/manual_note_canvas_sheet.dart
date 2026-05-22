@@ -9,6 +9,9 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import 'widgets/note_body_format.dart';
 import 'widgets/note_checklist_line.dart';
+import 'widgets/note_editor_blocks.dart';
+import 'widgets/note_prose_block_field.dart';
+import 'widgets/note_table_block_editor.dart';
 import 'widgets/note_wide_editor_toolbar.dart';
 
 /// Lienzo de nota amplia — estilo Apple Notes / Aris oscuro (v0.49.41).
@@ -43,11 +46,12 @@ class _NoteWideEditorPage extends StatefulWidget {
 
 class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   late final TextEditingController _title;
-  late final TextEditingController _prose;
   final List<NoteChecklistLineState> _checklistLines = [];
+  final List<NoteEditorBlock> _blocks = [];
   int _nextChecklistLineId = 0;
+  int _nextTableBlockId = 0;
+  int _nextProseBlockId = 0;
   final _titleFocus = FocusNode();
-  final _proseFocus = FocusNode();
   bool _saving = false;
   bool _pinned = false;
 
@@ -61,9 +65,21 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     super.initState();
     final parsed = NoteBodyFormat.parse(widget.existing?.body ?? '');
     _title = TextEditingController(text: widget.existing?.title ?? '');
-    _prose = TextEditingController(text: parsed.prose);
     for (final item in parsed.checklist) {
       _checklistLines.add(_newChecklistLine(item));
+    }
+    if (parsed.segments.isEmpty) {
+      _blocks.add(NoteEditorBlock.prose(_newProseBlock()));
+    } else {
+      for (final segment in parsed.segments) {
+        if (segment.isProse) {
+          _blocks.add(NoteEditorBlock.prose(_newProseBlock(segment.text!)));
+        } else {
+          _blocks.add(
+            NoteEditorBlock.table(_newTableBlock(segment.table!)),
+          );
+        }
+      }
     }
     if (widget._isNew) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -75,13 +91,57 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   @override
   void dispose() {
     _title.dispose();
-    _prose.dispose();
     _titleFocus.dispose();
-    _proseFocus.dispose();
     for (final line in _checklistLines) {
       line.dispose();
     }
+    for (final block in _blocks) {
+      if (block.isProse) {
+        block.prose!.dispose();
+      } else {
+        block.table!.dispose();
+      }
+    }
     super.dispose();
+  }
+
+  NoteProseBlockState _newProseBlock([String text = '']) {
+    return NoteProseBlockState(
+      id: 'pb-${_nextProseBlockId++}',
+      text: text,
+    );
+  }
+
+  NoteTableBlockState _newTableBlock(NoteTableBlock data) {
+    return NoteTableBlockState(
+      id: 'tb-${_nextTableBlockId++}',
+      data: data,
+    );
+  }
+
+  List<NoteBodySegment> get _segmentsSnapshot => [
+        for (final block in _blocks)
+          if (block.isProse)
+            NoteBodySegment.prose(block.prose!.controller.text)
+          else
+            NoteBodySegment.table(block.table!.snapshot()),
+      ];
+
+  int? _focusedProseIndex() {
+    for (var i = 0; i < _blocks.length; i++) {
+      final block = _blocks[i];
+      if (block.isProse && block.prose!.focusNode.hasFocus) {
+        return i;
+      }
+    }
+    return null;
+  }
+
+  NoteProseBlockState? get _firstProseBlock {
+    for (final block in _blocks) {
+      if (block.isProse) return block.prose;
+    }
+    return null;
   }
 
   NoteChecklistLineState _newChecklistLine(NoteChecklistItem item) {
@@ -133,7 +193,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
 
   String _mergedBody() => NoteBodyFormat.merge(
         checklist: _checklistSnapshot,
-        prose: _prose.text,
+        segments: _segmentsSnapshot,
       );
 
   Future<bool> _persist() async {
@@ -197,6 +257,62 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     setState(() {
       final line = _checklistLines[index];
       line.item = line.item.copyWith(done: !line.item.done);
+    });
+  }
+
+  void _insertTable() {
+    final proseIndex = _focusedProseIndex();
+    if (proseIndex != null) {
+      _insertTableAtProse(proseIndex);
+      return;
+    }
+    setState(() {
+      _blocks.add(NoteEditorBlock.table(_newTableBlock(NoteTableBlock.empty())));
+    });
+  }
+
+  void _insertTableAtProse(int index) {
+    final prose = _blocks[index].prose!;
+    final controller = prose.controller;
+    final selection = controller.selection;
+    final offset = selection.isValid && selection.baseOffset >= 0
+        ? selection.baseOffset.clamp(0, controller.text.length)
+        : controller.text.length;
+    final text = controller.text;
+    final before = text.substring(0, offset);
+    final after = text.substring(offset);
+
+    setState(() {
+      controller.text = before;
+      _blocks.insert(
+        index + 1,
+        NoteEditorBlock.table(_newTableBlock(NoteTableBlock.empty())),
+      );
+      _blocks.insert(index + 2, NoteEditorBlock.prose(_newProseBlock(after)));
+    });
+  }
+
+  void _writeBelowTable(int tableIndex) {
+    if (tableIndex + 1 < _blocks.length && _blocks[tableIndex + 1].isProse) {
+      final prose = _blocks[tableIndex + 1].prose!;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) prose.focusNode.requestFocus();
+      });
+      return;
+    }
+
+    final prose = _newProseBlock('');
+    setState(() {
+      _blocks.insert(tableIndex + 1, NoteEditorBlock.prose(prose));
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) prose.focusNode.requestFocus();
+    });
+  }
+
+  void _addTableRow(int blockIndex) {
+    setState(() {
+      _blocks[blockIndex].table!.addRow();
     });
   }
 
@@ -372,13 +488,6 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
       letterSpacing: -0.4,
       color: AppColors.noteWideTextPrimary,
     );
-    const bodyStyle = TextStyle(
-      fontSize: 17,
-      height: 1.55,
-      fontWeight: FontWeight.w400,
-      color: AppColors.noteWideTextPrimary,
-    );
-
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -417,7 +526,8 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                         maxLines: null,
                         enabled: !_saving,
                         textInputAction: TextInputAction.next,
-                        onSubmitted: (_) => _proseFocus.requestFocus(),
+                        onSubmitted: (_) =>
+                            _firstProseBlock?.focusNode.requestFocus(),
                         decoration: _fieldDecoration('Título'),
                       ),
                       if (_checklistLines.isNotEmpty) ...[
@@ -434,16 +544,34 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                           ),
                       ],
                       const SizedBox(height: AppSpacing.md),
-                      TextField(
-                        controller: _prose,
-                        focusNode: _proseFocus,
-                        style: bodyStyle,
-                        enabled: !_saving,
-                        minLines: 12,
-                        maxLines: null,
-                        keyboardType: TextInputType.multiline,
-                        decoration: _fieldDecoration('Escribe la nota…'),
-                      ),
+                      for (var i = 0; i < _blocks.length; i++) ...[
+                        if (i > 0)
+                          SizedBox(
+                            height: _blocks[i].isTable || _blocks[i - 1].isTable
+                                ? AppSpacing.lg
+                                : AppSpacing.md,
+                          ),
+                        if (_blocks[i].isProse)
+                          NoteProseBlockField(
+                            key: ValueKey(_blocks[i].prose!.id),
+                            controller: _blocks[i].prose!.controller,
+                            focusNode: _blocks[i].prose!.focusNode,
+                            enabled: !_saving,
+                            minLines: i == _blocks.length - 1 ? 8 : 1,
+                            hintText: i == 0 && _blocks.length == 1
+                                ? 'Escribe la nota…'
+                                : null,
+                          )
+                        else
+                          NoteTableBlockEditor(
+                            key: ValueKey(_blocks[i].table!.id),
+                            state: _blocks[i].table!,
+                            enabled: !_saving,
+                            onAddRow: () => _addTableRow(i),
+                            onWriteBelow: () => _writeBelowTable(i),
+                            onTapBelow: () => _writeBelowTable(i),
+                          ),
+                      ],
                     ],
                   ),
                 ),
@@ -452,7 +580,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                 checklistActive: _checklistLines.isNotEmpty,
                 onChecklist: _addChecklistItem,
                 onAttach: () => _placeholderTool('Adjuntar'),
-                onTable: () => _placeholderTool('Tabla'),
+                onTable: _insertTable,
                 onScan: () => _placeholderTool('Escanear / OCR'),
                 onAris: _showArisActions,
               ),
