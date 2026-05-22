@@ -65,8 +65,9 @@ class NoteModel {
     return out;
   }
 
+  /// Fila inferior del listado: solo adjunto y etiquetas (sin checklist).
   bool get hasListMetadataRow =>
-      hasAttachments || listDisplayTags.isNotEmpty || hasChecklist;
+      hasAttachments || listDisplayTags.isNotEmpty;
 
   /// Línea compacta tipo Home.
   String get homePreviewLine {

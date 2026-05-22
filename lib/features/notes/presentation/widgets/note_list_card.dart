@@ -35,13 +35,6 @@ class NoteListCard extends StatelessWidget {
     color: AppColors.noteListTagTint,
   );
 
-  static const TextStyle _checklistStyle = TextStyle(
-    fontSize: 11,
-    height: 1.2,
-    fontWeight: FontWeight.w600,
-    color: AppColors.noteListChecklistTint,
-  );
-
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
@@ -164,13 +157,6 @@ class _MetadataRow extends StatelessWidget {
         for (final tag in visibleTags) Text(tag, style: NoteListCard._tagStyle),
         if (extraTags > 0)
           Text('+$extraTags', style: NoteListCard._tagStyle),
-        if (note.hasChecklist)
-          Text(
-            note.checklistItemCount > 0
-                ? '✓ ${note.checklistItemCount}'
-                : '✓',
-            style: NoteListCard._checklistStyle,
-          ),
       ],
     );
   }

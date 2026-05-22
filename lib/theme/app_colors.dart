@@ -122,7 +122,6 @@ abstract final class AppColors {
   static const Color noteListPinTint = Color(0x995EA8FF);
   static const Color noteListSectionLabel = noteArisBlue;
   static const Color noteListTagTint = Color(0x8F5EA8FF);
-  static const Color noteListChecklistTint = Color(0x99A6B0BE);
 
   /// Sombra modo claro — tinte marino, visible sobre crema.
   static const Color shadowWarmLight = Color(0x45102A5C);
