@@ -53,17 +53,11 @@ class NoteTableBlockEditor extends StatelessWidget {
     }
 
     final text = state.rowControllers[row][col].text.trim();
-    if (text.isEmpty) {
-      onExitBelow();
-      return;
-    }
-
-    final lastRowHasContent = state.rowControllers.last
-        .any((controller) => controller.text.trim().isNotEmpty);
-    if (lastRowHasContent) {
+    if (text.isNotEmpty) {
       onAddRow();
       return;
     }
+
     onExitBelow();
   }
 
@@ -104,10 +98,9 @@ class NoteTableBlockEditor extends StatelessWidget {
                           style: _cellStyle,
                           maxLines: 1,
                           keyboardType: TextInputType.text,
-                          textInputAction: _nextCell(r, c) != null
-                              ? TextInputAction.next
-                              : TextInputAction.done,
+                          textInputAction: TextInputAction.next,
                           onSubmitted: (_) => _advanceFromCell(r, c),
+                          onEditingComplete: () => _advanceFromCell(r, c),
                           decoration: _cellDecoration,
                         ),
                     ],
@@ -172,6 +165,27 @@ final class NoteTableBlockState {
 
   void addRow() {
     _addRowFromData(List.filled(columns, ''));
+  }
+
+  bool isRowEmpty(int row) {
+    return rowControllers[row].every((c) => c.text.trim().isEmpty);
+  }
+
+  bool get isLastRowEmpty =>
+      rowCount > 0 && isRowEmpty(rowCount - 1);
+
+  /// Quita la última fila si está vacía (p. ej. fila creada y abandonada).
+  void removeLastRowIfEmpty() {
+    if (rowCount <= 1 || !isLastRowEmpty) return;
+    final row = rowCount - 1;
+    for (final cell in rowControllers[row]) {
+      cell.dispose();
+    }
+    for (final node in focusNodes[row]) {
+      node.dispose();
+    }
+    rowControllers.removeAt(row);
+    focusNodes.removeAt(row);
   }
 
   void dispose() {

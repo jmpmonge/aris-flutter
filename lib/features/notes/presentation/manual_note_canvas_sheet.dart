@@ -477,6 +477,30 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     });
   }
 
+  /// Intro en línea con texto → nueva fila; Intro en línea vacía → sale al cuerpo libre.
+  void _onChecklistEnter(int index) {
+    final line = _checklistLines[index];
+    if (line.controller.text.trim().isEmpty) {
+      _exitChecklistAt(index);
+      return;
+    }
+    _insertChecklistAfter(index);
+  }
+
+  void _exitChecklistAt(int index) {
+    _recordHistoryBeforeMutation();
+    final line = _checklistLines[index];
+    setState(() {
+      line.dispose();
+      _checklistLines.removeAt(index);
+    });
+    _commitHistoryRecord();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _firstProseBlock?.focusNode.requestFocus();
+    });
+  }
+
   void _attachEditListenersForChecklistLine(NoteChecklistLineState line) {
     void onEdit() => _scheduleHistoryRecord();
     line.controller.addListener(onEdit);
@@ -535,6 +559,14 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     });
     _attachEditListenersForTable(_blocks[index + 1].table!);
     _commitHistoryRecord();
+  }
+
+  void _exitTableBelow(int tableIndex) {
+    final table = _blocks[tableIndex].table!;
+    if (table.isLastRowEmpty) {
+      setState(() => table.removeLastRowIfEmpty());
+    }
+    _writeBelowTable(tableIndex);
   }
 
   void _writeBelowTable(int tableIndex) {
@@ -833,7 +865,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                             done: _checklistLines[i].item.done,
                             enabled: !_saving,
                             onToggle: () => _toggleChecklistLine(i),
-                            onEnter: () => _insertChecklistAfter(i),
+                            onEnter: () => _onChecklistEnter(i),
                           ),
                       ],
                       const SizedBox(height: AppSpacing.md),
@@ -855,7 +887,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                             key: ValueKey(_blocks[i].table!.id),
                             state: _blocks[i].table!,
                             enabled: !_saving,
-                            onExitBelow: () => _writeBelowTable(i),
+                            onExitBelow: () => _exitTableBelow(i),
                             onTapBelow: () => _writeBelowTable(i),
                             onAddRow: () => _addTableRow(i),
                           ),
