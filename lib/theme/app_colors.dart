@@ -123,6 +123,31 @@ abstract final class AppColors {
   static const Color noteListSectionLabel = noteArisBlue;
   static const Color noteListTagTint = Color(0x8F5EA8FF);
 
+  /// Listado de tareas (v0.49.44) — coherente con Notas / lienzo oscuro Aris.
+  static const Color taskListCanvas = noteWideCanvas;
+  static const Color taskListCardFill = noteWideSurface;
+  static const Color taskListCardExpandedFill = Color(0xFF131E2A);
+  static const Color taskListBorderNormal = Color(0x40243244);
+  static const Color taskListBorderSelected = Color(0x665EA8FF);
+  static const Color taskListCardBorder = noteListCardBorder;
+  static const Color taskListElevated = Color(0xFF151F2B);
+  static const Color taskListSectionLabel = noteArisBlue;
+  static const Color taskListTextPrimary = noteWideTextPrimary;
+  static const Color taskListTextSecondary = noteWideTextSecondary;
+  static const Color taskListTextMuted = noteWideTextMuted;
+  static const Color taskListAccent = noteArisBlue;
+  static const Color taskListAccentSky = noteArisSky;
+  static const Color taskListDestructive = noteDestructive;
+  static const Color taskListCompletedCheck = noteArisBlue;
+  static const Color taskListChipFill = Color(0x33151F2B);
+  static const Color taskListChipText = noteArisSky;
+  static const Color taskListChipIcon = noteArisBlue;
+
+  /// Espaciado tarjeta desplegada (v0.49.44 paso 4).
+  static const double taskListExpandedPadH = 17;
+  static const double taskListExpandedPadV = 15;
+  static const double taskListExpandedSectionGap = 12;
+
   /// Sombra modo claro — tinte marino, visible sobre crema.
   static const Color shadowWarmLight = Color(0x45102A5C);
 

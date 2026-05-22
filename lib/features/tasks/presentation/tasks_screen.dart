@@ -7,8 +7,9 @@ import '../../../core/models/task_ui_buckets.dart';
 import '../../../core/repositories/repositories.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/home_aris_reply_card.dart';
-import '../../../shared/widgets/local_action_form_sheet.dart';
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import 'manual_task_editor_page.dart';
 import 'widgets/compact_expandable_task_tile.dart';
 
 /// Tareas desde **GET /tasks** · tarjetas compactas y desplegables (v0.47.34).
@@ -26,6 +27,7 @@ class _TasksScreenState extends State<TasksScreen> {
   final Set<String> _busyTaskIds = <String>{};
   final Map<String, bool> _localCompletionOverride = <String, bool>{};
   bool _arisSending = false;
+  String? _expandedTaskId;
 
   static const _taskBackendFail =
       'No he podido actualizar la tarea. Revisa la conexión con el backend.';
@@ -58,8 +60,8 @@ class _TasksScreenState extends State<TasksScreen> {
     final yes = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar tarea'),
-        content: const Text('¿Quieres eliminar esta tarea?'),
+        title: const Text('Borrar tarea'),
+        content: const Text('¿Quieres borrar esta tarea?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -71,7 +73,7 @@ class _TasksScreenState extends State<TasksScreen> {
               foregroundColor: scheme.onError,
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Eliminar'),
+            child: const Text('Borrar'),
           ),
         ],
       ),
@@ -79,12 +81,15 @@ class _TasksScreenState extends State<TasksScreen> {
 
     if (yes != true || !mounted) return;
 
-    setState(() => _busyTaskIds.add(t.id));
+    setState(() {
+      _busyTaskIds.add(t.id);
+      if (_expandedTaskId == t.id) _expandedTaskId = null;
+    });
     try {
       final ok = await Repositories.task.deleteTask(t.id);
       if (!mounted) return;
       if (ok) {
-        _briefSnack(context, message: 'Tarea eliminada.');
+        _briefSnack(context, message: 'Tarea borrada.');
       } else {
         _briefSnack(context, message: 'No he podido eliminar la tarea.', error: true);
       }
@@ -116,6 +121,7 @@ class _TasksScreenState extends State<TasksScreen> {
   @override
   void initState() {
     super.initState();
+    _expandedTaskId = widget.initialExpandedTaskId;
     unawaited(Repositories.task.refreshFromBackend());
     Repositories.task.readRevision.addListener(_onTaskReads);
   }
@@ -150,6 +156,16 @@ class _TasksScreenState extends State<TasksScreen> {
     Repositories.assistant.sendVoicePendingNotice();
   }
 
+  void _toggleExpanded(String taskId) {
+    setState(() {
+      _expandedTaskId = _expandedTaskId == taskId ? null : taskId;
+    });
+  }
+
+  void _onEditTask(TaskModel t) {
+    unawaited(ManualTaskEditorPage.showEdit(context, task: t));
+  }
+
   Future<void> _onTaskCheckbox(TaskModel t, bool? nextCompleted) async {
     if (nextCompleted == null) return;
 
@@ -162,6 +178,12 @@ class _TasksScreenState extends State<TasksScreen> {
     }
 
     if (_busyTaskIds.contains(t.id)) return;
+
+    if (nextCompleted) {
+      setState(() {
+        if (_expandedTaskId == t.id) _expandedTaskId = null;
+      });
+    }
 
     debugPrint(
       '[TaskList] checkbox taskId=${t.id} '
@@ -195,7 +217,7 @@ class _TasksScreenState extends State<TasksScreen> {
     List<TaskModel> rows,
   ) {
     final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final isCompleted = bucket == TaskBucketSection.completed;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -210,7 +232,9 @@ class _TasksScreenState extends State<TasksScreen> {
             bucket.uiLabel,
             style: text.labelSmall?.copyWith(
               letterSpacing: 1.1,
-              color: scheme.primary,
+              color: isCompleted
+                  ? AppColors.taskListTextMuted
+                  : AppColors.taskListSectionLabel,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -226,9 +250,11 @@ class _TasksScreenState extends State<TasksScreen> {
             child: CompactExpandableTaskTile(
               task: t,
               section: bucket,
-              initiallyExpanded: widget.initialExpandedTaskId == t.id,
+              isExpanded: _expandedTaskId == t.id,
               busy: _busyTaskIds.contains(t.id),
+              onToggleExpand: () => _toggleExpanded(t.id),
               onCheckboxChanged: (v) => _onTaskCheckbox(t, v),
+              onEdit: () => _onEditTask(t),
               onDelete: Repositories.task.readsFromBackend
                   ? () => _deleteBackendTask(t)
                   : null,
@@ -289,8 +315,7 @@ class _TasksScreenState extends State<TasksScreen> {
                   child: AppHeader(
                     title: 'Tareas',
                     trailing: IconButton.filledTonal(
-                      onPressed: () =>
-                          LocalActionFormSheet.showTaskForm(context),
+                      onPressed: () => ManualTaskEditorPage.show(context),
                       icon: const Icon(Icons.add_rounded),
                       tooltip: 'Nueva tarea',
                     ),

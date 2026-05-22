@@ -2,152 +2,85 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/models/task_model.dart';
 import '../../../../core/models/task_ui_buckets.dart';
+import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
+import 'task_expanded_card.dart';
 
-/// Tarjeta compacta de tarea con check y expansión inline (v0.49.18).
-class CompactExpandableTaskTile extends StatefulWidget {
+/// Tarjeta compacta de tarea con check y expansión inline (v0.49.44 paso 4).
+class CompactExpandableTaskTile extends StatelessWidget {
   const CompactExpandableTaskTile({
     super.key,
     required this.task,
     required this.section,
-    this.initiallyExpanded = false,
+    required this.isExpanded,
     required this.busy,
+    required this.onToggleExpand,
     required this.onCheckboxChanged,
+    required this.onEdit,
     this.onDelete,
   });
 
   final TaskModel task;
   final TaskBucketSection section;
-
-  /// Desde Home: abrir detalle inline de la tarea seleccionada.
-  final bool initiallyExpanded;
+  final bool isExpanded;
   final bool busy;
+  final VoidCallback onToggleExpand;
   final ValueChanged<bool?> onCheckboxChanged;
-
-  /// Si no es null, se muestra un menú con «Eliminar».
+  final VoidCallback onEdit;
   final VoidCallback? onDelete;
-
-  @override
-  State<CompactExpandableTaskTile> createState() =>
-      _CompactExpandableTaskTileState();
-}
-
-class _CompactExpandableTaskTileState extends State<CompactExpandableTaskTile> {
-  late bool _open;
 
   static const double _checkSlot = 22;
   static const double _checkTextGap = 10;
   static const double _cardRadius = 14;
 
-  @override
-  void initState() {
-    super.initState();
-    _open = widget.initiallyExpanded;
-  }
+  static const double _closedPadH = AppSpacing.md;
+  static const double _closedPadV = 12;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final now = DateTime.now();
-    final meta = TaskCompactFormat.compactMetaLine(
-      widget.task,
-      widget.section,
-      now,
-    );
-    final strike = widget.task.completed;
-    final high = TaskCompactFormat.priorityHigh(widget.task);
+    final completed = task.completed;
+    final isCompletedSection = section == TaskBucketSection.completed;
+    final muted = completed || isCompletedSection;
 
-    final titleStyle = tt.bodyMedium?.copyWith(
-      decoration: strike ? TextDecoration.lineThrough : null,
-      color: strike
-          ? scheme.onSurfaceVariant.withValues(alpha: 0.72)
-          : scheme.onSurface,
-      height: 1.2,
-      fontWeight: FontWeight.w600,
+    final titleStyle = TextStyle(
       fontSize: 15,
+      height: 1.22,
+      fontWeight: FontWeight.w600,
+      color: muted
+          ? AppColors.taskListTextSecondary.withValues(alpha: 0.72)
+          : AppColors.taskListTextPrimary,
+      decoration: muted ? TextDecoration.lineThrough : null,
+      decorationColor: AppColors.taskListTextMuted,
     );
 
-    final metaStyle = tt.bodySmall?.copyWith(
-      color: strike
-          ? scheme.onSurfaceVariant.withValues(alpha: 0.45)
-          : scheme.onSurfaceVariant.withValues(alpha: 0.72),
-      height: 1.2,
-      fontSize: 12,
-    );
+    final cardFill = isExpanded
+        ? AppColors.taskListCardExpandedFill
+        : AppColors.taskListCardFill;
+    final borderColor = isExpanded
+        ? AppColors.taskListBorderSelected
+        : AppColors.taskListBorderNormal;
 
-    final desc = (widget.task.description ?? '').trim();
-    final hasDesc = desc.isNotEmpty;
-    final tagsLabel =
-        widget.task.tags.where((x) => x.trim().isNotEmpty).join(' · ');
-    final hasTags = tagsLabel.isNotEmpty;
-    final hasExpandedBody = hasDesc || hasTags;
+    final padH = isExpanded
+        ? AppColors.taskListExpandedPadH
+        : _closedPadH;
+    final padV = isExpanded
+        ? AppColors.taskListExpandedPadV
+        : _closedPadV;
 
-    void toggleExpanded() => setState(() => _open = !_open);
-
-    final detailBlock = _open && hasExpandedBody
-        ? Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: scheme.outline.withValues(alpha: 0.18),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (hasDesc)
-                      Text(
-                        desc,
-                        style: tt.bodySmall?.copyWith(
-                          height: 1.4,
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
-                        ),
-                      ),
-                    if (hasTags)
-                      Padding(
-                        padding: EdgeInsets.only(
-                          top: hasDesc ? AppSpacing.xs : 0,
-                        ),
-                        child: Text(
-                          tagsLabel,
-                          style: tt.labelSmall?.copyWith(
-                            color: scheme.onSurfaceVariant
-                                .withValues(alpha: 0.65),
-                            height: 1.3,
-                            letterSpacing: 0.15,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          )
-        : const SizedBox.shrink();
-
-    return Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      elevation: 0,
-      shadowColor: Colors.transparent,
-      color: scheme.surface,
-      shape: RoundedRectangleBorder(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        color: cardFill.withValues(alpha: muted && !isExpanded ? 0.72 : 1),
         borderRadius: BorderRadius.circular(_cardRadius),
-        side: BorderSide(
-          color: scheme.outline.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: borderColor, width: isExpanded ? 1.15 : 1),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.sm + 2,
+        padding: EdgeInsets.fromLTRB(
+          padH,
+          padV,
+          padH - 2,
+          padV,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,98 +94,77 @@ class _CompactExpandableTaskTileState extends State<CompactExpandableTaskTile> {
                   shape: const CircleBorder(),
                   visualDensity: VisualDensity.compact,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  value: widget.task.completed,
-                  onChanged: widget.busy ? null : widget.onCheckboxChanged,
+                  activeColor: AppColors.taskListCompletedCheck,
+                  checkColor: AppColors.taskListCanvas,
+                  side: BorderSide(
+                    color: muted
+                        ? AppColors.taskListAccent.withValues(alpha: 0.55)
+                        : AppColors.taskListTextMuted.withValues(alpha: 0.65),
+                    width: 1.4,
+                  ),
+                  value: completed,
+                  onChanged: busy ? null : onCheckboxChanged,
                 ),
               ),
             ),
             SizedBox(width: _checkTextGap),
             Expanded(
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: toggleExpanded,
-                  borderRadius:
-                      BorderRadius.circular(AppSpacing.radiusSm),
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                      top: 1,
-                      right: AppSpacing.xs,
-                      bottom: 1,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onToggleExpand,
+                      borderRadius:
+                          BorderRadius.circular(AppSpacing.radiusSm),
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          top: 1,
+                          bottom: 1,
+                          right: 2,
+                        ),
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Expanded(
                               child: Text(
-                                widget.task.title,
+                                task.title,
                                 style: titleStyle,
-                                maxLines: _open ? 6 : 2,
-                                overflow: _open
-                                    ? TextOverflow.visible
-                                    : TextOverflow.ellipsis,
+                                maxLines: isExpanded ? 3 : 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (high) ...[
-                              const SizedBox(width: AppSpacing.xs),
-                              Text(
-                                '\u26A0',
-                                style: tt.titleSmall?.copyWith(
-                                  height: 1,
-                                  fontSize: 14,
-                                  color: Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? const Color(0xFFF59E0B)
-                                      : const Color(0xFFD97706),
-                                ),
-                                semanticsLabel: 'Prioridad alta',
-                              ),
-                            ],
-                            if (widget.onDelete != null)
-                              PopupMenuButton<String>(
-                                tooltip: 'Más opciones',
-                                enabled: !widget.busy,
-                                padding: EdgeInsets.zero,
-                                onSelected: (v) {
-                                  if (v == 'delete') widget.onDelete?.call();
-                                },
-                                itemBuilder: (_) => const [
-                                  PopupMenuItem(
-                                    value: 'delete',
-                                    child: Text('Eliminar'),
-                                  ),
-                                ],
-                                child: Padding(
-                                  padding:
-                                      EdgeInsets.only(left: AppSpacing.xxs),
-                                  child: Icon(
-                                    Icons.more_vert_rounded,
-                                    size: 18,
-                                    color: scheme.onSurfaceVariant
-                                        .withValues(alpha: 0.55),
-                                  ),
-                                ),
-                              ),
+                            const SizedBox(width: AppSpacing.xxs),
+                            Icon(
+                              isExpanded
+                                  ? Icons.expand_less_rounded
+                                  : Icons.expand_more_rounded,
+                              size: 20,
+                              color: AppColors.taskListTextMuted
+                                  .withValues(alpha: 0.82),
+                            ),
                           ],
                         ),
-                        if (meta.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 3),
-                            child: Text(meta, style: metaStyle),
-                          ),
-                        AnimatedSize(
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeOutCubic,
-                          alignment: Alignment.topLeft,
-                          child: detailBlock,
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.topLeft,
+                    clipBehavior: Clip.none,
+                    child: isExpanded
+                        ? TaskExpandedCard(
+                            key: ValueKey('expanded-${task.id}'),
+                            task: task,
+                            section: section,
+                            onEdit: onEdit,
+                            onDelete: onDelete,
+                          )
+                        : const SizedBox(width: double.infinity, height: 0),
+                  ),
+                ],
               ),
             ),
           ],

@@ -1,21 +1,31 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/models/task_model.dart';
 import '../../../core/repositories/repositories.dart';
 import '../../../shared/layout/breakpoints.dart';
 import '../../../shared/widgets/manual_editor_time_meta_chip.dart';
 import '../../../shared/widgets/section_accent_time_wheel_picker.dart';
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 
-/// Naranja solo para metadatos activos en el editor manual (v0.49.20).
+/// Acento azul Aris para metadatos del editor de tareas (v0.49.44).
 abstract final class TaskManualEditorAccent {
-  static const Color metaActive = Color(0xFFF4A261);
+  static const Color metaActive = AppColors.taskListAccent;
 }
 
-/// Editor manual de tarea: sheet alto desde abajo (~68 %), compacto (v0.49.20).
+/// Editor manual de tarea: sheet desde abajo, compacto (v0.49.44).
 abstract final class ManualTaskEditorPage {
-  static const double _sheetHeightFactor = 0.68;
+  static const double _sheetHeightFactor = 0.62;
 
   static Future<void> show(BuildContext context) {
+    return _open(context, const _ManualTaskEditorSheet());
+  }
+
+  static Future<void> showEdit(BuildContext context, {required TaskModel task}) {
+    return _open(context, _ManualTaskEditorSheet(existing: task));
+  }
+
+  static Future<void> _open(BuildContext context, Widget sheet) {
     final scheme = Theme.of(context).colorScheme;
     final width = MediaQuery.sizeOf(context).width;
     final sheetConstraints = width > LayoutBreakpoints.webMobileFrameMaxWidth
@@ -27,7 +37,7 @@ abstract final class ManualTaskEditorPage {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: scheme.surface,
+      backgroundColor: AppColors.taskListCardFill,
       barrierColor: scheme.scrim.withValues(alpha: 0.45),
       constraints: sheetConstraints,
       shape: const RoundedRectangleBorder(
@@ -42,7 +52,7 @@ abstract final class ManualTaskEditorPage {
           padding: EdgeInsets.only(bottom: viewBottom),
           child: SizedBox(
             height: sheetH,
-            child: const _ManualTaskEditorSheet(),
+            child: sheet,
           ),
         );
       },
@@ -51,7 +61,11 @@ abstract final class ManualTaskEditorPage {
 }
 
 class _ManualTaskEditorSheet extends StatefulWidget {
-  const _ManualTaskEditorSheet();
+  const _ManualTaskEditorSheet({this.existing});
+
+  final TaskModel? existing;
+
+  bool get isEdit => existing != null;
 
   @override
   State<_ManualTaskEditorSheet> createState() => _ManualTaskEditorSheetState();
@@ -83,6 +97,29 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
     'nov',
     'dic',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final t = widget.existing;
+    if (t == null) return;
+
+    _title.text = t.title;
+    _body.text = (t.description ?? '').trim();
+    _date = TaskModel.tryParseIsoDateLocal(t.dateIso);
+    _time = _parseTime(t.timeText);
+    _priorityHigh = (t.priority ?? '').trim().toLowerCase() == 'high';
+  }
+
+  TimeOfDay? _parseTime(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    final parts = raw.trim().split(':');
+    if (parts.length != 2) return null;
+    final h = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    if (h == null || m == null) return null;
+    return TimeOfDay(hour: h, minute: m);
+  }
 
   @override
   void dispose() {
@@ -127,20 +164,18 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
     );
   }
 
-  /// Recuadro del título: ~52–56 px total (v0.49.32).
   static const double _titleSurfaceVerticalPad = 10;
 
   Widget _textSurface({
     required Widget child,
     bool titleField = false,
   }) {
-    final scheme = Theme.of(context).colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.42),
+        color: AppColors.taskListElevated,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         border: Border.all(
-          color: scheme.outline.withValues(alpha: 0.18),
+          color: AppColors.taskListCardBorder.withValues(alpha: 0.55),
         ),
       ),
       child: Padding(
@@ -180,6 +215,18 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
     setState(() => _priorityHigh = !_priorityHigh);
   }
 
+  ButtonStyle _primaryButtonStyle() {
+    return FilledButton.styleFrom(
+      elevation: 0,
+      backgroundColor: AppColors.taskListAccent,
+      foregroundColor: AppColors.taskListCanvas,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      ),
+    );
+  }
+
   Future<void> _submit() async {
     final t = _title.text.trim();
     if (t.isEmpty) {
@@ -194,21 +241,35 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
       _busy = true;
     });
 
-    final ok = await Repositories.task.createTaskOnBackend(
-      title: t,
-      description: _body.text.trim().isEmpty ? null : _body.text.trim(),
-      dateIso: _date != null ? _dateIso(_date!) : null,
-      dateText: _date != null ? _dateLabel(_date!) : null,
-      timeText: _time != null ? _timeLabel(_time!) : null,
-      priority: _priorityHigh ? 'high' : 'normal',
-      tags: const <String>[],
-    );
+    final description =
+        _body.text.trim().isEmpty ? null : _body.text.trim();
+
+    bool ok;
+    if (widget.isEdit) {
+      ok = await Repositories.task.updateTask(
+        widget.existing!.id,
+        title: t,
+        description: description,
+      );
+    } else {
+      ok = await Repositories.task.createTaskOnBackend(
+        title: t,
+        description: description,
+        dateIso: _date != null ? _dateIso(_date!) : null,
+        dateText: _date != null ? _dateLabel(_date!) : null,
+        timeText: _time != null ? _timeLabel(_time!) : null,
+        priority: _priorityHigh ? 'high' : 'normal',
+        tags: const <String>[],
+      );
+    }
 
     if (!mounted) return;
     setState(() => _busy = false);
     if (!ok) {
       setState(
-        () => _submitError = 'No se pudo crear la tarea. Inténtalo de nuevo.',
+        () => _submitError = widget.isEdit
+            ? 'No se pudo guardar la tarea. Inténtalo de nuevo.'
+            : 'No se pudo crear la tarea. Inténtalo de nuevo.',
       );
       return;
     }
@@ -222,17 +283,16 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
     String? valueLabel,
     bool iconOnly = false,
   }) {
-    final scheme = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final color = active
         ? TaskManualEditorAccent.metaActive
-        : scheme.onSurfaceVariant.withValues(alpha: 0.38);
+        : AppColors.taskListTextMuted.withValues(alpha: 0.55);
     final iconSize = iconOnly ? 18.0 : 17.0;
 
     return Material(
       color: active
           ? TaskManualEditorAccent.metaActive.withValues(alpha: 0.14)
-          : scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+          : AppColors.taskListElevated,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: _busy ? null : onTap,
@@ -266,44 +326,67 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final heading = widget.isEdit ? 'Editar tarea' : 'Crear tarea';
 
     final titleStyle = tt.titleMedium?.copyWith(
       fontWeight: FontWeight.w600,
       height: 1.2,
       fontSize: 17,
-      color: scheme.onSurface,
+      color: AppColors.taskListTextPrimary,
     );
     final bodyStyle = tt.bodyMedium?.copyWith(
       height: 1.4,
-      color: scheme.onSurface,
+      color: AppColors.taskListTextPrimary,
     );
     final titleHint = titleStyle?.copyWith(
-      color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
+      color: AppColors.taskListTextMuted.withValues(alpha: 0.65),
       fontWeight: FontWeight.w600,
     );
     final bodyHint = bodyStyle?.copyWith(
-      color: scheme.onSurfaceVariant.withValues(alpha: 0.42),
+      color: AppColors.taskListTextMuted.withValues(alpha: 0.55),
     );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: IconButton(
-            visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.close_rounded, size: 22),
-            tooltip: 'Cerrar',
-            onPressed: _busy ? null : () => Navigator.of(context).pop(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.xs,
+            AppSpacing.sm,
+            0,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  heading,
+                  style: tt.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    color: AppColors.taskListTextPrimary,
+                  ),
+                ),
+              ),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: 22,
+                  color: AppColors.taskListTextMuted,
+                ),
+                tooltip: 'Cerrar',
+                onPressed: _busy ? null : () => Navigator.of(context).pop(),
+              ),
+            ],
           ),
         ),
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.lg,
-              0,
+              AppSpacing.sm,
               AppSpacing.lg,
               AppSpacing.sm,
             ),
@@ -363,7 +446,7 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
                     style: bodyStyle,
                     enabled: !_busy,
                     minLines: 3,
-                    maxLines: 6,
+                    maxLines: 5,
                     textAlignVertical: TextAlignVertical.top,
                     keyboardType: TextInputType.multiline,
                     decoration: _fieldDecoration('Notas o detalles…', bodyHint),
@@ -386,14 +469,22 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
               if (_submitError != null) ...[
                 Text(
                   _submitError!,
-                  style: tt.bodySmall?.copyWith(color: scheme.error),
+                  style: tt.bodySmall?.copyWith(
+                    color: AppColors.taskListDestructive,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
               ],
               FilledButton(
                 onPressed: _busy ? null : _submit,
-                style: ManualEditorPrimaryCtaStyle.style(context),
-                child: Text(_busy ? 'Guardando…' : 'Crear tarea'),
+                style: _primaryButtonStyle(),
+                child: Text(
+                  _busy
+                      ? 'Guardando…'
+                      : widget.isEdit
+                          ? 'Guardar cambios'
+                          : 'Crear tarea',
+                ),
               ),
             ],
           ),

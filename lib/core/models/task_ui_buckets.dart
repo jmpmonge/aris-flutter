@@ -50,6 +50,45 @@ abstract final class TaskCompactFormat {
   static bool priorityHigh(TaskModel t) =>
       (t.priority ?? '').trim().toLowerCase() == 'high';
 
+  /// Chip de prioridad en tarjeta expandida; `null` si no hay dato.
+  static String? expandedPriorityChip(TaskModel t) {
+    final p = (t.priority ?? '').trim().toLowerCase();
+    if (p.isEmpty) return null;
+    return switch (p) {
+      'high' => 'Alta',
+      'low' => 'Baja',
+      'normal' || 'media' => 'Media',
+      _ => p[0].toUpperCase() + p.substring(1),
+    };
+  }
+
+  /// Fecha corta para chip expandido (p. ej. «22 may 2026», «Hoy»).
+  static String? expandedDateChip(
+    TaskModel t,
+    TaskBucketSection section,
+    DateTime now, {
+    bool includeYear = true,
+  }) {
+    final rawTxt = (t.dateText ?? '').trim();
+    if (rawTxt.isNotEmpty) return rawTxt;
+
+    final iso = TaskModel.tryParseIsoDateLocal(t.dateIso);
+    if (iso != null) {
+      const months = [
+        'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+        'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+      ];
+      if (section == TaskBucketSection.today &&
+          _sameDay(iso, DateTime(now.year, now.month, now.day))) {
+        return 'Hoy';
+      }
+      final base = '${iso.day} ${months[iso.month - 1]}';
+      if (includeYear) return '$base ${iso.year}';
+      return base;
+    }
+    return null;
+  }
+
   static bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 }

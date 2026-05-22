@@ -27,6 +27,11 @@ class TaskModel {
   final String? dateText;
   final String? timeText;
 
+  /// Texto de notas/descripción para ficha desplegada (campo `description`).
+  static String expandedDescription(TaskModel task) {
+    return (task.description ?? '').trim();
+  }
+
   /// Interpreta **`YYYY-MM-DD`** como día civil **local**.
   static DateTime? tryParseIsoDateLocal(String? raw) {
     if (raw == null || raw.trim().isEmpty) return null;
