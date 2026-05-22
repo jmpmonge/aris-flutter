@@ -47,8 +47,7 @@ class _NoteWideEditorPage extends StatefulWidget {
 
 class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   late final TextEditingController _title;
-  final List<NoteChecklistLineState> _checklistLines = [];
-  final List<NoteEditorBlock> _blocks = [];
+  final List<NoteEditorBlock> _entries = [];
   int _nextChecklistLineId = 0;
   int _nextTableBlockId = 0;
   int _nextProseBlockId = 0;
@@ -75,25 +74,24 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   @override
   void initState() {
     super.initState();
-    final parsed = NoteBodyFormat.parse(widget.existing?.body ?? '');
+    final ordered = NoteBodyFormat.parseOrdered(widget.existing?.body ?? '');
     _title = TextEditingController(text: widget.existing?.title ?? '');
-    for (final item in parsed.checklist) {
-      _checklistLines.add(_newChecklistLine(item));
-    }
-    if (parsed.segments.isEmpty) {
-      _blocks.add(NoteEditorBlock.prose(_newProseBlock()));
+    if (ordered.isEmpty) {
+      _entries.add(NoteEditorBlock.prose(_newProseBlock()));
     } else {
-      for (final segment in parsed.segments) {
-        if (segment.isProse) {
-          _blocks.add(NoteEditorBlock.prose(_newProseBlock(segment.text!)));
-        } else {
-          _blocks.add(
-            NoteEditorBlock.table(_newTableBlock(segment.table!)),
+      for (final entry in ordered) {
+        if (entry.isChecklist) {
+          _entries.add(
+            NoteEditorBlock.checklist(_newChecklistLine(entry.checklist!)),
           );
+        } else if (entry.isProse) {
+          _entries.add(NoteEditorBlock.prose(_newProseBlock(entry.proseText!)));
+        } else {
+          _entries.add(NoteEditorBlock.table(_newTableBlock(entry.table!)));
         }
       }
     }
-    for (var i = 0; i < _blocks.length; i++) {
+    for (var i = 0; i < _entries.length; i++) {
       if (_isProseRightAfterTable(i)) {
         _watchProseAfterTable(i);
       }
@@ -113,14 +111,13 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     _detachEditListeners();
     _title.dispose();
     _titleFocus.dispose();
-    for (final line in _checklistLines) {
-      line.dispose();
-    }
-    for (final block in _blocks) {
-      if (block.isProse) {
-        block.prose!.dispose();
+    for (final entry in _entries) {
+      if (entry.isProse) {
+        entry.prose!.dispose();
+      } else if (entry.isTable) {
+        entry.table!.dispose();
       } else {
-        block.table!.dispose();
+        entry.checklist!.dispose();
       }
     }
     super.dispose();
@@ -140,61 +137,94 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     );
   }
 
-  List<NoteBodySegment> get _segmentsSnapshot => [
-        for (final block in _blocks)
-          if (block.isProse)
-            NoteBodySegment.prose(block.prose!.controller.text)
+  List<NoteOrderedEntry> get _orderedEntriesSnapshot => [
+        for (final entry in _entries)
+          if (entry.isProse)
+            NoteOrderedEntry.prose(entry.prose!.controller.text)
+          else if (entry.isTable)
+            NoteOrderedEntry.table(entry.table!.snapshot())
           else
-            NoteBodySegment.table(block.table!.snapshot()),
+            NoteOrderedEntry.checklist(
+              NoteChecklistItem(
+                text: entry.checklist!.controller.text,
+                done: entry.checklist!.item.done,
+              ),
+            ),
       ];
 
   int? _focusedProseIndex() {
-    for (var i = 0; i < _blocks.length; i++) {
-      final block = _blocks[i];
-      if (block.isProse && block.prose!.focusNode.hasFocus) {
+    for (var i = 0; i < _entries.length; i++) {
+      final entry = _entries[i];
+      if (entry.isProse && entry.prose!.focusNode.hasFocus) {
         return i;
       }
     }
     return null;
   }
 
-  NoteProseBlockState? get _firstProseBlock {
-    for (final block in _blocks) {
-      if (block.isProse) return block.prose;
+  int? _focusedChecklistEntryIndex() {
+    for (var i = 0; i < _entries.length; i++) {
+      final entry = _entries[i];
+      if (entry.isChecklist && entry.checklist!.focusNode.hasFocus) {
+        return i;
+      }
     }
     return null;
   }
 
+  int? _focusedTableEntryIndex() {
+    for (var i = 0; i < _entries.length; i++) {
+      final table = _entries[i].table;
+      if (table == null) continue;
+      for (final row in table.focusNodes) {
+        for (final node in row) {
+          if (node.hasFocus) return i;
+        }
+      }
+    }
+    return null;
+  }
+
+  NoteProseBlockState? get _firstProseBlock {
+    for (final entry in _entries) {
+      if (entry.isProse) return entry.prose;
+    }
+    return null;
+  }
+
+  bool get _hasChecklistEntries => _entries.any((e) => e.isChecklist);
+
   /// Separación mínima entre bloques; tras tabla, sin hueco extra antes del texto.
   double _gapBeforeBlock(int index) {
     assert(index > 0);
-    final prev = _blocks[index - 1];
-    final curr = _blocks[index];
+    final prev = _entries[index - 1];
+    final curr = _entries[index];
     if (prev.isTable && curr.isProse) return 0;
     if (prev.isProse && curr.isTable) return AppSpacing.xs;
+    if (prev.isChecklist || curr.isChecklist) return AppSpacing.xs;
     if (prev.isTable || curr.isTable) return AppSpacing.xs;
     return AppSpacing.md;
   }
 
   int _proseMinLines(int index) {
-    final afterTable = index > 0 && _blocks[index - 1].isTable;
+    final afterTable = index > 0 && _entries[index - 1].isTable;
     if (afterTable) return 1;
-    final onlyBlock = _blocks.length == 1;
+    final onlyBlock = _entries.length == 1;
     if (onlyBlock && index == 0) return 8;
     return 1;
   }
 
   bool _isProseRightAfterTable(int index) {
-    return index > 0 && _blocks[index].isProse && _blocks[index - 1].isTable;
+    return index > 0 && _entries[index].isProse && _entries[index - 1].isTable;
   }
 
   void _watchProseAfterTable(int index) {
-    final prose = _blocks[index].prose!;
+    final prose = _entries[index].prose!;
     if (!_watchedProseAfterTableIds.add(prose.id)) return;
 
     void onFocusOrText() {
       if (!mounted) return;
-      final idx = _blocks.indexWhere(
+      final idx = _entries.indexWhere(
         (b) => b.isProse && identical(b.prose, prose),
       );
       if (idx < 0 || !_isProseRightAfterTable(idx)) return;
@@ -208,7 +238,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
 
       setState(() {
         prose.dispose();
-        _blocks.removeAt(idx);
+        _entries.removeAt(idx);
         _watchedProseAfterTableIds.remove(prose.id);
       });
     }
@@ -228,15 +258,9 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     return line;
   }
 
-  List<NoteChecklistItem> get _checklistSnapshot => [
-        for (final line in _checklistLines)
-          NoteChecklistItem(text: line.controller.text, done: line.item.done),
-      ];
-
   NoteEditorSnapshot _captureSnapshot() => NoteEditorSnapshot.fromDocument(
         title: _title.text,
-        checklist: _checklistSnapshot,
-        segments: _segmentsSnapshot,
+        entries: _orderedEntriesSnapshot,
       );
 
   void _attachEditListeners() {
@@ -249,16 +273,15 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     _title.addListener(onEdit);
     listen(() => _title.removeListener(onEdit));
 
-    for (final line in _checklistLines) {
-      line.controller.addListener(onEdit);
-      listen(() => line.controller.removeListener(onEdit));
-    }
-    for (final block in _blocks) {
-      if (block.isProse) {
-        block.prose!.controller.addListener(onEdit);
-        listen(() => block.prose!.controller.removeListener(onEdit));
+    for (final entry in _entries) {
+      if (entry.isProse) {
+        entry.prose!.controller.addListener(onEdit);
+        listen(() => entry.prose!.controller.removeListener(onEdit));
+      } else if (entry.isChecklist) {
+        entry.checklist!.controller.addListener(onEdit);
+        listen(() => entry.checklist!.controller.removeListener(onEdit));
       } else {
-        for (final row in block.table!.rowControllers) {
+        for (final row in entry.table!.rowControllers) {
           for (final cell in row) {
             cell.addListener(onEdit);
             listen(() => cell.removeListener(onEdit));
@@ -331,18 +354,16 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
 
   void _clearEditorContent() {
     _detachEditListeners();
-    for (final line in _checklistLines) {
-      line.dispose();
-    }
-    _checklistLines.clear();
-    for (final block in _blocks) {
-      if (block.isProse) {
-        block.prose!.dispose();
+    for (final entry in _entries) {
+      if (entry.isProse) {
+        entry.prose!.dispose();
+      } else if (entry.isTable) {
+        entry.table!.dispose();
       } else {
-        block.table!.dispose();
+        entry.checklist!.dispose();
       }
     }
-    _blocks.clear();
+    _entries.clear();
     _watchedProseAfterTableIds.clear();
     _keptProseBelowTableIds.clear();
   }
@@ -351,23 +372,22 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     _historyPaused = true;
     _clearEditorContent();
     _title.text = snap.title;
-    for (final item in snap.checklist) {
-      _checklistLines.add(_newChecklistLine(item));
-    }
-    if (snap.segments.isEmpty) {
-      _blocks.add(NoteEditorBlock.prose(_newProseBlock()));
+    if (snap.entries.isEmpty) {
+      _entries.add(NoteEditorBlock.prose(_newProseBlock()));
     } else {
-      for (final segment in snap.segments) {
-        if (segment.isProse) {
-          _blocks.add(NoteEditorBlock.prose(_newProseBlock(segment.text!)));
-        } else {
-          _blocks.add(
-            NoteEditorBlock.table(_newTableBlock(segment.table!)),
+      for (final entry in snap.entries) {
+        if (entry.isChecklist) {
+          _entries.add(
+            NoteEditorBlock.checklist(_newChecklistLine(entry.checklist!)),
           );
+        } else if (entry.isProse) {
+          _entries.add(NoteEditorBlock.prose(_newProseBlock(entry.proseText!)));
+        } else {
+          _entries.add(NoteEditorBlock.table(_newTableBlock(entry.table!)));
         }
       }
     }
-    for (var i = 0; i < _blocks.length; i++) {
+    for (var i = 0; i < _entries.length; i++) {
       if (_isProseRightAfterTable(i)) {
         _watchProseAfterTable(i);
       }
@@ -407,10 +427,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     );
   }
 
-  String _mergedBody() => NoteBodyFormat.merge(
-        checklist: _checklistSnapshot,
-        segments: _segmentsSnapshot,
-      );
+  String _mergedBody() => NoteBodyFormat.mergeOrdered(_orderedEntriesSnapshot);
 
   Future<bool> _persist() async {
     var t = _title.text.trim();
@@ -455,49 +472,114 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     _briefSnack('$feature · próximamente');
   }
 
-  void _addChecklistItem() {
-    _recordHistoryBeforeMutation();
-    final line = _newChecklistLine(const NoteChecklistItem(text: ''));
-    setState(() => _checklistLines.add(line));
-    _attachEditListenersForChecklistLine(line);
-    _commitHistoryRecord();
+  void _focusChecklistLine(NoteChecklistLineState line) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) line.focusNode.requestFocus();
     });
   }
 
-  void _insertChecklistAfter(int index) {
+  void _insertChecklistAtCursor() {
     _recordHistoryBeforeMutation();
     final line = _newChecklistLine(const NoteChecklistItem(text: ''));
-    setState(() => _checklistLines.insert(index + 1, line));
+
+    final checklistIndex = _focusedChecklistEntryIndex();
+    if (checklistIndex != null) {
+      setState(() {
+        _entries.insert(checklistIndex + 1, NoteEditorBlock.checklist(line));
+      });
+      _attachEditListenersForChecklistLine(line);
+      _commitHistoryRecord();
+      _focusChecklistLine(line);
+      return;
+    }
+
+    final tableIndex = _focusedTableEntryIndex();
+    if (tableIndex != null) {
+      setState(() {
+        _entries.insert(tableIndex + 1, NoteEditorBlock.checklist(line));
+      });
+      _attachEditListenersForChecklistLine(line);
+      _commitHistoryRecord();
+      _focusChecklistLine(line);
+      return;
+    }
+
+    final proseIndex = _focusedProseIndex();
+    if (proseIndex != null) {
+      _insertChecklistAtProse(proseIndex, line);
+      return;
+    }
+
+    setState(() => _entries.add(NoteEditorBlock.checklist(line)));
     _attachEditListenersForChecklistLine(line);
     _commitHistoryRecord();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) line.focusNode.requestFocus();
+    _focusChecklistLine(line);
+  }
+
+  void _insertChecklistAtProse(int index, NoteChecklistLineState line) {
+    final prose = _entries[index].prose!;
+    final controller = prose.controller;
+    final selection = controller.selection;
+    final offset = selection.isValid && selection.baseOffset >= 0
+        ? selection.baseOffset.clamp(0, controller.text.length)
+        : controller.text.length;
+    final text = controller.text;
+    final before = text.substring(0, offset);
+    final after = text.substring(offset);
+
+    setState(() {
+      controller.text = before;
+      _entries.insert(index + 1, NoteEditorBlock.checklist(line));
+      if (after.isNotEmpty) {
+        final proseIndex = index + 2;
+        _entries.insert(proseIndex, NoteEditorBlock.prose(_newProseBlock(after)));
+      }
     });
+    _attachEditListenersForChecklistLine(line);
+    if (after.isNotEmpty) {
+      final proseBlock = _entries[index + 2].prose!;
+      _attachEditListenersForProse(proseBlock);
+      if (index + 2 < _entries.length && _isProseRightAfterTable(index + 2)) {
+        _watchProseAfterTable(index + 2);
+      }
+    }
+    _commitHistoryRecord();
+    _focusChecklistLine(line);
+  }
+
+  void _insertChecklistAfterEntry(int entryIndex) {
+    _recordHistoryBeforeMutation();
+    final line = _newChecklistLine(const NoteChecklistItem(text: ''));
+    setState(() {
+      _entries.insert(entryIndex + 1, NoteEditorBlock.checklist(line));
+    });
+    _attachEditListenersForChecklistLine(line);
+    _commitHistoryRecord();
+    _focusChecklistLine(line);
   }
 
   /// Intro en línea con texto → nueva fila; Intro en línea vacía → sale al cuerpo libre.
-  void _onChecklistEnter(int index) {
-    final line = _checklistLines[index];
+  void _onChecklistEnter(int entryIndex) {
+    final line = _entries[entryIndex].checklist!;
     if (line.controller.text.trim().isEmpty) {
-      _exitChecklistAt(index);
+      _exitChecklistAt(entryIndex);
       return;
     }
-    _insertChecklistAfter(index);
+    _insertChecklistAfterEntry(entryIndex);
   }
 
-  void _exitChecklistAt(int index) {
+  void _exitChecklistAt(int entryIndex) {
     _recordHistoryBeforeMutation();
-    final line = _checklistLines[index];
+    final line = _entries[entryIndex].checklist!;
+    final prose = _newProseBlock('');
     setState(() {
       line.dispose();
-      _checklistLines.removeAt(index);
+      _entries[entryIndex] = NoteEditorBlock.prose(prose);
     });
+    _attachEditListenersForProse(prose);
     _commitHistoryRecord();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _firstProseBlock?.focusNode.requestFocus();
+      if (mounted) prose.focusNode.requestFocus();
     });
   }
 
@@ -507,10 +589,10 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     _editListenerRemovers.add(() => line.controller.removeListener(onEdit));
   }
 
-  void _toggleChecklistLine(int index) {
+  void _toggleChecklistLine(int entryIndex) {
     _recordHistoryBeforeMutation();
     setState(() {
-      final line = _checklistLines[index];
+      final line = _entries[entryIndex].checklist!;
       line.item = line.item.copyWith(done: !line.item.done);
     });
     _commitHistoryRecord();
@@ -524,14 +606,14 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     }
     _recordHistoryBeforeMutation();
     setState(() {
-      _blocks.add(NoteEditorBlock.table(_newTableBlock(NoteTableBlock.empty())));
+      _entries.add(NoteEditorBlock.table(_newTableBlock(NoteTableBlock.empty())));
     });
-    _attachEditListenersForTable(_blocks.last.table!);
+    _attachEditListenersForTable(_entries.last.table!);
     _commitHistoryRecord();
   }
 
   void _insertTableAtProse(int index) {
-    final prose = _blocks[index].prose!;
+    final prose = _entries[index].prose!;
     final controller = prose.controller;
     final selection = controller.selection;
     final offset = selection.isValid && selection.baseOffset >= 0
@@ -544,25 +626,25 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     _recordHistoryBeforeMutation();
     setState(() {
       controller.text = before;
-      _blocks.insert(
+      _entries.insert(
         index + 1,
         NoteEditorBlock.table(_newTableBlock(NoteTableBlock.empty())),
       );
       if (after.isNotEmpty) {
         final proseIndex = index + 2;
         final prose = _newProseBlock(after);
-        _blocks.insert(proseIndex, NoteEditorBlock.prose(prose));
+        _entries.insert(proseIndex, NoteEditorBlock.prose(prose));
         _keptProseBelowTableIds.add(prose.id);
         _watchProseAfterTable(proseIndex);
         _attachEditListenersForProse(prose);
       }
     });
-    _attachEditListenersForTable(_blocks[index + 1].table!);
+    _attachEditListenersForTable(_entries[index + 1].table!);
     _commitHistoryRecord();
   }
 
   void _exitTableBelow(int tableIndex) {
-    final table = _blocks[tableIndex].table!;
+    final table = _entries[tableIndex].table!;
     if (table.isLastRowEmpty) {
       setState(() => table.removeLastRowIfEmpty());
     }
@@ -570,9 +652,9 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   }
 
   void _writeBelowTable(int tableIndex) {
-    if (tableIndex + 1 < _blocks.length && _blocks[tableIndex + 1].isProse) {
+    if (tableIndex + 1 < _entries.length && _entries[tableIndex + 1].isProse) {
       final proseIndex = tableIndex + 1;
-      final prose = _blocks[proseIndex].prose!;
+      final prose = _entries[proseIndex].prose!;
       _keptProseBelowTableIds.add(prose.id);
       _watchProseAfterTable(proseIndex);
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -585,7 +667,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     final prose = _newProseBlock('');
     final insertIndex = tableIndex + 1;
     setState(() {
-      _blocks.insert(insertIndex, NoteEditorBlock.prose(prose));
+      _entries.insert(insertIndex, NoteEditorBlock.prose(prose));
     });
     _keptProseBelowTableIds.add(prose.id);
     _watchProseAfterTable(insertIndex);
@@ -597,7 +679,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   }
 
   void _addTableRow(int blockIndex) {
-    final table = _blocks[blockIndex].table!;
+    final table = _entries[blockIndex].table!;
     _recordHistoryBeforeMutation();
     setState(() => table.addRow());
     _attachEditListenersForTable(table);
@@ -855,41 +937,39 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                             _firstProseBlock?.focusNode.requestFocus(),
                         decoration: _fieldDecoration('Título'),
                       ),
-                      if (_checklistLines.isNotEmpty) ...[
-                        const SizedBox(height: AppSpacing.md),
-                        for (var i = 0; i < _checklistLines.length; i++)
-                          NoteChecklistLine(
-                            key: ValueKey(_checklistLines[i].id),
-                            controller: _checklistLines[i].controller,
-                            focusNode: _checklistLines[i].focusNode,
-                            done: _checklistLines[i].item.done,
-                            enabled: !_saving,
-                            onToggle: () => _toggleChecklistLine(i),
-                            onEnter: () => _onChecklistEnter(i),
-                          ),
-                      ],
                       const SizedBox(height: AppSpacing.md),
-                      for (var i = 0; i < _blocks.length; i++) ...[
+                      for (var i = 0; i < _entries.length; i++) ...[
                         if (i > 0) SizedBox(height: _gapBeforeBlock(i)),
-                        if (_blocks[i].isProse)
+                        if (_entries[i].isProse)
                           NoteProseBlockField(
-                            key: ValueKey(_blocks[i].prose!.id),
-                            controller: _blocks[i].prose!.controller,
-                            focusNode: _blocks[i].prose!.focusNode,
+                            key: ValueKey(_entries[i].prose!.id),
+                            controller: _entries[i].prose!.controller,
+                            focusNode: _entries[i].prose!.focusNode,
                             enabled: !_saving,
                             minLines: _proseMinLines(i),
-                            hintText: i == 0 && _blocks.length == 1
+                            hintText: _entries.length == 1 &&
+                                    _entries[i].isProse
                                 ? 'Escribe la nota…'
                                 : null,
                           )
-                        else
+                        else if (_entries[i].isTable)
                           NoteTableBlockEditor(
-                            key: ValueKey(_blocks[i].table!.id),
-                            state: _blocks[i].table!,
+                            key: ValueKey(_entries[i].table!.id),
+                            state: _entries[i].table!,
                             enabled: !_saving,
                             onExitBelow: () => _exitTableBelow(i),
                             onTapBelow: () => _writeBelowTable(i),
                             onAddRow: () => _addTableRow(i),
+                          )
+                        else
+                          NoteChecklistLine(
+                            key: ValueKey(_entries[i].checklist!.id),
+                            controller: _entries[i].checklist!.controller,
+                            focusNode: _entries[i].checklist!.focusNode,
+                            done: _entries[i].checklist!.item.done,
+                            enabled: !_saving,
+                            onToggle: () => _toggleChecklistLine(i),
+                            onEnter: () => _onChecklistEnter(i),
                           ),
                       ],
                     ],
@@ -897,8 +977,8 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                 ),
               ),
               NoteWideEditorToolbar(
-                checklistActive: _checklistLines.isNotEmpty,
-                onChecklist: _addChecklistItem,
+                checklistActive: _hasChecklistEntries,
+                onChecklist: _insertChecklistAtCursor,
                 onAttach: () => _placeholderTool('Adjuntar'),
                 onTable: _insertTable,
                 onScan: () => _placeholderTool('Escanear / OCR'),

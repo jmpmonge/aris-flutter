@@ -64,6 +64,71 @@ abstract final class NoteBodyFormat {
     );
   }
 
+  /// Cuerpo en orden de aparición (v0.49.43) — checklist intercalado con prosa/tablas.
+  static List<NoteOrderedEntry> parseOrdered(String raw) {
+    final entries = <NoteOrderedEntry>[];
+    final proseBuffer = <String>[];
+
+    void flushProse() {
+      if (proseBuffer.isEmpty) return;
+      entries.add(NoteOrderedEntry.prose(proseBuffer.join('\n')));
+      proseBuffer.clear();
+    }
+
+    final lines = raw.split('\n');
+    var i = 0;
+    while (i < lines.length) {
+      final line = lines[i];
+      if (line.startsWith(tableStartPrefix) && line.endsWith(']')) {
+        flushProse();
+        final cols = _parseTableCols(line);
+        i++;
+        final rows = <List<String>>[];
+        while (i < lines.length && lines[i] != tableEndMarker) {
+          rows.add(_parseTableRow(lines[i], cols));
+          i++;
+        }
+        if (i < lines.length && lines[i] == tableEndMarker) {
+          i++;
+        }
+        entries.add(
+          NoteOrderedEntry.table(NoteTableBlock(columns: cols, rows: rows)),
+        );
+        continue;
+      }
+
+      if (line.startsWith(donePrefix)) {
+        flushProse();
+        final t = line.substring(donePrefix.length).trim();
+        entries.add(NoteOrderedEntry.checklist(NoteChecklistItem(text: t, done: true)));
+      } else if (line.startsWith(pendingPrefix)) {
+        flushProse();
+        final t = line.substring(pendingPrefix.length).trim();
+        entries.add(
+          NoteOrderedEntry.checklist(NoteChecklistItem(text: t, done: false)),
+        );
+      } else {
+        proseBuffer.add(line);
+      }
+      i++;
+    }
+    flushProse();
+    return entries;
+  }
+
+  static String mergeOrdered(List<NoteOrderedEntry> entries) {
+    final parts = <String>[
+      for (final entry in entries)
+        if (entry.isChecklist)
+          '${entry.checklist!.done ? donePrefix : pendingPrefix}${entry.checklist!.text.trim()}'
+        else if (entry.isProse)
+          entry.proseText!.trim()
+        else
+          _serializeTable(entry.table!),
+    ];
+    return parts.where((p) => p.isNotEmpty).join('\n');
+  }
+
   static String merge({
     required List<NoteChecklistItem> checklist,
     required List<NoteBodySegment> segments,
@@ -127,6 +192,29 @@ class NoteBodyDocument {
 
   final List<NoteChecklistItem> checklist;
   final List<NoteBodySegment> segments;
+}
+
+/// Entrada ordenada del cuerpo (checklist, prosa o tabla intercalados).
+class NoteOrderedEntry {
+  const NoteOrderedEntry.checklist(this.checklist)
+      : proseText = null,
+        table = null;
+
+  const NoteOrderedEntry.prose(this.proseText)
+      : checklist = null,
+        table = null;
+
+  const NoteOrderedEntry.table(this.table)
+      : checklist = null,
+        proseText = null;
+
+  final NoteChecklistItem? checklist;
+  final String? proseText;
+  final NoteTableBlock? table;
+
+  bool get isChecklist => checklist != null;
+  bool get isProse => proseText != null;
+  bool get isTable => table != null;
 }
 
 /// Segmento ordenado de prosa o tabla en el cuerpo.

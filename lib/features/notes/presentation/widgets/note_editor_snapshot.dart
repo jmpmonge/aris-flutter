@@ -4,35 +4,35 @@ import 'note_body_format.dart';
 final class NoteEditorSnapshot {
   const NoteEditorSnapshot({
     required this.title,
-    required this.checklist,
-    required this.segments,
+    required this.entries,
   });
 
   final String title;
-  final List<NoteChecklistItem> checklist;
-  final List<NoteBodySegment> segments;
+  final List<NoteOrderedEntry> entries;
 
   static NoteEditorSnapshot fromDocument({
     required String title,
-    required List<NoteChecklistItem> checklist,
-    required List<NoteBodySegment> segments,
+    required List<NoteOrderedEntry> entries,
   }) {
     return NoteEditorSnapshot(
       title: title,
-      checklist: [
-        for (final item in checklist)
-          NoteChecklistItem(text: item.text, done: item.done),
-      ],
-      segments: [
-        for (final segment in segments)
-          if (segment.isProse)
-            NoteBodySegment.prose(segment.text!)
+      entries: [
+        for (final entry in entries)
+          if (entry.isChecklist)
+            NoteOrderedEntry.checklist(
+              NoteChecklistItem(
+                text: entry.checklist!.text,
+                done: entry.checklist!.done,
+              ),
+            )
+          else if (entry.isProse)
+            NoteOrderedEntry.prose(entry.proseText!)
           else
-            NoteBodySegment.table(
+            NoteOrderedEntry.table(
               NoteTableBlock(
-                columns: segment.table!.columns,
+                columns: entry.table!.columns,
                 rows: [
-                  for (final row in segment.table!.rows)
+                  for (final row in entry.table!.rows)
                     List<String>.from(row),
                 ],
               ),
@@ -45,21 +45,24 @@ final class NoteEditorSnapshot {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! NoteEditorSnapshot) return false;
-    if (title != other.title || checklist.length != other.checklist.length) {
+    if (title != other.title || entries.length != other.entries.length) {
       return false;
     }
-    for (var i = 0; i < checklist.length; i++) {
-      final a = checklist[i];
-      final b = other.checklist[i];
-      if (a.text != b.text || a.done != b.done) return false;
-    }
-    if (segments.length != other.segments.length) return false;
-    for (var i = 0; i < segments.length; i++) {
-      final a = segments[i];
-      final b = other.segments[i];
-      if (a.isProse != b.isProse) return false;
-      if (a.isProse) {
-        if (a.text != b.text) return false;
+    for (var i = 0; i < entries.length; i++) {
+      final a = entries[i];
+      final b = other.entries[i];
+      if (a.isChecklist != b.isChecklist ||
+          a.isProse != b.isProse ||
+          a.isTable != b.isTable) {
+        return false;
+      }
+      if (a.isChecklist) {
+        if (a.checklist!.text != b.checklist!.text ||
+            a.checklist!.done != b.checklist!.done) {
+          return false;
+        }
+      } else if (a.isProse) {
+        if (a.proseText != b.proseText) return false;
       } else {
         final at = a.table!;
         final bt = b.table!;
@@ -78,5 +81,5 @@ final class NoteEditorSnapshot {
   }
 
   @override
-  int get hashCode => Object.hash(title, checklist.length, segments.length);
+  int get hashCode => Object.hash(title, entries.length);
 }
