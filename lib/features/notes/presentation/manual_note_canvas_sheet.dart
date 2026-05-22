@@ -311,8 +311,10 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   }
 
   void _addTableRow(int blockIndex) {
-    setState(() {
-      _blocks[blockIndex].table!.addRow();
+    final table = _blocks[blockIndex].table!;
+    setState(() => table.addRow());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) table.focusCell(table.rowCount - 1, 0);
     });
   }
 
@@ -567,9 +569,9 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                             key: ValueKey(_blocks[i].table!.id),
                             state: _blocks[i].table!,
                             enabled: !_saving,
-                            onAddRow: () => _addTableRow(i),
-                            onWriteBelow: () => _writeBelowTable(i),
+                            onExitBelow: () => _writeBelowTable(i),
                             onTapBelow: () => _writeBelowTable(i),
+                            onAddRow: () => _addTableRow(i),
                           ),
                       ],
                     ],
