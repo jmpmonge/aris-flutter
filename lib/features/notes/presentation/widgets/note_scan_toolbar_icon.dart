@@ -1,10 +1,8 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import 'note_toolbar_icon_style.dart';
 
-/// Marco de escaneo con esquinas parciales redondeadas + líneas OCR (v0.49.41).
+/// Marco de escaneo: 4 esquinas parciales + líneas OCR (v0.49.41).
 class NoteScanToolbarIcon extends StatelessWidget {
   const NoteScanToolbarIcon({
     super.key,
@@ -32,9 +30,9 @@ class _NoteScanToolbarIconPainter extends CustomPainter {
 
   final Color color;
 
-  static const double _cornerLen = 5.5;
-  static const double _cornerRound = 1.8;
   static const double _inset = 4.0;
+  static const double _armLen = 5.0;
+  static const double _cornerRadius = 1.6;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -45,90 +43,97 @@ class _NoteScanToolbarIconPainter extends CustomPainter {
     final right = size.width - _inset;
     final bottom = size.height - _inset;
 
-    _drawRoundedScanCorner(
-      canvas,
-      paint,
-      corner: Offset(left, top),
-      horizontalEnd: Offset(left + _cornerLen, top),
-      verticalEnd: Offset(left, top + _cornerLen),
-    );
-    _drawRoundedScanCorner(
-      canvas,
-      paint,
-      corner: Offset(right, top),
-      horizontalEnd: Offset(right - _cornerLen, top),
-      verticalEnd: Offset(right, top + _cornerLen),
-    );
-    _drawRoundedScanCorner(
-      canvas,
-      paint,
-      corner: Offset(left, bottom),
-      horizontalEnd: Offset(left + _cornerLen, bottom),
-      verticalEnd: Offset(left, bottom - _cornerLen),
-    );
-    _drawRoundedScanCorner(
-      canvas,
-      paint,
-      corner: Offset(right, bottom),
-      horizontalEnd: Offset(right - _cornerLen, bottom),
-      verticalEnd: Offset(right, bottom - _cornerLen),
-    );
+    _drawCornerTopLeft(canvas, paint, left, top);
+    _drawCornerTopRight(canvas, paint, right, top);
+    _drawCornerBottomLeft(canvas, paint, left, bottom);
+    _drawCornerBottomRight(canvas, paint, right, bottom);
 
-    final lineLeft = left + 5;
-    final lineRight = right - 5;
-    final shortRight = lineLeft + (lineRight - lineLeft) * 0.5;
+    final lineLeft = left + 4.5;
+    final lineRight = right - 4.5;
+    final shortRight = lineLeft + (lineRight - lineLeft) * 0.52;
+    final midY = (top + bottom) / 2;
 
-    const y1 = 11.2;
-    const y2 = 14.6;
-    const y3 = 18.0;
+    final y1 = midY - 3.2;
+    final y2 = midY;
+    final y3 = midY + 3.2;
 
     canvas.drawLine(Offset(lineLeft, y1), Offset(lineRight, y1), paint);
     canvas.drawLine(Offset(lineLeft, y2), Offset(lineRight, y2), paint);
     canvas.drawLine(Offset(lineLeft, y3), Offset(shortRight, y3), paint);
   }
 
-  static void _drawRoundedScanCorner(
+  static void _drawCornerTopLeft(
     Canvas canvas,
-    Paint paint, {
-    required Offset corner,
-    required Offset horizontalEnd,
-    required Offset verticalEnd,
-  }) {
-    final hx = horizontalEnd.dx - corner.dx;
-    final hy = horizontalEnd.dy - corner.dy;
-    final vx = verticalEnd.dx - corner.dx;
-    final vy = verticalEnd.dy - corner.dy;
+    Paint paint,
+    double left,
+    double top,
+  ) {
+    final r = _cornerRadius;
+    final path = Path()
+      ..moveTo(left + _armLen, top)
+      ..lineTo(left + r, top)
+      ..arcToPoint(
+        Offset(left, top + r),
+        radius: const Radius.circular(_cornerRadius),
+      )
+      ..lineTo(left, top + _armLen);
+    canvas.drawPath(path, paint);
+  }
 
-    final hLen = math.sqrt(hx * hx + hy * hy);
-    final vLen = math.sqrt(vx * vx + vy * vy);
-    if (hLen < _cornerRound + 0.5 || vLen < _cornerRound + 0.5) {
-      canvas.drawLine(corner, horizontalEnd, paint);
-      canvas.drawLine(corner, verticalEnd, paint);
-      return;
-    }
+  static void _drawCornerTopRight(
+    Canvas canvas,
+    Paint paint,
+    double right,
+    double top,
+  ) {
+    final r = _cornerRadius;
+    final path = Path()
+      ..moveTo(right - _armLen, top)
+      ..lineTo(right - r, top)
+      ..arcToPoint(
+        Offset(right, top + r),
+        radius: const Radius.circular(_cornerRadius),
+        clockwise: false,
+      )
+      ..lineTo(right, top + _armLen);
+    canvas.drawPath(path, paint);
+  }
 
-    final hUnit = Offset(hx / hLen, hy / hLen);
-    final vUnit = Offset(vx / vLen, vy / vLen);
-    final hStop = corner + hUnit * (hLen - _cornerRound);
-    final vStop = corner + vUnit * (vLen - _cornerRound);
-    final arcCenter = hStop + vUnit * _cornerRound;
+  static void _drawCornerBottomLeft(
+    Canvas canvas,
+    Paint paint,
+    double left,
+    double bottom,
+  ) {
+    final r = _cornerRadius;
+    final path = Path()
+      ..moveTo(left + _armLen, bottom)
+      ..lineTo(left + r, bottom)
+      ..arcToPoint(
+        Offset(left, bottom - r),
+        radius: const Radius.circular(_cornerRadius),
+        clockwise: false,
+      )
+      ..lineTo(left, bottom - _armLen);
+    canvas.drawPath(path, paint);
+  }
 
-    canvas.drawLine(horizontalEnd, hStop, paint);
-    canvas.drawLine(verticalEnd, vStop, paint);
-
-    final start = math.atan2(hStop.dy - arcCenter.dy, hStop.dx - arcCenter.dx);
-    final end = math.atan2(vStop.dy - arcCenter.dy, vStop.dx - arcCenter.dx);
-    var sweep = end - start;
-    if (sweep > math.pi) sweep -= 2 * math.pi;
-    if (sweep < -math.pi) sweep += 2 * math.pi;
-
-    canvas.drawArc(
-      Rect.fromCircle(center: arcCenter, radius: _cornerRound),
-      start,
-      sweep,
-      false,
-      paint,
-    );
+  static void _drawCornerBottomRight(
+    Canvas canvas,
+    Paint paint,
+    double right,
+    double bottom,
+  ) {
+    final r = _cornerRadius;
+    final path = Path()
+      ..moveTo(right - _armLen, bottom)
+      ..lineTo(right - r, bottom)
+      ..arcToPoint(
+        Offset(right, bottom - r),
+        radius: const Radius.circular(_cornerRadius),
+      )
+      ..lineTo(right, bottom - _armLen);
+    canvas.drawPath(path, paint);
   }
 
   @override
