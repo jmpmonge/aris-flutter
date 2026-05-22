@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import 'note_toolbar_icon_style.dart';
@@ -36,10 +34,6 @@ class _NoteChecklistToolbarIconPainter extends CustomPainter {
   static const double _lineWidth = 9.5;
   static const double _columnGap = 7.0;
 
-  /// Hueco visible (~55°) en cuadrante superior derecho.
-  static const double _gapCenter = -0.72;
-  static const double _gapHalf = 0.48;
-
   @override
   void paint(Canvas canvas, Size size) {
     final stroke = NoteToolbarIconStyle.stroke(color);
@@ -50,33 +44,17 @@ class _NoteChecklistToolbarIconPainter extends CustomPainter {
     ];
 
     final circleCx = _circleRadius + 1.6;
-    final circleRect =
-        Rect.fromCircle(center: Offset.zero, radius: _circleRadius);
 
     for (final row in rows) {
       final center = Offset(circleCx, row.cy);
+      canvas.drawCircle(center, _circleRadius, stroke);
 
       if (row.checked) {
-        final gapEnd = _gapCenter + _gapHalf;
-        final gapSpan = 2 * math.pi - (_gapHalf * 2);
-        canvas.drawArc(
-          circleRect.shift(center),
-          gapEnd,
-          gapSpan,
-          false,
-          stroke,
-        );
-
         final check = Path()
-          ..moveTo(center.dx - _circleRadius * 0.42, row.cy + 0.42)
-          ..lineTo(center.dx + _circleRadius * 0.06, row.cy + _circleRadius * 0.18)
-          ..lineTo(
-            center.dx + _circleRadius * 0.64,
-            row.cy - _circleRadius * 0.54,
-          );
+          ..moveTo(center.dx - _circleRadius * 0.38, row.cy + 0.2)
+          ..lineTo(center.dx - _circleRadius * 0.04, row.cy + _circleRadius * 0.3)
+          ..lineTo(center.dx + _circleRadius * 0.4, row.cy - _circleRadius * 0.34);
         canvas.drawPath(check, stroke);
-      } else {
-        canvas.drawCircle(center, _circleRadius, stroke);
       }
 
       final lineLeft = circleCx + _circleRadius + _columnGap;

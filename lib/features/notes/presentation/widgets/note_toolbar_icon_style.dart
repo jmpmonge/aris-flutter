@@ -7,6 +7,9 @@ abstract final class NoteToolbarIconStyle {
   static const double size = 28;
   static const double strokeWidth = 1.75;
 
+  /// Altura óptica del icono de tabla (referencia para escáner).
+  static const double tableFrameHeight = 18;
+
   static Paint stroke(Color color) {
     return Paint()
       ..color = color
