@@ -43,7 +43,7 @@ class _NoteWideEditorPage extends StatefulWidget {
 class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   late final TextEditingController _title;
   late final TextEditingController _prose;
-  late List<String> _checklist;
+  late List<NoteChecklistItem> _checklist;
   final _titleFocus = FocusNode();
   final _proseFocus = FocusNode();
   bool _saving = false;
@@ -60,7 +60,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     final parsed = NoteBodyFormat.parse(widget.existing?.body ?? '');
     _title = TextEditingController(text: widget.existing?.title ?? '');
     _prose = TextEditingController(text: parsed.prose);
-    _checklist = List<String>.from(parsed.checklist);
+    _checklist = List<NoteChecklistItem>.from(parsed.checklist);
     if (widget._isNew) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _titleFocus.requestFocus();
@@ -156,8 +156,64 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
 
   void _addChecklistItem() {
     setState(() {
-      _checklist = [..._checklist, ''];
+      _checklist = [..._checklist, const NoteChecklistItem(text: '')];
     });
+  }
+
+  void _showArisActions() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.noteWideSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.auto_awesome_outlined,
+                    color: AppColors.noteArisBlue,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Preguntar a Aris',
+                    style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                          color: AppColors.noteWideTextPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            for (final label in const [
+              'Resumir nota',
+              'Extraer tareas',
+              'Convertir en evento',
+              'Mejorar redacción',
+              'Buscar ideas clave',
+              'Preguntar sobre esta nota',
+            ])
+              ListTile(
+                title: Text(
+                  label,
+                  style: const TextStyle(color: AppColors.noteWideTextSecondary),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _placeholderTool(label);
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showMoreMenu() {
@@ -217,11 +273,11 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
               ListTile(
                 leading: const Icon(
                   Icons.delete_outline_rounded,
-                  color: AppColors.danger,
+                  color: AppColors.noteDestructive,
                 ),
                 title: const Text(
                   'Eliminar',
-                  style: TextStyle(color: AppColors.danger),
+                  style: TextStyle(color: AppColors.noteDestructive),
                 ),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -328,17 +384,28 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                         const SizedBox(height: AppSpacing.md),
                         ..._checklist.asMap().entries.map(
                           (e) => _ChecklistRow(
-                            key: ValueKey('check-${e.key}-${e.value.hashCode}'),
-                            text: e.value,
-                            onChanged: (v) {
+                            key: ValueKey(
+                              'check-${e.key}-${e.value.done}-${e.value.text}',
+                            ),
+                            item: e.value,
+                            onTextChanged: (v) {
                               setState(() {
-                                _checklist[e.key] = v;
+                                _checklist[e.key] =
+                                    e.value.copyWith(text: v);
+                              });
+                            },
+                            onToggle: () {
+                              setState(() {
+                                _checklist[e.key] = e.value.copyWith(
+                                  done: !e.value.done,
+                                );
                               });
                             },
                             onRemove: () {
                               setState(() {
-                                _checklist = List<String>.from(_checklist)
-                                  ..removeAt(e.key);
+                                _checklist = List<NoteChecklistItem>.from(
+                                  _checklist,
+                                )..removeAt(e.key);
                               });
                             },
                           ),
@@ -358,11 +425,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                       const SizedBox(height: AppSpacing.lg),
                       Center(
                         child: TextButton.icon(
-                          onPressed: _saving
-                              ? null
-                              : () => _placeholderTool(
-                                    'Preguntar a Aris',
-                                  ),
+                          onPressed: _saving ? null : _showArisActions,
                           icon: const Icon(
                             Icons.auto_awesome_outlined,
                             size: 18,
@@ -390,11 +453,12 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                 ),
               ),
               NoteWideEditorToolbar(
+                checklistActive: _checklist.isNotEmpty,
                 onChecklist: _addChecklistItem,
                 onAttach: () => _placeholderTool('Adjuntar'),
                 onTable: () => _placeholderTool('Tabla'),
                 onScan: () => _placeholderTool('Escanear / OCR'),
-                onAris: () => _placeholderTool('Preguntar a Aris'),
+                onAris: _showArisActions,
               ),
             ],
           ),
@@ -475,13 +539,15 @@ class _NoteWideTopBar extends StatelessWidget {
 class _ChecklistRow extends StatefulWidget {
   const _ChecklistRow({
     super.key,
-    required this.text,
-    required this.onChanged,
+    required this.item,
+    required this.onTextChanged,
+    required this.onToggle,
     required this.onRemove,
   });
 
-  final String text;
-  final ValueChanged<String> onChanged;
+  final NoteChecklistItem item;
+  final ValueChanged<String> onTextChanged;
+  final VoidCallback onToggle;
   final VoidCallback onRemove;
 
   @override
@@ -494,7 +560,16 @@ class _ChecklistRowState extends State<_ChecklistRow> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.text);
+    _controller = TextEditingController(text: widget.item.text);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ChecklistRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.item.text != widget.item.text &&
+        _controller.text != widget.item.text) {
+      _controller.text = widget.item.text;
+    }
   }
 
   @override
@@ -505,28 +580,48 @@ class _ChecklistRowState extends State<_ChecklistRow> {
 
   @override
   Widget build(BuildContext context) {
+    final done = widget.item.done;
+    final textColor =
+        done ? AppColors.noteWideTextMuted : AppColors.noteWideTextPrimary;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 3),
-            child: Icon(
-              Icons.circle_outlined,
-              size: 18,
-              color: AppColors.noteWideTextMuted,
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                onTap: widget.onToggle,
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    done
+                        ? Icons.check_circle_rounded
+                        : Icons.circle_outlined,
+                    size: 20,
+                    color: done
+                        ? AppColors.noteArisBlue
+                        : AppColors.noteWideTextMuted,
+                  ),
+                ),
+              ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 6),
           Expanded(
             child: TextField(
               controller: _controller,
-              onChanged: widget.onChanged,
-              style: const TextStyle(
+              onChanged: widget.onTextChanged,
+              style: TextStyle(
                 fontSize: 16,
                 height: 1.4,
-                color: AppColors.noteWideTextPrimary,
+                color: textColor,
+                decoration: done ? TextDecoration.lineThrough : null,
+                decorationColor: AppColors.noteWideTextMuted,
               ),
               decoration: const InputDecoration(
                 border: InputBorder.none,

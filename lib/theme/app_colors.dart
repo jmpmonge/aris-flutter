@@ -114,6 +114,7 @@ abstract final class AppColors {
   static const Color noteWideTextPrimary = Color(0xFFF2F6FA);
   static const Color noteWideTextSecondary = Color(0xFFA6B0BE);
   static const Color noteWideTextMuted = Color(0xFF6F7B8A);
+  static const Color noteDestructive = Color(0xFFFF5A5A);
 
   /// Sombra modo claro — tinte marino, visible sobre crema.
   static const Color shadowWarmLight = Color(0x45102A5C);
