@@ -31,7 +31,7 @@ class _NoteTableToolbarIconPainter extends CustomPainter {
   final Color color;
 
   static const double _tableWidth = 26;
-  static const double _tableHeight = 22;
+  static const double _tableHeight = 18;
   static const double _radius = 3.5;
 
   @override

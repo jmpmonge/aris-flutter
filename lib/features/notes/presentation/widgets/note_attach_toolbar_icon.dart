@@ -13,7 +13,7 @@ class NoteAttachToolbarIcon extends StatelessWidget {
   final Color color;
   final double size;
 
-  static const double _iconSize = 21;
+  static const double _iconSize = 20;
   static const double _rotationRadians = 0.35;
 
   @override
