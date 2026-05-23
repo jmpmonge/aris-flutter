@@ -13,9 +13,9 @@ const _kSunTintLight = Color(0xFFF0A830);
 const _kSunTintDark = Color(0xFFE8C547);
 const _kMockTemperature = '21°';
 const _kMockCity = 'Madrid';
-const _kWeatherRiseOffset = 36.0;
+const _kWeatherBlockRiseOffset = 36.0;
 
-/// Cabecera viva de Home: saludo temporal + clima que colapsa (v0.49.50).
+/// Cabecera viva de Home: saludo temporal + clima que colapsa (v0.49.51).
 class HomeLiveHeader extends StatefulWidget {
   const HomeLiveHeader({super.key});
 
@@ -28,17 +28,13 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
   static const Duration _visibleDuration = Duration(seconds: 7);
   static const Duration _fadeInDuration = Duration(milliseconds: 300);
   static const Duration _collapseDuration = Duration(milliseconds: 600);
-  static const Duration _sunPulseDuration = Duration(milliseconds: 200);
 
   /// Fracción inicial reservada solo a animación visual (sin mover HOY).
   static const double _kLayoutDelay = 0.45;
 
   AnimationController? _fadeInController;
   AnimationController? _collapseController;
-  AnimationController? _sunPulseController;
-  Animation<double>? _sunIconScaleAnimation;
   Timer? _holdTimer;
-  bool _collapseAnimationComplete = false;
 
   bool get _startCompact => HomeGreetingSession.hasReachedCompactMode;
 
@@ -58,22 +54,6 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
       vsync: this,
       duration: _collapseDuration,
     );
-    _sunPulseController = AnimationController(
-      vsync: this,
-      duration: _sunPulseDuration,
-    );
-    _sunIconScaleAnimation = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 0.94)
-            .chain(CurveTween(curve: Curves.easeInOutCubic)),
-        weight: 50,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 0.94, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeInOutCubic)),
-        weight: 50,
-      ),
-    ]).animate(_sunPulseController!);
 
     _fadeInController!.forward();
     _collapseController!.addListener(_syncCollapseProgress);
@@ -82,23 +62,22 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
 
   void _syncCollapseProgress() {
     if (_collapseController == null) return;
-    final t = Curves.easeInOutCubic
+    final weatherBlockProgress = Curves.easeInOutCubic
         .transform(_collapseController!.value)
         .clamp(0.0, 1.0);
-    HomeGreetingSession.collapseProgress.value = _layoutProgress(t);
+    HomeGreetingSession.collapseProgress.value =
+        _layoutProgress(weatherBlockProgress);
   }
 
-  double _layoutProgress(double t) {
-    if (t <= _kLayoutDelay) return 0.0;
-    return ((t - _kLayoutDelay) / (1.0 - _kLayoutDelay)).clamp(0.0, 1.0);
+  double _layoutProgress(double weatherBlockProgress) {
+    if (weatherBlockProgress <= _kLayoutDelay) return 0.0;
+    return ((weatherBlockProgress - _kLayoutDelay) / (1.0 - _kLayoutDelay))
+        .clamp(0.0, 1.0);
   }
 
   void _beginCollapse() {
     if (!mounted || _collapseController == null) return;
-    _collapseController!.forward().then((_) async {
-      if (!mounted) return;
-      setState(() => _collapseAnimationComplete = true);
-      await _sunPulseController?.forward(from: 0);
+    _collapseController!.forward().then((_) {
       if (mounted) {
         HomeGreetingSession.markCompactReached();
       }
@@ -111,27 +90,19 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
     _collapseController?.removeListener(_syncCollapseProgress);
     _fadeInController?.dispose();
     _collapseController?.dispose();
-    _sunPulseController?.dispose();
     super.dispose();
   }
 
-  double _sunIconScale() {
-    if (!_collapseAnimationComplete || _sunIconScaleAnimation == null) {
-      return 1.0;
-    }
-    return _sunIconScaleAnimation!.value;
-  }
-
-  double _headerBottomPadding(double t) {
+  double _headerBottomPadding(double layoutT) {
     return lerpDouble(
       AppSpacing.homeLiveHeaderBottomWithGreeting,
       AppSpacing.homeLiveHeaderBottomCompact,
-      t,
+      layoutT,
     )!;
   }
 
-  double _greetingSlotHeight(double t) {
-    return lerpDouble(AppSpacing.homeGreetingSlotHeight, 0, t)!;
+  double _greetingSlotHeight(double layoutT) {
+    return lerpDouble(AppSpacing.homeGreetingSlotHeight, 0, layoutT)!;
   }
 
   @override
@@ -152,7 +123,7 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
           scheme: scheme,
           isDark: isDark,
           layoutProgress: 1,
-          weatherScale: HomeWeatherBlock.compactScale,
+          weatherBlockScale: HomeWeatherBlock.weatherBlockCompactScale,
         ),
       );
     }
@@ -161,21 +132,22 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
       animation: Listenable.merge([
         _fadeInController!,
         _collapseController!,
-        ?_sunPulseController,
       ]),
       builder: (context, _) {
         final fadeIn = Curves.easeOutCubic.transform(_fadeInController!.value);
-        final collapse = Curves.easeInOutCubic.transform(
-          _collapseController!.value,
-        );
-        final t = collapse.clamp(0.0, 1.0);
-        final layoutT = _layoutProgress(t);
-        final greetingOpacity = (1 - t) * fadeIn;
+        final weatherBlockProgress = Curves.easeInOutCubic
+            .transform(_collapseController!.value)
+            .clamp(0.0, 1.0);
+        final layoutT = _layoutProgress(weatherBlockProgress);
+        final greetingOpacity = (1 - weatherBlockProgress) * fadeIn;
         final greetingSlide = 4 * (1 - fadeIn);
-        final weatherScale = lerpDouble(1.0, HomeWeatherBlock.compactScale, t)!;
+        final weatherBlockScale = lerpDouble(
+          1.0,
+          HomeWeatherBlock.weatherBlockCompactScale,
+          weatherBlockProgress,
+        )!;
         final greetingHeight = _greetingSlotHeight(layoutT);
         final showGreetingWeather = layoutT <= 0;
-        final sunIconScale = _sunIconScale();
 
         return _HeaderShell(
           bottomPadding: _headerBottomPadding(layoutT),
@@ -191,8 +163,7 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
                 scheme: scheme,
                 isDark: isDark,
                 layoutProgress: layoutT,
-                weatherScale: weatherScale,
-                sunIconScale: sunIconScale,
+                weatherBlockScale: weatherBlockScale,
               ),
               SizedBox(
                 height: greetingHeight,
@@ -215,7 +186,7 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
                             scheme: scheme,
                             isDark: isDark,
                             showWeather: showGreetingWeather,
-                            weatherScale: weatherScale,
+                            weatherBlockScale: weatherBlockScale,
                           ),
                         ),
                       ),
@@ -254,7 +225,7 @@ class _HeaderShell extends StatelessWidget {
   }
 }
 
-/// Fila superior: fecha izquierda + clima escalado a la derecha al colapsar.
+/// Fila superior: fecha izquierda + bloque clima a la derecha al colapsar.
 class _CompactHeaderRow extends StatelessWidget {
   const _CompactHeaderRow({
     required this.date,
@@ -264,8 +235,7 @@ class _CompactHeaderRow extends StatelessWidget {
     required this.scheme,
     required this.isDark,
     required this.layoutProgress,
-    required this.weatherScale,
-    this.sunIconScale = 1,
+    required this.weatherBlockScale,
   });
 
   final String date;
@@ -275,8 +245,7 @@ class _CompactHeaderRow extends StatelessWidget {
   final ColorScheme scheme;
   final bool isDark;
   final double layoutProgress;
-  final double weatherScale;
-  final double sunIconScale;
+  final double weatherBlockScale;
 
   @override
   Widget build(BuildContext context) {
@@ -285,41 +254,41 @@ class _CompactHeaderRow extends StatelessWidget {
     final dateColor = isDark
         ? AppColors.textSecondaryDark.withValues(alpha: 0.88)
         : AppColors.textSecondaryLight;
-    final weatherOffsetY = lerpDouble(_kWeatherRiseOffset, 0.0, layoutT)!;
+    final weatherBlockOffsetY = lerpDouble(
+      _kWeatherBlockRiseOffset,
+      0.0,
+      layoutT,
+    )!;
+    final rowCrossAxisAlignment = layoutT > 0.5
+        ? CrossAxisAlignment.center
+        : CrossAxisAlignment.start;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: rowCrossAxisAlignment,
       children: [
         Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(top: 2 * layoutT),
-            child: Text(
-              date,
-              style: TextStyle(
-                fontSize: dateSize,
-                height: 1.2,
-                fontWeight: FontWeight.w400,
-                letterSpacing: 0.1,
-                color: dateColor,
-              ),
+          child: Text(
+            date,
+            style: TextStyle(
+              fontSize: dateSize,
+              height: 1.2,
+              fontWeight: FontWeight.w400,
+              letterSpacing: 0.1,
+              color: dateColor,
             ),
           ),
         ),
         if (layoutT > 0.001) ...[
           const SizedBox(width: 12),
           Transform.translate(
-            offset: Offset(0, weatherOffsetY),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 1, right: 2),
-              child: HomeWeatherBlock(
-                temperature: temperature,
-                city: city,
-                sunColor: sunColor,
-                scheme: scheme,
-                isDark: isDark,
-                scale: weatherScale,
-                sunIconScale: sunIconScale,
-              ),
+            offset: Offset(0, weatherBlockOffsetY),
+            child: HomeWeatherBlock(
+              temperature: temperature,
+              city: city,
+              sunColor: sunColor,
+              scheme: scheme,
+              isDark: isDark,
+              weatherBlockScale: weatherBlockScale,
             ),
           ),
         ],
@@ -337,7 +306,7 @@ class _ExpandedGreetingRow extends StatelessWidget {
     required this.scheme,
     required this.isDark,
     this.showWeather = true,
-    this.weatherScale = 1,
+    this.weatherBlockScale = 1,
   });
 
   final String greeting;
@@ -347,7 +316,7 @@ class _ExpandedGreetingRow extends StatelessWidget {
   final ColorScheme scheme;
   final bool isDark;
   final bool showWeather;
-  final double weatherScale;
+  final double weatherBlockScale;
 
   @override
   Widget build(BuildContext context) {
@@ -378,7 +347,7 @@ class _ExpandedGreetingRow extends StatelessWidget {
             sunColor: sunColor,
             scheme: scheme,
             isDark: isDark,
-            scale: weatherScale,
+            weatherBlockScale: weatherBlockScale,
           ),
       ],
     );

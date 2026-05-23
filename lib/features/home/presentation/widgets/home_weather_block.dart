@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/widgets/home_weather_icon.dart';
 
-/// Bloque de clima escalable para Home (v0.49.50).
+/// Bloque de clima para Home (v0.49.51).
 ///
-/// Misma composición en todos los estados: icono · grados · ciudad debajo.
-/// [scale] reduce proporcionalmente icono, tipografías y separaciones.
-/// [sunIconScale] solo afecta al icono del sol, centrado en su caja fija.
+/// [weatherBlockScale] escala el bloque completo (icono, grados, ciudad, gaps).
 class HomeWeatherBlock extends StatelessWidget {
   const HomeWeatherBlock({
     super.key,
@@ -15,12 +13,11 @@ class HomeWeatherBlock extends StatelessWidget {
     required this.sunColor,
     required this.scheme,
     required this.isDark,
-    this.scale = 1,
-    this.sunIconScale = 1,
+    this.weatherBlockScale = 1,
     this.shiftLeft = 5.0,
   });
 
-  static const double compactScale = 0.78;
+  static const double weatherBlockCompactScale = 0.78;
 
   static const double baseIconSize = 38;
   static const double baseTemperatureFontSize = 17.5;
@@ -33,60 +30,50 @@ class HomeWeatherBlock extends StatelessWidget {
   final Color sunColor;
   final ColorScheme scheme;
   final bool isDark;
-  final double scale;
-  final double sunIconScale;
+  final double weatherBlockScale;
   final double shiftLeft;
 
   @override
   Widget build(BuildContext context) {
-    final double s = scale.clamp(0.01, 1.5);
-    final iconSize = baseIconSize * s;
-    final tempSize = baseTemperatureFontSize * s;
-    final citySize = baseCityFontSize * s;
-    final iconGap = baseIconTextGap * s;
-    final cityGap = baseTempCityGap * s;
+    final double blockScale = weatherBlockScale.clamp(0.01, 1.5);
 
     final tempStyle = TextStyle(
-      fontSize: tempSize,
+      fontSize: baseTemperatureFontSize,
       height: 1.05,
       fontWeight: FontWeight.w600,
       color: scheme.onSurface,
     );
     final cityStyle = TextStyle(
-      fontSize: citySize,
+      fontSize: baseCityFontSize,
       height: 1.05,
       fontWeight: FontWeight.w400,
       color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.70 : 0.65),
     );
 
+    final content = Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        HomeWeatherIcon(size: baseIconSize, sunColor: sunColor),
+        const SizedBox(width: baseIconTextGap),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(temperature, style: tempStyle),
+            const SizedBox(height: baseTempCityGap),
+            Text(city, style: cityStyle),
+          ],
+        ),
+      ],
+    );
+
     return Transform.translate(
-      offset: Offset(-shiftLeft * s, 0),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          SizedBox(
-            width: iconSize,
-            height: iconSize,
-            child: Center(
-              child: Transform.scale(
-                scale: sunIconScale.clamp(0.01, 2.0),
-                alignment: Alignment.center,
-                child: HomeWeatherIcon(size: iconSize, sunColor: sunColor),
-              ),
-            ),
-          ),
-          SizedBox(width: iconGap),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(temperature, style: tempStyle),
-              SizedBox(height: cityGap),
-              Text(city, style: cityStyle),
-            ],
-          ),
-        ],
+      offset: Offset(-shiftLeft * blockScale, 0),
+      child: Transform.scale(
+        scale: blockScale,
+        alignment: Alignment.bottomRight,
+        child: content,
       ),
     );
   }

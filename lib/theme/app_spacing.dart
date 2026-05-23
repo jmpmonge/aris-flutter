@@ -77,17 +77,17 @@ abstract final class AppSpacing {
   /// Debe coincidir con [_ExpandedGreetingRow] para evitar saltos en HOY.
   static const double homeGreetingSlotHeight = 40;
 
-  /// Respiro bajo cabecera viva con saludo visible (v0.49.46).
-  static const double homeLiveHeaderBottomWithGreeting = 4;
+  /// Respiro bajo cabecera viva con saludo visible (v0.49.51).
+  static const double homeLiveHeaderBottomWithGreeting = 10;
 
-  /// Respiro bajo cabecera compacta sin saludo (v0.49.46).
-  static const double homeLiveHeaderBottomCompact = 8;
+  /// Respiro bajo cabecera compacta sin saludo (v0.49.51).
+  static const double homeLiveHeaderBottomCompact = 14;
 
-  /// ListView → HOY mientras el saludo ocupa cabecera (v0.49.46).
-  static const double homeGreetingToHoyGapVisible = 6;
+  /// ListView → HOY mientras el saludo ocupa cabecera (v0.49.51).
+  static const double homeGreetingToHoyGapVisible = 8;
 
-  /// Fecha fija → HOY cuando el saludo temporal está oculto (v0.48.41).
-  static const double homeFixedDateToHoyWhenGreetingHidden = 12;
+  /// Fecha fija → HOY cuando el saludo temporal está oculto (v0.49.51).
+  static const double homeFixedDateToHoyWhenGreetingHidden = 10;
 
   /// Inset izquierdo del texto de fecha fija (margen pantalla + sangría; v0.48.37).
   static const double homeFixedDateLeftInsetH =
