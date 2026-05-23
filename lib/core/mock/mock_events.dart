@@ -2,30 +2,35 @@ import '../models/event_model.dart';
 
 /// Eventos de demostración para [CalendarService].
 abstract final class MockEvents {
+  /// Agenda Día — tres eventos con detalle completo para probar tarjeta expandida (v0.49.94).
   static List<EventModel> daySchedule(DateTime day) {
+    final d = DateTime(day.year, day.month, day.day);
     return [
       EventModel(
         id: 'mock_evt_cafe',
-        start: DateTime(day.year, day.month, day.day, 9, 0),
+        start: DateTime(d.year, d.month, d.day, 9, 0),
+        end: DateTime(d.year, d.month, d.day, 10, 0),
         title: 'Café con Laura',
         location: 'Café Central',
         description: 'Llevar documentación',
         reminderMinutesBefore: 15,
-        detail: 'Café Central · Llevar documentación',
+        participants: const ['Laura'],
         weekIconKey: 'coffee',
       ),
       EventModel(
         id: 'mock_evt_lunch',
-        start: DateTime(day.year, day.month, day.day, 12, 30),
+        start: DateTime(d.year, d.month, d.day, 12, 30),
+        end: DateTime(d.year, d.month, d.day, 13, 0),
         title: 'Almuerzo equipo',
-        detail: 'Online',
+        location: 'Restaurante Norte',
         weekIconKey: 'meal',
       ),
       EventModel(
         id: 'mock_evt_gym',
-        start: DateTime(day.year, day.month, day.day, 18, 0),
+        start: DateTime(d.year, d.month, d.day, 18, 0),
+        end: DateTime(d.year, d.month, d.day, 19, 0),
         title: 'Gimnasio',
-        detail: 'Plan suave',
+        location: 'Centro deportivo',
         weekIconKey: 'gym',
       ),
     ];
