@@ -9,7 +9,10 @@ import '../../theme/app_spacing.dart';
 import '../../theme/home_card_theme.dart';
 import '../../features/home/presentation/widgets/home_event_detail_sheet.dart';
 import '../../features/home/presentation/widgets/home_event_timeline_row.dart';
+import '../../core/models/task_ui_buckets.dart';
 import '../../features/notes/presentation/widgets/note_detail_sheet.dart';
+import '../../features/tasks/presentation/manual_task_editor_page.dart';
+import '../../features/tasks/presentation/widgets/task_detail_sheet.dart';
 import '../navigation/app_bottom_navigation.dart';
 import 'premium_pressable.dart';
 
@@ -59,8 +62,6 @@ class TodaySummaryCard extends StatefulWidget {
 }
 
 class TodaySummaryCardState extends State<TodaySummaryCard> {
-  String? _expandedTaskId;
-
   /// Copias temporales de tareas recién completadas (persisten aunque salgan de
   /// [widget.tasks] tras el PATCH).
   final Map<String, TaskModel> _recentlyCompletedTasks = {};
@@ -82,6 +83,54 @@ class TodaySummaryCardState extends State<TodaySummaryCard> {
 
   void _openHomeNoteDetail(NoteModel note) {
     NoteDetailSheet.show(context, note);
+  }
+
+  TaskBucketSection _homeTaskSection(TaskModel task) {
+    final g = TaskGroupedLists.partition([task], DateTime.now());
+    if (g.completed.isNotEmpty) return TaskBucketSection.completed;
+    if (g.today.isNotEmpty) return TaskBucketSection.today;
+    if (g.upcoming.isNotEmpty) return TaskBucketSection.upcoming;
+    return TaskBucketSection.noDate;
+  }
+
+  void _openHomeTaskDetail(TaskModel task) {
+    TaskDetailSheet.show(
+      context,
+      task: task,
+      section: _homeTaskSection(task),
+      onToggleComplete: () => _onTaskCompleteTap(task),
+      onEdit: () => ManualTaskEditorPage.showEdit(context, task: task),
+      onDelete: Repositories.task.readsFromBackend
+          ? () => _deleteHomeTask(task)
+          : null,
+    );
+  }
+
+  Future<void> _deleteHomeTask(TaskModel task) async {
+    final scheme = Theme.of(context).colorScheme;
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Borrar tarea'),
+        content: const Text('¿Quieres borrar esta tarea?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: scheme.error,
+              foregroundColor: scheme.onError,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Borrar'),
+          ),
+        ],
+      ),
+    );
+    if (yes != true || !mounted) return;
+    await Repositories.task.deleteTask(task.id);
   }
 
   void _ensureHomeTaskOrderIds() {
@@ -120,12 +169,6 @@ class TodaySummaryCardState extends State<TodaySummaryCard> {
     _homeTaskOrderIds
       ..clear()
       ..addAll(merged);
-  }
-
-  void _toggleTaskExpand(String id) {
-    setState(() {
-      _expandedTaskId = _expandedTaskId == id ? null : id;
-    });
   }
 
   /// Lista visible en Home: pendientes + completadas recientes (orden estable).
@@ -178,9 +221,6 @@ class TodaySummaryCardState extends State<TodaySummaryCard> {
       }
       setState(() {
         _recentlyCompletedTasks[task.id] = task.copyWith(completed: true);
-        if (_expandedTaskId == task.id) {
-          _expandedTaskId = null;
-        }
       });
     }
 
@@ -659,8 +699,7 @@ class TodaySummaryCardState extends State<TodaySummaryCard> {
               task: t,
               scheme: scheme,
               isDark: isDark,
-              isExpanded: _expandedTaskId == t.id,
-              onToggleExpand: () => _toggleTaskExpand(t.id),
+              onOpenDetail: () => _openHomeTaskDetail(t),
               onCompleteTap: () => _onTaskCompleteTap(t),
             ),
           ),
@@ -859,16 +898,14 @@ class _TaskRow extends StatelessWidget {
     required this.task,
     required this.scheme,
     required this.isDark,
-    required this.isExpanded,
-    required this.onToggleExpand,
+    required this.onOpenDetail,
     required this.onCompleteTap,
   });
 
   final TaskModel task;
   final ColorScheme scheme;
   final bool isDark;
-  final bool isExpanded;
-  final VoidCallback onToggleExpand;
+  final VoidCallback onOpenDetail;
   final Future<void> Function() onCompleteTap;
 
   static const double _iconSize = 22;
@@ -889,7 +926,6 @@ class _TaskRow extends StatelessWidget {
   static const double _textBlockInkBorderRadius = 13;
 
   static const double _titleMetaGap = 7;
-  static const double _titleDescriptionGap = 3;
 
   /// Alineación óptica del círculo/check con la primera línea del título.
   /// Se calcula pensando en:
@@ -897,27 +933,6 @@ class _TaskRow extends StatelessWidget {
   /// - línea del título ≈ 18 px
   /// - icono = 22 px
   static const double _taskIconTopWhenStartAligned = 3.5;
-
-  static const double _expandRadius = 13;
-  static const double _expandPadH = 11;
-  static const double _expandPadV = 7.5;
-  /// Panel expandido — misma familia que hover de tarea (v0.48.30, sin amarillo).
-  static const Color _expandBgLight = AppColors.surfaceRaisedLight;
-  static const Color _expandBgDark = AppColors.surfaceRaisedDark;
-  static const Color _expandBorderLight = AppColors.outlineLight;
-  static const Color _expandBorderDark = AppColors.outlineVariantDark;
-
-  /// Meta texto panel expandido oscuro.
-  static const Color _expandTextDarkMeta = AppColors.textSecondaryDark;
-
-  static TextStyle _detailMetaStyle(ColorScheme scheme, bool isDark) {
-    return TextStyle(
-      fontSize: 12.75,
-      height: 1.25,
-      fontWeight: FontWeight.w400,
-      color: isDark ? scheme.onSurfaceVariant : AppColors.textSecondaryLight,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -970,13 +985,6 @@ class _TaskRow extends StatelessWidget {
       color: TodaySummaryCardState.homeCardSecondaryText(scheme, isDark),
     );
 
-    final Widget? expandedPanel = _buildExpandedPanel(
-      scheme: scheme,
-      isDark: isDark,
-      kind: kind,
-      metaStr: metaStr,
-    );
-
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1011,7 +1019,7 @@ class _TaskRow extends StatelessWidget {
         ),
         Expanded(
           child: PremiumPressable(
-            onTap: onToggleExpand,
+            onTap: onOpenDetail,
             borderRadius: BorderRadius.circular(_textBlockInkBorderRadius),
             pressTint: PremiumPressTints.neutral(isDark),
             child: Padding(
@@ -1020,148 +1028,34 @@ class _TaskRow extends StatelessWidget {
                 bottom: _textBlockInkPaddingV,
                 end: _textBlockInkPaddingH,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          task.title,
-                          maxLines: isExpanded ? 6 : 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: titleStyle,
-                        ),
-                      ),
-                      if (metaStr.isNotEmpty && !isExpanded)
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            left: _titleMetaGap,
-                          ),
-                          child: Text(
-                            metaStr,
-                            textAlign: TextAlign.end,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: metaSmallStyle,
-                          ),
-                        ),
-                    ],
+                  Expanded(
+                    child: Text(
+                      task.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: titleStyle,
+                    ),
                   ),
-                  if (expandedPanel != null) ...[
-                    const SizedBox(height: _titleDescriptionGap),
-                    expandedPanel,
-                  ],
+                  if (metaStr.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(left: _titleMetaGap),
+                      child: Text(
+                        metaStr,
+                        textAlign: TextAlign.end,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: metaSmallStyle,
+                      ),
+                    ),
                 ],
               ),
             ),
           ),
         ),
       ],
-    );
-  }
-
-  Widget? _buildExpandedPanel({
-    required ColorScheme scheme,
-    required bool isDark,
-    required HomeTaskVisualKind kind,
-    required String metaStr,
-  }) {
-    if (!isExpanded) return null;
-
-    final expandMeta = isDark
-        ? _detailMetaStyle(scheme, isDark).copyWith(
-            color: _expandTextDarkMeta,
-          )
-        : _detailMetaStyle(scheme, isDark);
-
-    final pieces = <Widget>[];
-
-    final desc = (task.description ?? '').trim();
-    if (desc.isNotEmpty) {
-      pieces.add(
-        Text(
-          desc,
-          style: TodaySummaryCardState.homeCardBodyDescriptionStyle(
-            scheme,
-            isDark,
-          ),
-        ),
-      );
-    }
-
-    if (task.dueDate != null) {
-      final d = task.dueDate!;
-      pieces.add(
-        Text(
-          'Vencimiento (local): '
-          '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
-          style: expandMeta,
-        ),
-      );
-    }
-
-    if (metaStr.isNotEmpty) {
-      pieces.add(
-        Text('Fecha / hora: $metaStr', style: expandMeta),
-      );
-    }
-
-    if (task.priority != null && task.priority!.trim().isNotEmpty) {
-      pieces.add(
-        Text(
-          'Prioridad: ${task.priority}',
-          style: expandMeta,
-        ),
-      );
-    }
-
-    pieces.add(
-      Text(
-        switch (kind) {
-          HomeTaskVisualKind.completed => 'Estado: completada',
-          HomeTaskVisualKind.inProgress => 'Estado: en curso',
-          HomeTaskVisualKind.pending => 'Estado: pendiente',
-        },
-        style: expandMeta,
-      ),
-    );
-
-    final tagStr = task.tags.where((x) => x.trim().isNotEmpty).join(' · ');
-    if (tagStr.isNotEmpty) {
-      pieces.add(
-        Text('Etiquetas: $tagStr', style: expandMeta),
-      );
-    }
-
-    final borderColor = isDark
-        ? _expandBorderDark.withValues(alpha: 0.55)
-        : _expandBorderLight.withValues(alpha: 0.85);
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: isDark ? _expandBgDark : _expandBgLight,
-        borderRadius: BorderRadius.circular(_expandRadius),
-        border: Border.all(color: borderColor, width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: _expandPadH,
-          vertical: _expandPadV,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (var i = 0; i < pieces.length; i++) ...[
-              if (i > 0) const SizedBox(height: 4),
-              pieces[i],
-            ],
-          ],
-        ),
-      ),
     );
   }
 }

@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/models/task_model.dart';
 import '../../../../core/models/task_ui_buckets.dart';
-import '../../../../shared/widgets/premium_pressable.dart';
 import '../../../../theme/aris_list_palette.dart';
 import '../../../../theme/app_spacing.dart';
 
-/// Fila compacta de tarea — sin expansión inline (v0.49.97).
+/// Fila compacta de tarea — tap abre ficha inferior (v0.49.98).
 class CompactExpandableTaskTile extends StatelessWidget {
   const CompactExpandableTaskTile({
     super.key,
@@ -56,48 +55,58 @@ class CompactExpandableTaskTile extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-          _closedPadH,
-          _closedPadV,
+          _closedPadH - 4,
+          _closedPadV - 2,
           _closedPadH - 2,
-          _closedPadV,
+          _closedPadV - 2,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: _checkSlot,
-              height: _checkSlot,
-              child: Align(
-                alignment: Alignment.center,
-                child: Checkbox(
-                  shape: const CircleBorder(),
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  activeColor: context.arisList.completedCheck,
-                  checkColor: context.arisList.canvas,
-                  side: BorderSide(
-                    color: muted
-                        ? context.arisList.accent.withValues(alpha: 0.55)
-                        : context.arisList.textMuted.withValues(alpha: 0.65),
-                    width: 1.4,
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: busy ? null : () => onCheckboxChanged(!completed),
+                child: SizedBox(
+                  width: _checkSlot + 8,
+                  height: _checkSlot + 8,
+                  child: Align(
+                    child: Checkbox(
+                      shape: const CircleBorder(),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      activeColor: context.arisList.completedCheck,
+                      checkColor: context.arisList.canvas,
+                      side: BorderSide(
+                        color: muted
+                            ? context.arisList.accent.withValues(alpha: 0.55)
+                            : context.arisList.textMuted
+                                .withValues(alpha: 0.65),
+                        width: 1.4,
+                      ),
+                      value: completed,
+                      onChanged: busy ? null : onCheckboxChanged,
+                    ),
                   ),
-                  value: completed,
-                  onChanged: busy ? null : onCheckboxChanged,
                 ),
               ),
             ),
-            SizedBox(width: _checkTextGap),
+            SizedBox(width: _checkTextGap - 4),
             Expanded(
-              child: PremiumPressable(
-                onTap: onOpenDetail,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 1, bottom: 1, right: 2),
-                  child: Text(
-                    task.title,
-                    style: titleStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                  onTap: onOpenDetail,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Text(
+                      task.title,
+                      style: titleStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
               ),
