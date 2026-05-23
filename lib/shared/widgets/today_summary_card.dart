@@ -745,7 +745,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
   }
 }
 
-/// Calendario HOY: timeline por fila con línea continua (v0.49.90).
+/// Calendario HOY: timeline por fila; mini ficha en columna contenido (v0.49.91).
 class _EventCalendarStackedTable extends StatelessWidget {
   const _EventCalendarStackedTable({
     required this.events,

@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/models/event_model.dart';
 import '../../../../shared/widgets/premium_pressable.dart';
-import '../../../../shared/widgets/smooth_card_expand.dart';
-import '../../../../theme/app_spacing.dart';
-import '../../../../theme/aris_list_palette.dart';
-import '../../../calendar/presentation/widgets/calendar_event_format.dart';
+import 'home_event_mini_detail_card.dart';
 
-/// Fila compacta HOY + ficha contextual debajo (v0.49.90).
+/// Fila compacta HOY + mini ficha local en columna de contenido (v0.49.91).
 class HomeEventTimelineRow extends StatelessWidget {
   const HomeEventTimelineRow({
     super.key,
@@ -65,8 +62,6 @@ class HomeEventTimelineRow extends StatelessWidget {
   final double textPaddingV;
   final double textBorderRadius;
   final double textTopOffset;
-
-  static const double _expandedPanelTopGap = 8;
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +138,7 @@ class HomeEventTimelineRow extends StatelessWidget {
         Expanded(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
                 height: rowHeight,
@@ -193,18 +188,12 @@ class HomeEventTimelineRow extends StatelessWidget {
                   ),
                 ),
               ),
-              SmoothCardExpandReveal(
-                isExpanded: isExpanded,
-                animateSize: false,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: _expandedPanelTopGap),
-                  child: _HomeEventExpandedDetail(
-                    event: event,
-                    compactSubtitle: subtitle,
-                    onEdit: onEdit,
-                  ),
+              if (isExpanded)
+                HomeEventMiniDetailCard(
+                  event: event,
+                  compactSubtitle: subtitle,
+                  onEdit: onEdit,
                 ),
-              ),
             ],
           ),
         ),
@@ -213,208 +202,7 @@ class HomeEventTimelineRow extends StatelessWidget {
   }
 }
 
-/// Ficha compacta Home — sin repetir lo ya visible en la fila (v0.49.90).
-class _HomeEventExpandedDetail extends StatelessWidget {
-  const _HomeEventExpandedDetail({
-    required this.event,
-    required this.compactSubtitle,
-    required this.onEdit,
-  });
-
-  final EventModel event;
-  final String compactSubtitle;
-  final VoidCallback onEdit;
-
-  static const double _radius = 12;
-
-  bool _isDuplicate(String? text) {
-    if (text == null || text.trim().isEmpty) return true;
-    final compact = compactSubtitle.trim();
-    if (compact.isEmpty) return false;
-    return text.trim() == compact;
-  }
-
-  String? _extraLocation() {
-    final loc = CalendarEventFormat.expandedLocation(event);
-    return _isDuplicate(loc) ? null : loc;
-  }
-
-  String? _extraObservations() {
-    final obs = CalendarEventFormat.expandedObservations(event);
-    return _isDuplicate(obs) ? null : obs;
-  }
-
-  String? _extraParticipants() {
-    if (event.participants.isEmpty) return null;
-    final joined = event.participants.join(', ');
-    return _isDuplicate(joined) ? null : joined;
-  }
-
-  String? _extraDuration() {
-    final mins = CalendarEventFormat.durationMinutes(event);
-    if (mins == null || mins <= 0) return null;
-    final text = CalendarEventFormat.gapDuration(mins);
-    return _isDuplicate(text) ? null : text;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final location = _extraLocation();
-    final reminder = CalendarEventFormat.expandedReminder(event);
-    final observations = _extraObservations();
-    final participants = _extraParticipants();
-    final duration = _extraDuration();
-
-    final hasDetails = location != null ||
-        reminder != null ||
-        observations != null ||
-        participants != null ||
-        duration != null;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(_radius),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: context.arisList.cardExpanded,
-          borderRadius: BorderRadius.circular(_radius),
-          border: Border.all(
-            color: context.arisList.borderSelected,
-            width: 1.15,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.calendarDayEventCardPaddingH,
-            vertical: AppSpacing.calendarDayEventCardPaddingV,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (hasDetails) ...[
-                if (location != null)
-                  _HomeExpandedIconLine(
-                    icon: Icons.place_outlined,
-                    text: location,
-                  ),
-                if (reminder != null) ...[
-                  if (location != null)
-                    SizedBox(
-                      height: AppSpacing.calendarDayExpandedDetailRowGap,
-                    ),
-                  _HomeExpandedIconLine(
-                    icon: Icons.notifications_outlined,
-                    text: reminder,
-                  ),
-                ],
-                if (observations != null) ...[
-                  if (location != null || reminder != null)
-                    SizedBox(
-                      height: AppSpacing.calendarDayExpandedDetailRowGap,
-                    ),
-                  _HomeExpandedIconLine(
-                    icon: Icons.notes_outlined,
-                    text: observations,
-                  ),
-                ],
-                if (participants != null) ...[
-                  if (location != null || reminder != null || observations != null)
-                    SizedBox(
-                      height: AppSpacing.calendarDayExpandedDetailRowGap,
-                    ),
-                  _HomeExpandedIconLine(
-                    icon: Icons.people_outline_rounded,
-                    text: participants,
-                  ),
-                ],
-                if (duration != null) ...[
-                  if (location != null ||
-                      reminder != null ||
-                      observations != null ||
-                      participants != null)
-                    SizedBox(
-                      height: AppSpacing.calendarDayExpandedDetailRowGap,
-                    ),
-                  _HomeExpandedIconLine(
-                    icon: Icons.schedule_outlined,
-                    text: duration,
-                  ),
-                ],
-                SizedBox(height: AppSpacing.calendarDayExpandedEditTopGap),
-              ] else
-                const SizedBox(height: AppSpacing.xxs),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: onEdit,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 2,
-                    ),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    foregroundColor: context.arisList.accent,
-                  ),
-                  child: const Text(
-                    'Editar',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HomeExpandedIconLine extends StatelessWidget {
-  const _HomeExpandedIconLine({
-    required this.icon,
-    required this.text,
-  });
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 1),
-          child: Icon(
-            icon,
-            size: 15,
-            color: context.arisList.textMuted.withValues(alpha: 0.9),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 12.5,
-              height: 1.28,
-              fontWeight: FontWeight.w400,
-              color: context.arisList.textSecondary,
-            ),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Subtítulo compacto del evento en HOY (misma lógica que antes de v0.49.88).
+/// Subtítulo compacto del evento en HOY.
 String homeEventCompactSubtitle(EventModel event) {
   if (event.detail.trim().isNotEmpty) return event.detail.trim();
   if (event.description.trim().isNotEmpty) return event.description.trim();
