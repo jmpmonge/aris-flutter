@@ -6,7 +6,7 @@ import '../../../../theme/app_spacing.dart';
 import 'calendar_event_format.dart';
 import 'calendar_event_icon.dart';
 
-/// Tarjeta de evento en agenda Día — colapsada o desplegada (v0.49.62).
+/// Tarjeta de evento en agenda Día — colapsada o desplegada (v0.49.63).
 class CalendarDayEventCard extends StatelessWidget {
   const CalendarDayEventCard({
     super.key,
@@ -91,18 +91,16 @@ class CalendarDayEventCard extends StatelessWidget {
                       ),
                   ],
                 ),
-                if (!isExpanded) ...[
-                  SizedBox(height: AppSpacing.calendarDayEventTitleTimeGap),
-                  Text(
-                    timeSimple,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      height: 1.2,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.calendarListAccentSky,
-                    ),
+                SizedBox(height: AppSpacing.calendarDayEventTitleTimeGap),
+                Text(
+                  timeSimple,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.2,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.calendarListAccentSky,
                   ),
-                ],
+                ),
                 if (isExpanded)
                   CalendarDayEventExpandedContent(
                     event: event,
@@ -117,7 +115,7 @@ class CalendarDayEventCard extends StatelessWidget {
   }
 }
 
-/// Cuerpo desplegado compacto de evento en agenda Día (v0.49.62).
+/// Cuerpo desplegado mínimo de evento en agenda Día (v0.49.63).
 class CalendarDayEventExpandedContent extends StatelessWidget {
   const CalendarDayEventExpandedContent({
     super.key,
@@ -128,50 +126,47 @@ class CalendarDayEventExpandedContent extends StatelessWidget {
   final EventModel event;
   final VoidCallback onEdit;
 
-  String? _secondaryDetail() {
-    final location = event.location.trim();
-    if (location.isNotEmpty) return location;
-    final notes = CalendarEventFormat.notesText(event);
-    if (notes.isNotEmpty) return notes;
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final detail = _secondaryDetail();
-    final metaStyle = TextStyle(
-      fontSize: 12,
-      height: 1.25,
-      fontWeight: FontWeight.w400,
-      color: AppColors.calendarListTextMuted.withValues(alpha: 0.88),
-    );
+    final location = CalendarEventFormat.expandedLocation(event);
+    final reminder = CalendarEventFormat.expandedReminder(event);
+    final observations = CalendarEventFormat.expandedObservations(event);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(height: AppSpacing.calendarDayExpandedMetaTopGap),
-        Text(
-          CalendarEventFormat.compactDateTimeLine(event),
-          style: metaStyle,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        if (detail != null) ...[
-          const SizedBox(height: 3),
-          Text(
-            detail,
-            style: const TextStyle(
-              fontSize: 12.5,
-              height: 1.28,
-              fontWeight: FontWeight.w400,
-              color: AppColors.calendarListTextSecondary,
+        if (location != null ||
+            reminder != null ||
+            observations != null) ...[
+          SizedBox(height: AppSpacing.calendarDayExpandedDetailTopGap),
+          if (location != null)
+            _ExpandedIconLine(
+              icon: Icons.place_outlined,
+              text: location,
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+          if (reminder != null) ...[
+            if (location != null)
+              SizedBox(height: AppSpacing.calendarDayExpandedDetailRowGap),
+            _ExpandedIconLine(
+              icon: Icons.notifications_outlined,
+              text: reminder,
+            ),
+          ],
+          if (observations != null) ...[
+            if (location != null || reminder != null)
+              SizedBox(height: AppSpacing.calendarDayExpandedDetailRowGap),
+            _ExpandedIconLine(
+              icon: Icons.notes_outlined,
+              text: observations,
+            ),
+          ],
         ],
-        const SizedBox(height: AppSpacing.xxs),
+        SizedBox(
+          height: location != null || reminder != null || observations != null
+              ? AppSpacing.calendarDayExpandedEditTopGap
+              : AppSpacing.xxs,
+        ),
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton(
@@ -189,6 +184,47 @@ class CalendarDayEventExpandedContent extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ExpandedIconLine extends StatelessWidget {
+  const _ExpandedIconLine({
+    required this.icon,
+    required this.text,
+  });
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(
+            icon,
+            size: 15,
+            color: AppColors.calendarListTextMuted.withValues(alpha: 0.9),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 12.5,
+              height: 1.28,
+              fontWeight: FontWeight.w400,
+              color: AppColors.calendarListTextSecondary,
+            ),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
