@@ -30,9 +30,12 @@ abstract final class AppSpacing {
   static const int sectionTransitionMs = 200;
   static const double sectionTransitionSlidePx = 8;
 
-  /// Micropress tarjetas interactivas (v0.49.77).
-  static const int pressableScaleMs = 110;
-  static const double pressableScale = 0.985;
+  /// Micropress tarjetas interactivas (v0.49.77, refinado v0.49.78).
+  static const int pressableScaleMs = 155;
+  static const double pressableScale = 0.99;
+  static const double pressableTintAlphaAccentLight = 0.055;
+  static const double pressableTintAlphaNeutralLight = 0.045;
+  static const double pressableTintAlphaDark = 0.18;
 
   /// Esquina “cola” en burbujas de chat.
   static const double radiusTail = 4;

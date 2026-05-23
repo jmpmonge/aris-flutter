@@ -6,32 +6,6 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/home_card_theme.dart';
 
-/// Overlay cabecera ARIS — igual que CHAT CON ARIS (v0.48.33).
-WidgetStateProperty<Color?> _arisHeaderOverlayColor(bool isDark) {
-  const light = Color(0xFFF0EEFF);
-  const lightHover = Color(0xFFEDE9FF);
-  return WidgetStateProperty.resolveWith((states) {
-    if (isDark) {
-      if (states.contains(WidgetState.pressed)) {
-        return AppColors.surfaceHoverDark.withValues(alpha: 0.96);
-      }
-      if (states.contains(WidgetState.hovered) ||
-          states.contains(WidgetState.focused)) {
-        return AppColors.surfaceRaisedDark.withValues(alpha: 0.92);
-      }
-      return Colors.transparent;
-    }
-    if (states.contains(WidgetState.pressed)) {
-      return light.withValues(alpha: 0.92);
-    }
-    if (states.contains(WidgetState.hovered) ||
-        states.contains(WidgetState.focused)) {
-      return lightHover.withValues(alpha: 0.72);
-    }
-    return Colors.transparent;
-  });
-}
-
 /// Tarjeta Aris en scroll — cabecera + mensaje (v0.48.49).
 class HomeArisReplyCard extends StatelessWidget {
   const HomeArisReplyCard({
@@ -110,7 +84,10 @@ class HomeArisReplyCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(
         AppSpacing.homeCardHeaderInkBorderRadius,
       ),
-      overlayColor: _arisHeaderOverlayColor(isDark),
+      pressTint: PremiumPressTints.accent(
+        isDark,
+        lightHue: isDark ? null : AppColors.secondaryViolet,
+      ),
       child: padded,
     );
   }

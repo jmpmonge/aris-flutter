@@ -26,74 +26,6 @@ const Color _kTasksSectionIconDark = AppColors.tasksOrangeDark;
 const Color _kNotesSectionIconLight = AppColors.suggestionGreen;
 const Color _kNotesSectionIconDark = AppColors.suggestionGreenDark;
 
-/// Overlay cabecera HOY → Calendario (claro azul; oscuro neutro v0.48.33).
-WidgetStateProperty<Color?> _hoyHeaderOverlayColor(bool isDark) {
-  const light = Color(0xFFEAF3FF);
-  const lightHover = Color(0xFFDDEBFF);
-  return WidgetStateProperty.resolveWith((states) {
-    if (isDark) {
-      if (states.contains(WidgetState.pressed)) {
-        return AppColors.surfaceHoverDark.withValues(alpha: 0.96);
-      }
-      if (states.contains(WidgetState.hovered) ||
-          states.contains(WidgetState.focused)) {
-        return AppColors.surfaceRaisedDark.withValues(alpha: 0.92);
-      }
-      return Colors.transparent;
-    }
-    if (states.contains(WidgetState.pressed)) {
-      return light.withValues(alpha: 0.92);
-    }
-    if (states.contains(WidgetState.hovered) ||
-        states.contains(WidgetState.focused)) {
-      return lightHover.withValues(alpha: 0.72);
-    }
-    return Colors.transparent;
-  });
-}
-
-/// Hover/pressed azul — bloque texto evento y bloque texto tarea en HOY (misma cápsula).
-WidgetStateProperty<Color?> _calendarEventRowOverlayColor(bool isDark) {
-  const lightHover = Color(0xFFEAF3FF);
-  const lightPressed = Color(0xFFDDEBFF);
-  const darkHover = AppColors.surfaceHoverDark;
-  const darkPressed = AppColors.surfaceRaisedDark;
-  return WidgetStateProperty.resolveWith((states) {
-    if (states.contains(WidgetState.pressed)) {
-      return (isDark ? darkPressed : lightPressed)
-          .withValues(alpha: isDark ? 0.88 : 0.90);
-    }
-    if (states.contains(WidgetState.hovered) ||
-        states.contains(WidgetState.focused)) {
-      return (isDark ? darkHover : lightHover)
-          .withValues(alpha: isDark ? 0.82 : 0.88);
-    }
-    return null;
-  });
-}
-
-/// Hover/pressed neutro — bloque textual de tarea (integrado con la tarjeta).
-WidgetStateProperty<Color?> _taskTextBlockOverlayColor(bool isDark) {
-  const lightHover = Color(0xFFF3F5F8);
-  const lightPressed = Color(0xFFEEF2F6);
-  const darkHover = AppColors.surfaceHoverDark;
-  const darkPressed = AppColors.surfaceRaisedDark;
-  return WidgetStateProperty.resolveWith((states) {
-    if (states.contains(WidgetState.pressed)) {
-      return isDark
-          ? darkPressed.withValues(alpha: 0.94)
-          : lightPressed.withValues(alpha: 0.96);
-    }
-    if (states.contains(WidgetState.hovered) ||
-        states.contains(WidgetState.focused)) {
-      return isDark
-          ? darkHover.withValues(alpha: 0.90)
-          : lightHover.withValues(alpha: 0.94);
-    }
-    return null;
-  });
-}
-
 /// Bloque **HOY** — v0.49.73 sustituye MAIL por NOTAS en Home.
 class TodaySummaryCard extends StatefulWidget {
   const TodaySummaryCard({
@@ -606,7 +538,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
             borderRadius: BorderRadius.circular(
               AppSpacing.homeCardHeaderInkBorderRadius,
             ),
-            overlayColor: _hoyHeaderOverlayColor(isDark),
+            pressTint: PremiumPressTints.accent(isDark),
             child: Padding(
               padding: _sectionHeaderPadding,
               child: _buildHoyHeaderRow(
@@ -634,7 +566,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
             borderRadius: BorderRadius.circular(
               AppSpacing.homeCardHeaderInkBorderRadius,
             ),
-            overlayColor: _hoyHeaderOverlayColor(isDark),
+            pressTint: PremiumPressTints.accent(isDark),
             child: Padding(
               padding: _sectionHeaderPadding,
               child: _buildTasksHeaderRow(
@@ -662,7 +594,10 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
             borderRadius: BorderRadius.circular(
               AppSpacing.homeCardHeaderInkBorderRadius,
             ),
-            overlayColor: _hoyHeaderOverlayColor(isDark),
+            pressTint: PremiumPressTints.accent(
+              isDark,
+              lightHue: notesIconColor,
+            ),
             child: Padding(
               padding: _sectionHeaderPadding,
               child: _buildNotesHeaderRow(
@@ -943,7 +878,7 @@ Widget _calendarEventRow(
             child: PremiumPressable(
               onTap: () {},
               borderRadius: BorderRadius.circular(textRadius),
-              overlayColor: _calendarEventRowOverlayColor(isDark),
+              pressTint: PremiumPressTints.neutral(isDark),
               child: Padding(
                   padding: EdgeInsetsDirectional.only(
                     start: 0,
@@ -1144,7 +1079,7 @@ class _TaskRow extends StatelessWidget {
               child: PremiumPressable(
                 onTap: () => onCompleteTap(),
                 borderRadius: BorderRadius.circular(_iconHitHeight / 2),
-                overlayColor: _calendarEventRowOverlayColor(isDark),
+                pressTint: PremiumPressTints.neutral(isDark),
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: Padding(
@@ -1166,7 +1101,7 @@ class _TaskRow extends StatelessWidget {
           child: PremiumPressable(
             onTap: onToggleExpand,
             borderRadius: BorderRadius.circular(_textBlockInkBorderRadius),
-            overlayColor: _taskTextBlockOverlayColor(isDark),
+            pressTint: PremiumPressTints.neutral(isDark),
             child: Padding(
               padding: const EdgeInsetsDirectional.only(
                 top: _textBlockInkPaddingV,
