@@ -7,6 +7,8 @@ import '../../core/repositories/repositories.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/home_card_theme.dart';
+import '../../features/calendar/presentation/widgets/event_detail_sheet.dart';
+import '../../features/home/presentation/widgets/home_event_timeline_row.dart';
 import '../navigation/app_bottom_navigation.dart';
 import 'premium_pressable.dart';
 
@@ -57,6 +59,7 @@ class TodaySummaryCard extends StatefulWidget {
 
 class _TodaySummaryCardState extends State<TodaySummaryCard> {
   String? _expandedTaskId;
+  String? _expandedHomeEventId;
 
   /// Copias temporales de tareas recién completadas (persisten aunque salgan de
   /// [widget.tasks] tras el PATCH).
@@ -71,6 +74,23 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
   void didUpdateWidget(covariant TodaySummaryCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     _mergeHomeTaskOrderIds();
+    final visibleIds = widget.events
+        .take(widget.maxAgendaItems.clamp(0, widget.events.length))
+        .map((e) => e.id)
+        .toSet();
+    if (_expandedHomeEventId != null && !visibleIds.contains(_expandedHomeEventId)) {
+      _expandedHomeEventId = null;
+    }
+  }
+
+  void _toggleHomeEventExpand(String id) {
+    setState(() {
+      _expandedHomeEventId = _expandedHomeEventId == id ? null : id;
+    });
+  }
+
+  Future<void> _openHomeEventEditor(EventModel event) async {
+    await EventDetailSheet.show(context, event);
   }
 
   void _ensureHomeTaskOrderIds() {
@@ -199,15 +219,11 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
   static const double _eventTimelineColWidth = 18;
   /// Gap único entre columna del punto y el bloque de texto (título + descripción).
   static const double _eventTimelineTextGap = 12;
-  /// Alineación vertical: sube el bloque textual del evento respecto a hora/punto (px).
-  static const double _eventTextTopOffset = -5;
+  /// Alineación vertical legacy (pull-up enlace «+ X más»).
+  static const double _eventMoreLinkPullUp = 6;
   static const double _eventDotSize = 7.5;
   /// Desplaza el punto para alinearlo con la primera línea del título (no al centro de la fila).
   static const double _eventDotAlignPaddingTop = 6;
-  /// Padding y radio cápsula hover — evento (texto) y tarea (texto) en HOY (v0.48.20+ unificado).
-  static const double _eventTextInkPaddingH = 9;
-  static const double _eventTextInkPaddingV = 6;
-  static const double _eventTextInkBorderRadius = 12;
   /// Espacio entre filas de evento (compacto).
   static const double _eventRowGap = 4;
   /// Altura fija fila evento (hora + punto + texto; hover solo en texto).
@@ -268,7 +284,6 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
   }
 
   /// Separación última línea de sección → «+ X más» (referencia TAREAS).
-  static const double _lastLineToMoreLinkGap = 7;
   static const double _lastLineToMoreLinkPad = 5;
   static const double _moreLinkTopPad = 2;
   static const EdgeInsets _moreLinkPadding = EdgeInsets.only(
@@ -276,23 +291,8 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
     bottom: 1,
   );
 
-  /// Compensa el hueco de la fila fija de evento para igualar el gap de TAREAS.
-  static double _homeEventMoreLinkPullUp(EventModel event) {
-    final raw = event.detail.trim().isNotEmpty
-        ? event.detail.trim()
-        : (event.description.trim().isNotEmpty
-            ? event.description.trim()
-            : (event.location.trim().isNotEmpty ? event.location.trim() : ''));
-    final titleH = 14.75 * 1.2;
-    final subH = raw.isNotEmpty ? 12.5 * 1.22 : 0.0;
-    final contentBottom = -_eventTextTopOffset +
-        _eventTextInkPaddingV +
-        titleH +
-        subH +
-        _eventTextInkPaddingV;
-    final slack = _eventRowHeight - contentBottom - _lastLineToMoreLinkGap;
-    return slack.clamp(0.0, _eventRowHeight);
-  }
+  /// Compensa hueco residual tarjeta compacta ↔ enlace «+ X más».
+  static const double _homeEventMoreLinkPullUp = _eventMoreLinkPullUp;
 
   Widget _buildMoreLink({
     required String label,
@@ -674,14 +674,17 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
           events: visibleEvents,
           scheme: scheme,
           isDark: isDark,
+          expandedEventId: _expandedHomeEventId,
+          onToggleEvent: _toggleHomeEventExpand,
+          onEditEvent: _openHomeEventEditor,
         )
       else
         Text(_emptyCalendarLine, style: emptyLineStyle),
       if (moreEvents > 0)
         Transform.translate(
-          offset: Offset(
+          offset: const Offset(
             0,
-            -_homeEventMoreLinkPullUp(visibleEvents.last),
+            -_homeEventMoreLinkPullUp,
           ),
           child: _buildMoreLink(
             label: _moreEventsLabel(moreEvents),
@@ -726,17 +729,23 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
   }
 }
 
-/// Calendario HOY: **una** línea vertical en capa inferior del Stack; filas altura fija.
+/// Calendario HOY: línea vertical cuando todas las filas están compactas.
 class _EventCalendarStackedTable extends StatelessWidget {
   const _EventCalendarStackedTable({
     required this.events,
     required this.scheme,
     required this.isDark,
+    required this.expandedEventId,
+    required this.onToggleEvent,
+    required this.onEditEvent,
   });
 
   final List<EventModel> events;
   final ColorScheme scheme;
   final bool isDark;
+  final String? expandedEventId;
+  final ValueChanged<String> onToggleEvent;
+  final ValueChanged<EventModel> onEditEvent;
 
   @override
   Widget build(BuildContext context) {
@@ -753,9 +762,10 @@ class _EventCalendarStackedTable extends StatelessWidget {
     final n = events.length;
     final dotColor = isDark ? _kCalendarBlueDark : _kCalendarBlueLight;
     final rowGap = _TodaySummaryCardState._eventRowGap;
+    final allCompact = expandedEventId == null;
 
     final axisLeft = tw + (cw - lineW) / 2;
-    final showSpine = n >= 2;
+    final showSpine = allCompact && n >= 2;
     final dotCenterOffsetY = dotPadTop + dotSize / 2;
     final spineTop = dotCenterOffsetY + trim;
     final spineHeight = (n - 1) * (rowH + rowGap) - 2 * trim;
@@ -782,16 +792,23 @@ class _EventCalendarStackedTable extends StatelessWidget {
           children: [
             for (var i = 0; i < n; i++) ...[
               if (i > 0) SizedBox(height: rowGap),
-              _calendarEventRow(
-                events[i],
-                scheme,
-                isDark,
-                dotColor,
-                dotSize,
-                tw,
-                cw,
-                gw,
-                rowH,
+              HomeEventTimelineRow(
+                key: ValueKey('home-event-${events[i].id}'),
+                event: events[i],
+                timeLabel: events[i].timeText.trim().isNotEmpty
+                    ? events[i].timeText.trim()
+                    : events[i].timeHm,
+                isExpanded: expandedEventId == events[i].id,
+                onToggle: () => onToggleEvent(events[i].id),
+                onEdit: () => onEditEvent(events[i]),
+                timeColumnWidth: tw,
+                timelineColumnWidth: cw,
+                timelineTextGap: gw,
+                dotSize: dotSize,
+                dotPaddingTop: dotPadTop,
+                dotColor: dotColor,
+                timeTextColor: scheme.onSurfaceVariant,
+                minRowHeight: allCompact ? rowH : null,
               ),
             ],
           ],
@@ -801,132 +818,7 @@ class _EventCalendarStackedTable extends StatelessWidget {
   }
 }
 
-/// Una fila de evento: sin línea (solo punto); altura fija para alinear la capa Stack.
-Widget _calendarEventRow(
-  EventModel event,
-  ColorScheme scheme,
-  bool isDark,
-  Color dotColor,
-  double dotSize,
-  double tw,
-  double cw,
-  double gw,
-  double rowH,
-) {
-  final dotPadTop = _TodaySummaryCardState._eventDotAlignPaddingTop;
-  final timeStr =
-      event.timeText.trim().isNotEmpty ? event.timeText.trim() : event.timeHm;
-  final subtitle = event.detail.trim().isNotEmpty
-      ? event.detail.trim()
-      : (event.description.trim().isNotEmpty
-          ? event.description.trim()
-          : (event.location.trim().isNotEmpty ? event.location.trim() : ''));
-
-  final textPadH = _TodaySummaryCardState._eventTextInkPaddingH;
-  final textPadV = _TodaySummaryCardState._eventTextInkPaddingV;
-  final textRadius = _TodaySummaryCardState._eventTextInkBorderRadius;
-
-  return SizedBox(
-    height: rowH,
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: tw,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 1),
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Text(
-                timeStr,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13,
-                  height: 1.25,
-                  fontWeight: FontWeight.w500,
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ),
-        ),
-        SizedBox(
-          width: cw,
-          child: Padding(
-            padding: EdgeInsets.only(top: dotPadTop),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Container(
-                width: dotSize,
-                height: dotSize,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: dotColor,
-                ),
-              ),
-            ),
-          ),
-        ),
-        SizedBox(width: gw),
-        Expanded(
-          child: Transform.translate(
-            offset: const Offset(
-              0,
-              _TodaySummaryCardState._eventTextTopOffset,
-            ),
-            child: PremiumPressable(
-              onTap: () {},
-              borderRadius: BorderRadius.circular(textRadius),
-              pressTint: PremiumPressTints.neutral(isDark),
-              child: Padding(
-                  padding: EdgeInsetsDirectional.only(
-                    start: 0,
-                    end: textPadH,
-                    top: textPadV,
-                    bottom: textPadV,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        event.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14.75,
-                          height: 1.2,
-                          fontWeight: FontWeight.w600,
-                          color: scheme.onSurface,
-                        ),
-                      ),
-                      if (subtitle.isNotEmpty)
-                        Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            height: 1.22,
-                            fontWeight: FontWeight.w400,
-                            color:
-                                _TodaySummaryCardState.homeCardSecondaryText(
-                              scheme,
-                              isDark,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
-    ),
-  );
-}
+// _calendarEventRow removed — reemplazado por HomeEventTimelineRow + CalendarDayEventCard (v0.49.88).
 
 enum HomeTaskVisualKind { pending, inProgress, completed }
 
