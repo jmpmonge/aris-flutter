@@ -8,10 +8,14 @@ class SmoothCardExpandReveal extends StatelessWidget {
     super.key,
     required this.isExpanded,
     required this.child,
+    this.animateSize = true,
   });
 
   final bool isExpanded;
   final Widget child;
+
+  /// Si es false, el contenido aparece/desaparece sin AnimatedSize (v0.49.84).
+  final bool animateSize;
 
   static Duration get _sizeDuration =>
       Duration(milliseconds: AppSpacing.cardExpandSizeMs);
@@ -20,6 +24,13 @@ class SmoothCardExpandReveal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!animateSize) {
+      if (!isExpanded) {
+        return const SizedBox(width: double.infinity, height: 0);
+      }
+      return child;
+    }
+
     return AnimatedSize(
       duration: _sizeDuration,
       curve: isExpanded ? Curves.easeOutCubic : Curves.easeInOutCubic,

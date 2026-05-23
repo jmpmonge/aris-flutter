@@ -8,7 +8,7 @@ import '../../../../theme/app_spacing.dart';
 import 'calendar_event_format.dart';
 import 'calendar_event_icon.dart';
 
-/// Tarjeta de evento en agenda Día — animación solo en columna tarjeta (v0.49.81).
+/// Tarjeta de evento en agenda Día — despliegue instantáneo fiable (v0.49.84).
 class CalendarDayEventCard extends StatelessWidget {
   const CalendarDayEventCard({
     super.key,
@@ -25,9 +25,6 @@ class CalendarDayEventCard extends StatelessWidget {
 
   static const double _radius = 12;
 
-  static Duration get _surfaceDuration =>
-      Duration(milliseconds: AppSpacing.cardExpandSizeMs);
-
   @override
   Widget build(BuildContext context) {
     final icon = CalendarEventIconResolver.resolve(event);
@@ -37,9 +34,7 @@ class CalendarDayEventCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(_radius),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(_radius),
-        child: AnimatedContainer(
-          duration: _surfaceDuration,
-          curve: isExpanded ? Curves.easeOutCubic : Curves.easeInOutCubic,
+        child: Container(
           decoration: BoxDecoration(
             color: isExpanded
                 ? AppColors.calendarListCardExpanded
@@ -97,6 +92,7 @@ class CalendarDayEventCard extends StatelessWidget {
                 ),
                 SmoothCardExpandReveal(
                   isExpanded: isExpanded,
+                  animateSize: false,
                   child: CalendarDayEventExpandedContent(
                     event: event,
                     onEdit: onEdit,
