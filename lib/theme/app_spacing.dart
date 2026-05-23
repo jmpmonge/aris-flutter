@@ -35,6 +35,9 @@ abstract final class AppSpacing {
   /// Columna de hora en filas tipo agenda.
   static const double calendarTimeColumnWidth = 52;
 
+  /// Padding vertical hueco libre vista Día (v0.49.57).
+  static const double calendarDayFreeGapPaddingV = 2;
+
   static const double profileAvatarRadius = 28;
 
   /// Altura fija de la franja horizontal de chips en Notas.

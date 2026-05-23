@@ -6,9 +6,10 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import 'calendar_day_event_card.dart';
 import 'calendar_event_format.dart';
+import 'calendar_free_gap_divider.dart';
 import 'event_detail_sheet.dart';
 
-/// Agenda vertical del día con línea temporal (v0.49.45).
+/// Agenda vertical del día con línea temporal (v0.49.57).
 class CalendarDayView extends StatefulWidget {
   const CalendarDayView({
     super.key,
@@ -100,33 +101,9 @@ class _CalendarDayViewState extends State<CalendarDayView> {
 
   Widget _maybeGapRow(EventModel prev, EventModel next) {
     final gapEnd = prev.end ?? prev.start.add(const Duration(minutes: 30));
-    final gapStart = gapEnd;
-    final gapMinutes = next.start.difference(gapStart).inMinutes;
+    final gapMinutes = next.start.difference(gapEnd).inMinutes;
     if (gapMinutes < 45) return const SizedBox(height: AppSpacing.xxs);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(width: AppSpacing.calendarTimeColumnWidth),
-          const _FreeGapDot(),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(left: AppSpacing.sm),
-              child: Text(
-                'Libre ${CalendarEventFormat.timeHm(gapStart)}–${CalendarEventFormat.timeHm(next.start)}',
-                style: TextStyle(
-                  fontSize: 10.5,
-                  height: 1.15,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.calendarListTextMuted.withValues(alpha: 0.36),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return CalendarFreeGapDivider(durationMinutes: gapMinutes);
   }
 }
 
@@ -224,35 +201,6 @@ class _TimelineEventRow extends StatelessWidget {
                 onEdit: onEdit,
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FreeGapDot extends StatelessWidget {
-  const _FreeGapDot();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 16,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 4,
-            height: 4,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.calendarListAccentSky.withValues(alpha: 0.28),
-            ),
-          ),
-          Container(
-            width: 0.5,
-            height: 14,
-            color: AppColors.calendarListBorderNormal.withValues(alpha: 0.22),
           ),
         ],
       ),

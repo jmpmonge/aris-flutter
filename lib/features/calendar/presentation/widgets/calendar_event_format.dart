@@ -65,6 +65,8 @@ abstract final class CalendarEventFormat {
     return start;
   }
 
+  static String gapDuration(int minutes) => _durationText(minutes);
+
   static String _durationText(int minutes) {
     if (minutes < 60) return '$minutes min';
     final h = minutes ~/ 60;
