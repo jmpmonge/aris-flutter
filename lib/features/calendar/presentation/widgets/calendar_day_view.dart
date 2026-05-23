@@ -494,15 +494,13 @@ class _DayEventTimeLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: SizedBox(
-        width: AppSpacing.calendarTimeColumnWidth,
-        child: Padding(
-          padding: const EdgeInsets.only(
-            top: AppSpacing.calendarDayTimeColumnTop,
-          ),
-          child: Text(label, style: _style),
+    return SizedBox(
+      width: AppSpacing.calendarTimeColumnWidth,
+      child: Padding(
+        padding: const EdgeInsets.only(
+          top: AppSpacing.calendarDayTimeColumnTop,
         ),
+        child: Text(label, style: _style),
       ),
     );
   }
@@ -537,9 +535,7 @@ class _TimelineEventRow extends StatelessWidget {
           key: ValueKey('day-time-${event.id}'),
           label: timeLabel,
         ),
-        RepaintBoundary(
-          child: _TimelineDot(key: dotKey, filled: true),
-        ),
+        _TimelineDot(key: dotKey, filled: true),
         Expanded(
           child: ListenableBuilder(
             listenable: expandedListenable,
