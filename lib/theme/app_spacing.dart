@@ -73,21 +73,21 @@ abstract final class AppSpacing {
   /// Fecha fija → bloque saludo «Hola, …» (v0.49.31: compacto).
   static const double homeFixedDateToEphemeralGap = 0;
 
-  /// Altura reservada del bloque saludo+clima expandido (v0.49.48).
-  /// Debe coincidir con [_ExpandedGreetingRow] para evitar saltos en HOY.
-  static const double homeGreetingSlotHeight = 40;
+  /// Altura reservada del bloque saludo expandido (v0.49.53).
+  /// Solo texto de saludo; el clima se posiciona en Stack aparte.
+  static const double homeGreetingSlotHeight = 38;
 
-  /// Respiro bajo cabecera viva con saludo visible (v0.49.51).
-  static const double homeLiveHeaderBottomWithGreeting = 10;
+  /// Respiro bajo cabecera viva con saludo visible (v0.49.53).
+  static const double homeLiveHeaderBottomWithGreeting = 7;
 
-  /// Respiro bajo cabecera compacta sin saludo (v0.49.51).
-  static const double homeLiveHeaderBottomCompact = 14;
+  /// Respiro bajo cabecera compacta sin saludo (v0.49.53).
+  static const double homeLiveHeaderBottomCompact = 9;
 
-  /// ListView → HOY mientras el saludo ocupa cabecera (v0.49.51).
-  static const double homeGreetingToHoyGapVisible = 8;
+  /// ListView → HOY mientras el saludo ocupa cabecera (v0.49.53).
+  static const double homeGreetingToHoyGapVisible = 6;
 
-  /// Fecha fija → HOY cuando el saludo temporal está oculto (v0.49.51).
-  static const double homeFixedDateToHoyWhenGreetingHidden = 10;
+  /// Fecha fija → HOY cuando el saludo temporal está oculto (v0.49.53).
+  static const double homeFixedDateToHoyWhenGreetingHidden = 8;
 
   /// Inset izquierdo del texto de fecha fija (margen pantalla + sangría; v0.48.37).
   static const double homeFixedDateLeftInsetH =
