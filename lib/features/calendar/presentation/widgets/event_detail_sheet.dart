@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/models/event_model.dart';
 import '../../../../core/repositories/repositories.dart';
+import '../../../../shared/widgets/manual_editor_time_meta_chip.dart';
+import '../../../../shared/widgets/section_accent_time_wheel_picker.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import '../calendar_event_sheet.dart';
 import 'calendar_event_format.dart';
-import 'calendar_event_icon.dart';
 
 void _eventSheetSnack(
   BuildContext context, {
@@ -47,7 +48,7 @@ class EventDetailSheetResult {
   bool get isDeleted => deletedEventId != null;
 }
 
-/// Ficha editable de evento — bottom sheet (v0.49.66).
+/// Ficha editable compacta de evento — bottom sheet (v0.49.67).
 abstract final class EventDetailSheet {
   EventDetailSheet._();
 
@@ -91,6 +92,11 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
   int? _reminderMinutes;
   bool _saving = false;
 
+  static const _monthsShort = <String>[
+    'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+    'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+  ];
+
   bool get _usesBackend =>
       calendarShouldShowBackendActions(widget.event);
 
@@ -104,9 +110,6 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
     _selectedDate = DateTime(e.start.year, e.start.month, e.start.day);
     _selectedTime = TimeOfDay(hour: e.start.hour, minute: e.start.minute);
     _reminderMinutes = e.reminderMinutesBefore;
-    for (final c in [_titleCtrl, _locationCtrl, _notesCtrl]) {
-      c.addListener(() => setState(() {}));
-    }
   }
 
   @override
@@ -117,36 +120,137 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
     super.dispose();
   }
 
-  String get _previewTitle =>
-      _titleCtrl.text.trim().isEmpty ? widget.event.title : _titleCtrl.text.trim();
-
   String get _previewTime {
     final h = _selectedTime.hour.toString().padLeft(2, '0');
     final m = _selectedTime.minute.toString().padLeft(2, '0');
     return '$h:$m';
   }
 
-  String? get _previewLocation {
-    final loc = _locationCtrl.text.trim();
-    return loc.isEmpty ? null : loc;
-  }
+  String _dateLabel(DateTime d) => '${d.day} ${_monthsShort[d.month - 1]}';
 
   Future<void> _pickDate() async {
+    final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime(_selectedDate.year - 2),
-      lastDate: DateTime(_selectedDate.year + 3),
+      firstDate: now.subtract(const Duration(days: 365 * 2)),
+      lastDate: now.add(const Duration(days: 365 * 3)),
     );
     if (picked != null) setState(() => _selectedDate = picked);
   }
 
   Future<void> _pickTime() async {
-    final picked = await showTimePicker(
+    final picked = await SectionAccentTimeWheelPicker.show(
       context: context,
+      accent: AppColors.calendarListAccent,
       initialTime: _selectedTime,
     );
     if (picked != null) setState(() => _selectedTime = picked);
+  }
+
+  Future<void> _pickReminder() async {
+    final idx = await showModalBottomSheet<int>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.calendarListCardFill,
+      builder: (ctx) {
+        final options = CalendarEventFormat.reminderChipOptions;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.xs,
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                ),
+                child: Text(
+                  'Alarma',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.calendarListTextPrimary,
+                  ),
+                ),
+              ),
+              for (var i = 0; i < options.length; i++)
+                ListTile(
+                  title: Text(
+                    options[i].value,
+                    style: const TextStyle(
+                      color: AppColors.calendarListTextPrimary,
+                    ),
+                  ),
+                  trailing: _reminderMinutes == options[i].key
+                      ? Icon(
+                          Icons.check_rounded,
+                          color: AppColors.calendarListAccent,
+                        )
+                      : null,
+                  onTap: () => Navigator.pop(ctx, i),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+    if (!mounted || idx == null) return;
+    setState(
+      () => _reminderMinutes =
+          CalendarEventFormat.reminderChipOptions[idx].key,
+    );
+  }
+
+  Widget _metaChip({
+    required IconData icon,
+    required bool active,
+    required VoidCallback onTap,
+    String? valueLabel,
+    bool iconOnly = false,
+  }) {
+    final tt = Theme.of(context).textTheme;
+    final color = active
+        ? AppColors.calendarListAccent
+        : AppColors.calendarListTextMuted.withValues(alpha: 0.55);
+    final iconSize = iconOnly ? 18.0 : 17.0;
+
+    return Material(
+      color: active
+          ? AppColors.calendarListAccent.withValues(alpha: 0.14)
+          : AppColors.calendarListElevated,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: _saving ? null : onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: iconOnly ? 8 : 10,
+            vertical: 6,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: iconSize, color: color),
+              if (!iconOnly && valueLabel != null && valueLabel.isNotEmpty) ...[
+                const SizedBox(width: 5),
+                Text(
+                  valueLabel,
+                  style: tt.labelSmall?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.1,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   EventModel _buildUpdatedEvent() {
@@ -202,7 +306,11 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
         widget.event.id,
         title: title,
         dateText: CalendarEventFormat.shortDate(
-          EventModel(id: widget.event.id, start: _buildUpdatedEvent().start, title: title),
+          EventModel(
+            id: widget.event.id,
+            start: _buildUpdatedEvent().start,
+            title: title,
+          ),
         ),
         timeText: _previewTime,
         location: _locationCtrl.text.trim(),
@@ -225,6 +333,9 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
   }
 
   Future<void> _confirmDelete() async {
+    final title = _titleCtrl.text.trim().isEmpty
+        ? widget.event.title
+        : _titleCtrl.text.trim();
     final scheme = Theme.of(context).colorScheme;
     final yes = await showDialog<bool>(
       context: context,
@@ -235,7 +346,7 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
           style: TextStyle(color: AppColors.calendarListTextPrimary),
         ),
         content: Text(
-          'Se eliminará «$_previewTitle».',
+          'Se eliminará «$title».',
           style: const TextStyle(color: AppColors.calendarListTextSecondary),
         ),
         actions: [
@@ -269,336 +380,243 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final icon = CalendarEventIconResolver.resolve(widget.event);
-    final dateLabel = CalendarEventFormat.shortDate(
-      EventModel(
-        id: widget.event.id,
-        start: _selectedDate,
-        title: _previewTitle,
+  InputDecoration _inlineDecoration(String hint, TextStyle? hintStyle) {
+    return InputDecoration(
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      filled: false,
+      hintText: hint,
+      hintStyle: hintStyle,
+      contentPadding: EdgeInsets.zero,
+      isDense: true,
+      isCollapsed: true,
+    );
+  }
+
+  Widget _textSurface({required Widget child, bool titleField = false}) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.calendarListElevated,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        border: Border.all(
+          color: AppColors.calendarListBorderNormal.withValues(alpha: 0.55),
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: titleField ? 10 : AppSpacing.sm + 2,
+        ),
+        child: child,
       ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final reminderActive =
+        _reminderMinutes != null && _reminderMinutes! > 0;
+    final reminderChipLabel =
+        CalendarEventFormat.reminderChipLabel(_reminderMinutes);
+
+    final titleStyle = tt.titleMedium?.copyWith(
+      fontWeight: FontWeight.w600,
+      height: 1.2,
+      fontSize: 17,
+      color: AppColors.calendarListTextPrimary,
+    );
+    final bodyStyle = tt.bodyMedium?.copyWith(
+      height: 1.4,
+      color: AppColors.calendarListTextPrimary,
+    );
+    final titleHint = titleStyle?.copyWith(
+      color: AppColors.calendarListTextMuted.withValues(alpha: 0.65),
+      fontWeight: FontWeight.w600,
+    );
+    final bodyHint = bodyStyle?.copyWith(
+      color: AppColors.calendarListTextMuted.withValues(alpha: 0.55),
+    );
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        0,
-        AppSpacing.lg,
-        AppSpacing.lg + bottomInset,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.xs,
+              AppSpacing.sm,
+              0,
+            ),
+            child: Row(
               children: [
                 const Expanded(
                   child: Text(
                     'Editar evento',
                     style: TextStyle(
-                      fontSize: 17,
+                      fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: AppColors.calendarListTextPrimary,
                     ),
                   ),
                 ),
-                TextButton(
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 22,
+                    color: AppColors.calendarListTextMuted,
+                  ),
+                  tooltip: 'Cerrar',
                   onPressed: _saving ? null : () => Navigator.pop(context),
-                  child: const Text('Cancelar'),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.sm),
-            _PreviewHeader(
-              icon: icon,
-              title: _previewTitle,
-              time: _previewTime,
-              location: _previewLocation,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            _EditField(
-              label: 'Título',
-              controller: _titleCtrl,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _EditField(
-              label: 'Lugar',
-              controller: _locationCtrl,
-              hint: 'Añadir lugar...',
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _EditPickerField(
-              label: 'Fecha',
-              value: dateLabel,
-              onTap: _pickDate,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _EditPickerField(
-              label: 'Hora',
-              value: _previewTime,
-              onTap: _pickTime,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _ReminderField(
-              value: _reminderMinutes,
-              onChanged: (v) => setState(() => _reminderMinutes = v),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _EditField(
-              label: 'Observaciones',
-              controller: _notesCtrl,
-              hint: 'Añadir observaciones...',
-              maxLines: 4,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            FilledButton(
-              onPressed: _saving ? null : _save,
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.calendarListAccent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+          ),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.sm,
               ),
-              child: _saving
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text(
-                      'Guardar cambios',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _textSurface(
+                    titleField: true,
+                    child: TextField(
+                      controller: _titleCtrl,
+                      style: titleStyle,
+                      enabled: !_saving,
+                      maxLines: 1,
+                      decoration: _inlineDecoration(
+                        'Título del evento',
+                        titleHint,
                       ),
                     ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Row(
+                    children: [
+                      _metaChip(
+                        icon: Icons.calendar_today_outlined,
+                        active: true,
+                        onTap: _pickDate,
+                        valueLabel: _dateLabel(_selectedDate),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      ManualEditorTimeMetaChip(
+                        accent: AppColors.calendarListAccent,
+                        active: true,
+                        onTap: _pickTime,
+                        enabled: !_saving,
+                        valueLabel: _previewTime,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      _metaChip(
+                        icon: reminderActive
+                            ? Icons.notifications_active_outlined
+                            : Icons.notifications_outlined,
+                        active: reminderActive,
+                        onTap: _pickReminder,
+                        valueLabel: reminderChipLabel,
+                        iconOnly: !reminderActive,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _textSurface(
+                    child: TextField(
+                      controller: _locationCtrl,
+                      style: bodyStyle,
+                      enabled: !_saving,
+                      maxLines: 1,
+                      decoration: _inlineDecoration('Lugar', bodyHint),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _textSurface(
+                    child: TextField(
+                      controller: _notesCtrl,
+                      style: bodyStyle,
+                      enabled: !_saving,
+                      minLines: 3,
+                      maxLines: 5,
+                      textAlignVertical: TextAlignVertical.top,
+                      keyboardType: TextInputType.multiline,
+                      decoration: _inlineDecoration(
+                        'Añadir observaciones...',
+                        bodyHint,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: AppSpacing.xl),
-            TextButton(
-              onPressed: _saving ? null : _confirmDelete,
-              style: TextButton.styleFrom(
-                foregroundColor:
-                    AppColors.calendarListDestructive.withValues(alpha: 0.9),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              child: const Text(
-                'Eliminar evento',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.xs,
+              AppSpacing.lg,
+              AppSpacing.lg,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PreviewHeader extends StatelessWidget {
-  const _PreviewHeader({
-    required this.icon,
-    required this.title,
-    required this.time,
-    this.location,
-  });
-
-  final IconData icon;
-  final String title;
-  final String time;
-  final String? location;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.calendarListElevated,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.calendarListBorderNormal),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Icon(icon, size: 28, color: AppColors.calendarListAccent),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  height: 1.22,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.calendarListTextPrimary,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FilledButton(
+                  onPressed: _saving ? null : _save,
+                  style: FilledButton.styleFrom(
+                    elevation: 0,
+                    backgroundColor: AppColors.calendarListAccent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    ),
+                  ),
+                  child: _saving
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text(
+                          'Guardar cambios',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                time,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.calendarListAccentSky,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (location != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  location!,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.calendarListTextSecondary,
+                const SizedBox(height: AppSpacing.md),
+                TextButton(
+                  onPressed: _saving ? null : _confirmDelete,
+                  style: TextButton.styleFrom(
+                    foregroundColor:
+                        AppColors.calendarListDestructive.withValues(alpha: 0.9),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text(
+                    'Eliminar evento',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
-            ],
+            ),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _EditField extends StatelessWidget {
-  const _EditField({
-    required this.label,
-    required this.controller,
-    this.hint,
-    this.maxLines = 1,
-  });
-
-  final String label;
-  final TextEditingController controller;
-  final String? hint;
-  final int maxLines;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      style: const TextStyle(
-        fontSize: 14,
-        color: AppColors.calendarListTextPrimary,
-      ),
-      decoration: _fieldDecoration(label, hint: hint),
-    );
-  }
-}
-
-class _EditPickerField extends StatelessWidget {
-  const _EditPickerField({
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
-
-  final String label;
-  final String value;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: InputDecorator(
-        decoration: _fieldDecoration(label).copyWith(
-          suffixIcon: Icon(
-            Icons.chevron_right_rounded,
-            color: AppColors.calendarListTextMuted,
-          ),
-        ),
-        child: Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            color: AppColors.calendarListTextPrimary,
-          ),
-        ),
+        ],
       ),
     );
   }
-}
-
-class _ReminderField extends StatelessWidget {
-  const _ReminderField({
-    required this.value,
-    required this.onChanged,
-  });
-
-  final int? value;
-  final ValueChanged<int?> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return InputDecorator(
-      decoration: _fieldDecoration('Aviso'),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int?>(
-          isExpanded: true,
-          value: _matchedReminderValue(value),
-          dropdownColor: AppColors.calendarListElevated,
-          style: const TextStyle(
-            fontSize: 14,
-            color: AppColors.calendarListTextPrimary,
-          ),
-          items: [
-            for (final o in CalendarEventFormat.reminderEditOptions)
-              DropdownMenuItem<int?>(
-                value: o.key,
-                child: Text(o.value),
-              ),
-          ],
-          onChanged: onChanged,
-        ),
-      ),
-    );
-  }
-
-  int? _matchedReminderValue(int? minutes) {
-    for (final o in CalendarEventFormat.reminderEditOptions) {
-      if (o.key == minutes) return minutes;
-    }
-    return null;
-  }
-}
-
-InputDecoration _fieldDecoration(String label, {String? hint}) {
-  return InputDecoration(
-    labelText: label,
-    hintText: hint,
-    filled: true,
-    fillColor: AppColors.calendarListElevated,
-    labelStyle: const TextStyle(
-      color: AppColors.calendarListTextMuted,
-      fontSize: 13,
-      fontWeight: FontWeight.w500,
-    ),
-    hintStyle: TextStyle(
-      color: AppColors.calendarListTextMuted.withValues(alpha: 0.75),
-      fontSize: 14,
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: AppColors.calendarListBorderNormal),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: AppColors.calendarListBorderSelected),
-    ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-  );
 }

@@ -79,22 +79,39 @@ abstract final class CalendarEventFormat {
     return 'Aviso $minutesBefore min antes';
   }
 
-  /// Opciones del selector de aviso en edición (v0.49.66).
-  static const List<MapEntry<int?, String>> reminderEditOptions = [
+  /// Opciones cortas para chip y selector de alarma (v0.49.67).
+  static const List<MapEntry<int?, String>> reminderChipOptions = [
     MapEntry(null, 'Sin aviso'),
-    MapEntry(5, '5 min antes'),
-    MapEntry(10, '10 min antes'),
-    MapEntry(15, '15 min antes'),
-    MapEntry(30, '30 min antes'),
-    MapEntry(60, '1 h antes'),
-    MapEntry(1440, '1 día antes'),
+    MapEntry(5, '5 min'),
+    MapEntry(10, '10 min'),
+    MapEntry(15, '15 min'),
+    MapEntry(30, '30 min'),
+    MapEntry(60, '1 h'),
+    MapEntry(1440, '1 día'),
   ];
 
   static String reminderEditLabel(int? minutesBefore) {
-    for (final o in reminderEditOptions) {
+    for (final o in reminderChipOptions) {
       if (o.key == minutesBefore) return o.value;
     }
-    return reminderLabel(minutesBefore) ?? 'Sin aviso';
+    return reminderChipLabel(minutesBefore) ?? 'Sin aviso';
+  }
+
+  /// Etiqueta corta para chip de alarma en editor (v0.49.67).
+  static String? reminderChipLabel(int? minutesBefore) {
+    if (minutesBefore == null || minutesBefore <= 0) return null;
+    for (final o in reminderChipOptions) {
+      if (o.key == minutesBefore) return o.value;
+    }
+    if (minutesBefore >= 1440 && minutesBefore % 1440 == 0) {
+      final days = minutesBefore ~/ 1440;
+      return days == 1 ? '1 día' : '$days días';
+    }
+    if (minutesBefore >= 60 && minutesBefore % 60 == 0) {
+      final hours = minutesBefore ~/ 60;
+      return hours == 1 ? '1 h' : '$hours h';
+    }
+    return '$minutesBefore min';
   }
 
   static String timeHm(DateTime dt) {
