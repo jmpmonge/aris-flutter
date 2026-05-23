@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../theme/app_colors.dart';
+import '../../../../theme/aris_list_palette.dart';
 import 'note_attach_toolbar_icon.dart';
 import 'note_checklist_toolbar_icon.dart';
 import 'note_scan_toolbar_icon.dart';
@@ -27,11 +27,12 @@ class NoteWideEditorToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final list = context.arisList;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.noteWideSurface,
+      decoration: BoxDecoration(
+        color: list.elevated,
         border: Border(
-          top: BorderSide(color: AppColors.noteWideBorder, width: 1),
+          top: BorderSide(color: list.borderNormal, width: 1),
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -45,30 +46,28 @@ class NoteWideEditorToolbar extends StatelessWidget {
               onPressed: onChecklist,
               active: checklistActive,
               child: NoteChecklistToolbarIcon(
-                color: checklistActive
-                    ? AppColors.noteArisSky
-                    : AppColors.noteWideTextMuted,
+                color: checklistActive ? list.accentSky : list.textMuted,
               ),
             ),
             _ToolIcon(
               tooltip: 'Adjuntar',
               onPressed: onAttach,
               child: NoteAttachToolbarIcon(
-                color: AppColors.noteWideTextMuted,
+                color: list.textMuted,
               ),
             ),
             _ToolIcon(
               tooltip: 'Tabla',
               onPressed: onTable,
               child: NoteTableToolbarIcon(
-                color: AppColors.noteWideTextMuted,
+                color: list.textMuted,
               ),
             ),
             _ToolIcon(
               tooltip: 'Escanear',
               onPressed: onScan,
               child: NoteScanToolbarIcon(
-                color: AppColors.noteWideTextMuted,
+                color: list.textMuted,
               ),
             ),
             _ToolIcon(
@@ -100,8 +99,8 @@ class _ToolIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        active ? AppColors.noteArisSky : AppColors.noteWideTextMuted;
+    final list = context.arisList;
+    final color = active ? list.accentSky : list.textMuted;
     return IconButton(
       onPressed: onPressed,
       tooltip: tooltip,

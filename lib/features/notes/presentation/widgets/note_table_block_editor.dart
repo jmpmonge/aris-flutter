@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../theme/app_colors.dart';
+import '../../../../theme/aris_list_palette.dart';
 import '../../../../theme/app_spacing.dart';
 import 'note_body_format.dart';
 
@@ -21,30 +21,6 @@ class NoteTableBlockEditor extends StatelessWidget {
   final VoidCallback? onTapBelow;
   final VoidCallback onAddRow;
 
-  static const TextStyle _cellStyle = TextStyle(
-    fontSize: 17,
-    height: 1.26,
-    leadingDistribution: TextLeadingDistribution.even,
-    fontWeight: FontWeight.w400,
-    color: AppColors.noteWideTextPrimary,
-  );
-
-  static final InputDecoration _cellDecoration = InputDecoration(
-    border: InputBorder.none,
-    enabledBorder: InputBorder.none,
-    focusedBorder: InputBorder.none,
-    disabledBorder: InputBorder.none,
-    filled: false,
-    fillColor: Colors.transparent,
-    isCollapsed: true,
-    isDense: true,
-    contentPadding: EdgeInsets.symmetric(
-      horizontal: 10,
-      vertical: AppSpacing.noteBodyTableCellPadV,
-    ),
-    hintText: null,
-  );
-
   (int, int)? _nextCell(int row, int col) {
     if (col < state.columns - 1) return (row, col + 1);
     if (row < state.rowCount - 1) return (row + 1, 0);
@@ -55,7 +31,6 @@ class NoteTableBlockEditor extends StatelessWidget {
     final text = state.rowControllers[row][col].text.trim();
     final isNewEmptyRow = state.newEmptyRowIndex == row;
 
-    // Salida de tabla: solo fila nueva + primera celda + vacía.
     if (text.isEmpty && col == 0 && isNewEmptyRow) {
       state.newEmptyRowIndex = null;
       onExitBelow();
@@ -72,7 +47,6 @@ class NoteTableBlockEditor extends StatelessWidget {
       return;
     }
 
-    // Última celda de la fila (última columna): crear fila si hay contenido en la fila.
     if (text.isNotEmpty || state.rowHasContent(row)) {
       onAddRow();
       return;
@@ -83,16 +57,24 @@ class NoteTableBlockEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final border = BorderSide(color: AppColors.noteWideBorder, width: 1);
+    final list = context.arisList;
+    final cellStyle = TextStyle(
+      fontSize: 17,
+      height: 1.26,
+      leadingDistribution: TextLeadingDistribution.even,
+      fontWeight: FontWeight.w400,
+      color: list.textPrimary,
+    );
+    final border = BorderSide(color: list.borderNormal, width: 1);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         DecoratedBox(
           decoration: BoxDecoration(
-            color: AppColors.noteWideSurface.withValues(alpha: 0.35),
+            color: list.elevated.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.noteWideBorder),
+            border: Border.all(color: list.borderNormal),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(9),
@@ -115,14 +97,28 @@ class NoteTableBlockEditor extends StatelessWidget {
                           controller: state.rowControllers[r][c],
                           focusNode: state.focusNodes[r][c],
                           enabled: enabled,
-                          style: _cellStyle,
+                          style: cellStyle,
                           maxLines: 1,
                           scrollPadding: EdgeInsets.zero,
                           keyboardType: TextInputType.text,
                           textInputAction: TextInputAction.next,
                           onSubmitted: (_) => _advanceFromCell(r, c),
                           onEditingComplete: () => _advanceFromCell(r, c),
-                          decoration: _cellDecoration,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
+                            filled: false,
+                            fillColor: Colors.transparent,
+                            isCollapsed: true,
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: AppSpacing.noteBodyTableCellPadV,
+                            ),
+                            hintText: null,
+                          ),
                         ),
                     ],
                   ),
@@ -160,7 +156,6 @@ final class NoteTableBlockState {
   final List<List<TextEditingController>> rowControllers = [];
   final List<List<FocusNode>> focusNodes = [];
 
-  /// Índice de fila recién creada (`isNewEmptyRow`): salida solo en (row, 0) vacía.
   int? newEmptyRowIndex;
 
   int get rowCount => rowControllers.length;
@@ -200,10 +195,8 @@ final class NoteTableBlockState {
     return rowControllers[row].any((c) => c.text.trim().isNotEmpty);
   }
 
-  bool get isLastRowEmpty =>
-      rowCount > 0 && isRowEmpty(rowCount - 1);
+  bool get isLastRowEmpty => rowCount > 0 && isRowEmpty(rowCount - 1);
 
-  /// Quita la última fila si está vacía (p. ej. fila creada y abandonada).
   void removeLastRowIfEmpty() {
     if (rowCount <= 1 || !isLastRowEmpty) return;
     newEmptyRowIndex = null;

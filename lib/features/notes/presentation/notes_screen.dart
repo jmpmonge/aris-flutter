@@ -6,7 +6,6 @@ import '../../../core/models/note_model.dart';
 import '../../../core/repositories/repositories.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/home_aris_reply_card.dart';
-import '../../../theme/app_colors.dart';
 import '../../../theme/aris_list_palette.dart';
 import '../../../theme/app_spacing.dart';
 import 'manual_note_canvas_sheet.dart';
@@ -142,10 +141,12 @@ class _NotesScreenState extends State<NotesScreen> {
     final text = Theme.of(context).textTheme;
     final recent = Repositories.note.getRecentNotes();
 
-    return SafeArea(
-      top: true,
-      bottom: false,
-      child: Column(
+    return ColoredBox(
+      color: context.arisList.canvas,
+      child: SafeArea(
+        top: true,
+        bottom: false,
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
@@ -199,7 +200,7 @@ class _NotesScreenState extends State<NotesScreen> {
                                   icon: Icon(
                                     Icons.more_horiz_rounded,
                                     size: 20,
-                                    color: AppColors.noteWideTextMuted,
+                                    color: context.arisList.textMuted,
                                   ),
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(
@@ -233,6 +234,7 @@ class _NotesScreenState extends State<NotesScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }

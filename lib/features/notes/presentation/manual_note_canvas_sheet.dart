@@ -6,6 +6,7 @@ import '../../../core/models/note_model.dart';
 import '../../../core/repositories/repositories.dart';
 import '../../../core/services/local_action_service.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/aris_list_palette.dart';
 import '../../../theme/app_spacing.dart';
 import 'widgets/note_body_block_spacing.dart';
 import 'widgets/note_body_format.dart';
@@ -459,15 +460,15 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
     _attachEditListeners();
   }
 
-  InputDecoration _fieldDecoration(String hint) {
+  InputDecoration _fieldDecoration(BuildContext context, String hint) {
     return InputDecoration(
       border: InputBorder.none,
       enabledBorder: InputBorder.none,
       focusedBorder: InputBorder.none,
       filled: false,
       hintText: hint,
-      hintStyle: const TextStyle(
-        color: AppColors.noteWideTextMuted,
+      hintStyle: TextStyle(
+        color: context.arisList.textMuted,
         fontWeight: FontWeight.w500,
       ),
       contentPadding: EdgeInsets.zero,
@@ -478,13 +479,14 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   void _briefSnack(String message) {
     final messenger = ScaffoldMessenger.maybeOf(context);
     if (messenger == null) return;
+    final list = context.arisList;
     messenger.showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.noteWideSurface,
+        backgroundColor: list.elevated,
         content: Text(
           message,
-          style: const TextStyle(color: AppColors.noteWideTextSecondary),
+          style: TextStyle(color: list.textSecondary),
         ),
       ),
     );
@@ -769,9 +771,10 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   }
 
   void _showArisActions() {
+    final list = context.arisList;
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.noteWideSurface,
+      backgroundColor: list.elevated,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -783,16 +786,16 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.auto_awesome_outlined,
-                    color: AppColors.noteArisBlue,
+                    color: list.accent,
                     size: 22,
                   ),
                   const SizedBox(width: 10),
                   Text(
                     'Preguntar a Aris',
                     style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                          color: AppColors.noteWideTextPrimary,
+                          color: list.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                   ),
@@ -810,7 +813,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
               ListTile(
                 title: Text(
                   label,
-                  style: const TextStyle(color: AppColors.noteWideTextSecondary),
+                  style: TextStyle(color: list.textSecondary),
                 ),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -825,9 +828,10 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
   }
 
   void _showMoreMenu() {
+    final list = context.arisList;
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.noteWideSurface,
+      backgroundColor: list.elevated,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -919,12 +923,16 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
       Navigator.of(context).pop();
       return;
     }
+    final list = context.arisList;
     final yes = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.noteWideSurface,
-        title: const Text('Eliminar nota'),
-        content: const Text('¿Eliminar esta nota?'),
+        backgroundColor: list.elevated,
+        title: Text('Eliminar nota', style: TextStyle(color: list.textPrimary)),
+        content: Text(
+          '¿Eliminar esta nota?',
+          style: TextStyle(color: list.textSecondary),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -949,12 +957,13 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    const titleStyle = TextStyle(
+    final list = context.arisList;
+    final titleStyle = TextStyle(
       fontSize: 28,
       height: 1.2,
       fontWeight: FontWeight.w700,
       letterSpacing: -0.4,
-      color: AppColors.noteWideTextPrimary,
+      color: list.textPrimary,
     );
     return PopScope(
       canPop: false,
@@ -962,7 +971,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
         if (!didPop) unawaited(_onBack());
       },
       child: Scaffold(
-        backgroundColor: AppColors.noteWideCanvas,
+        backgroundColor: list.canvas,
         body: SafeArea(
           bottom: false,
           child: Column(
@@ -998,7 +1007,7 @@ class _NoteWideEditorPageState extends State<_NoteWideEditorPage> {
                         textInputAction: TextInputAction.next,
                         onSubmitted: (_) =>
                             _firstProseBlock?.focusNode.requestFocus(),
-                        decoration: _fieldDecoration('Título'),
+                        decoration: _fieldDecoration(context, 'Título'),
                       ),
                       const SizedBox(
                         height: AppSpacing.noteBodyTitleToFirstBlock,
@@ -1046,20 +1055,21 @@ class _NoteWideTopBar extends StatelessWidget {
   final VoidCallback onMore;
   final VoidCallback onOk;
 
-  static const Color _disabledIcon = Color(0x66A6B0BE);
-
   @override
   Widget build(BuildContext context) {
+    final list = context.arisList;
+    final disabledIcon = list.textMuted.withValues(alpha: 0.45);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
       child: Row(
         children: [
           IconButton(
             onPressed: saving ? null : onBack,
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_ios_new_rounded,
               size: 20,
-              color: AppColors.noteWideTextSecondary,
+              color: list.textSecondary,
             ),
             tooltip: 'Volver',
           ),
@@ -1069,9 +1079,7 @@ class _NoteWideTopBar extends StatelessWidget {
             icon: Icon(
               Icons.undo_rounded,
               size: 22,
-              color: canUndo && !saving
-                  ? AppColors.noteArisBlue
-                  : _disabledIcon,
+              color: canUndo && !saving ? list.accent : disabledIcon,
             ),
             tooltip: 'Deshacer',
           ),
@@ -1080,25 +1088,23 @@ class _NoteWideTopBar extends StatelessWidget {
             icon: Icon(
               Icons.redo_rounded,
               size: 22,
-              color: canRedo && !saving
-                  ? AppColors.noteArisBlue
-                  : _disabledIcon,
+              color: canRedo && !saving ? list.accent : disabledIcon,
             ),
             tooltip: 'Rehacer',
           ),
           IconButton(
             onPressed: saving ? null : onMore,
-            icon: const Icon(
+            icon: Icon(
               Icons.more_horiz_rounded,
               size: 24,
-              color: AppColors.noteWideTextSecondary,
+              color: list.textSecondary,
             ),
             tooltip: 'Más opciones',
           ),
           TextButton(
             onPressed: saving ? null : onOk,
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.noteArisBlue,
+              foregroundColor: list.accent,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               minimumSize: const Size(44, 40),
             ),
@@ -1107,7 +1113,7 @@ class _NoteWideTopBar extends StatelessWidget {
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
-                color: saving ? _disabledIcon : AppColors.noteArisBlue,
+                color: saving ? disabledIcon : list.accent,
               ),
             ),
           ),

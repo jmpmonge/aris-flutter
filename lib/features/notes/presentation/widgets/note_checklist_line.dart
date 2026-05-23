@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../theme/app_colors.dart';
+import '../../../../theme/aris_list_palette.dart';
 import 'note_body_format.dart';
 import 'note_prose_block_field.dart';
 
@@ -30,14 +30,13 @@ class NoteChecklistLine extends StatelessWidget {
   static const double _circleTopPad = 2;
   static const double _gap = 14;
 
-  static final TextStyle _textStyle = NoteProseBodyTypography.bodyStyle;
-
   @override
   Widget build(BuildContext context) {
-    final textStyle = _textStyle.copyWith(
-      color: done ? AppColors.noteWideTextMuted : AppColors.noteWideTextPrimary,
+    final list = context.arisList;
+    final textStyle = NoteProseBodyTypography.bodyStyleFor(context).copyWith(
+      color: done ? list.textMuted : list.textPrimary,
       decoration: done ? TextDecoration.lineThrough : null,
-      decorationColor: AppColors.noteWideTextMuted,
+      decorationColor: list.textMuted,
     );
 
     return DefaultTextHeightBehavior(
@@ -63,9 +62,7 @@ class NoteChecklistLine extends StatelessWidget {
                         ? Icons.check_circle_rounded
                         : Icons.circle_outlined,
                     size: _circleSize,
-                    color: done
-                        ? AppColors.noteArisBlue
-                        : AppColors.noteWideTextMuted,
+                    color: done ? list.accent : list.textMuted,
                   ),
                 ),
               ),
