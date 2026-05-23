@@ -9,17 +9,22 @@ abstract final class HomeGreetingSession {
 
   static bool get hasReachedCompactMode => _compactModeReached;
 
-  static void markCompactReached() {
-    _compactModeReached = true;
-    compactModeListenable.value = true;
-  }
-
   /// Notifica cuando la cabecera pasa a modo compacto (ajuste ListView).
   static final ValueNotifier<bool> compactModeListenable = ValueNotifier(false);
+
+  /// Progreso de colapso 0→1 para sincronizar padding ListView con cabecera.
+  static final ValueNotifier<double> collapseProgress = ValueNotifier(0);
+
+  static void markCompactReached() {
+    _compactModeReached = true;
+    collapseProgress.value = 1;
+    compactModeListenable.value = true;
+  }
 
   /// Solo para pruebas o reset de sesión.
   static void resetForTesting() {
     _compactModeReached = false;
+    collapseProgress.value = 0;
     compactModeListenable.value = false;
   }
 }

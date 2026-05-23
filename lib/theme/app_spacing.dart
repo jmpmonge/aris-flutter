@@ -73,6 +73,10 @@ abstract final class AppSpacing {
   /// Fecha fija → bloque saludo «Hola, …» (v0.49.31: compacto).
   static const double homeFixedDateToEphemeralGap = 0;
 
+  /// Altura reservada del bloque saludo+clima expandido (v0.49.48).
+  /// Debe coincidir con [_ExpandedGreetingRow] para evitar saltos en HOY.
+  static const double homeGreetingSlotHeight = 40;
+
   /// Respiro bajo cabecera viva con saludo visible (v0.49.46).
   static const double homeLiveHeaderBottomWithGreeting = 4;
 

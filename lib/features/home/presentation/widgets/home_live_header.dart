@@ -15,7 +15,7 @@ const _kMockTemperature = '21°';
 const _kMockCity = 'Madrid';
 const _kWeatherRiseOffset = 36.0;
 
-/// Cabecera viva de Home: saludo temporal + clima que colapsa (v0.49.46).
+/// Cabecera viva de Home: saludo temporal + clima que colapsa (v0.49.48).
 class HomeLiveHeader extends StatefulWidget {
   const HomeLiveHeader({super.key});
 
@@ -38,7 +38,10 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
   @override
   void initState() {
     super.initState();
-    if (_startCompact) return;
+    if (_startCompact) {
+      HomeGreetingSession.collapseProgress.value = 1;
+      return;
+    }
 
     _fadeInController = AnimationController(
       vsync: this,
@@ -50,7 +53,16 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
     );
 
     _fadeInController!.forward();
+    _collapseController!.addListener(_syncCollapseProgress);
     _holdTimer = Timer(_visibleDuration, _beginCollapse);
+  }
+
+  void _syncCollapseProgress() {
+    if (_collapseController == null) return;
+    final t = Curves.easeInOutCubic
+        .transform(_collapseController!.value)
+        .clamp(0.0, 1.0);
+    HomeGreetingSession.collapseProgress.value = t;
   }
 
   void _beginCollapse() {
@@ -65,13 +77,22 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
   @override
   void dispose() {
     _holdTimer?.cancel();
+    _collapseController?.removeListener(_syncCollapseProgress);
     _fadeInController?.dispose();
     _collapseController?.dispose();
     super.dispose();
   }
 
-  double _weatherScale(double t) {
-    return lerpDouble(1.0, HomeWeatherBlock.compactScale, t)!;
+  double _headerBottomPadding(double t) {
+    return lerpDouble(
+      AppSpacing.homeLiveHeaderBottomWithGreeting,
+      AppSpacing.homeLiveHeaderBottomCompact,
+      t,
+    )!;
+  }
+
+  double _greetingSlotHeight(double t) {
+    return lerpDouble(AppSpacing.homeGreetingSlotHeight, 0, t)!;
   }
 
   @override
@@ -110,13 +131,11 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
         final t = collapse.clamp(0.0, 1.0);
         final greetingOpacity = (1 - t) * fadeIn;
         final greetingSlide = 4 * (1 - fadeIn);
-        final weatherScale = _weatherScale(t);
+        final weatherScale = lerpDouble(1.0, HomeWeatherBlock.compactScale, t)!;
+        final greetingHeight = _greetingSlotHeight(t);
 
         return _HeaderShell(
-          bottomPadding: AppSpacing.homeLiveHeaderBottomWithGreeting +
-              (AppSpacing.homeLiveHeaderBottomCompact -
-                      AppSpacing.homeLiveHeaderBottomWithGreeting) *
-                  t,
+          bottomPadding: _headerBottomPadding(t),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
@@ -131,10 +150,9 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
                 compactProgress: t,
                 weatherScale: weatherScale,
               ),
-              ClipRect(
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  heightFactor: (1 - t).clamp(0.0, 1.0),
+              SizedBox(
+                height: greetingHeight,
+                child: ClipRect(
                   child: Opacity(
                     opacity: greetingOpacity.clamp(0.0, 1.0),
                     child: Transform.translate(
@@ -143,14 +161,17 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
                         padding: const EdgeInsets.only(
                           top: AppSpacing.homeFixedDateToEphemeralGap,
                         ),
-                        child: _ExpandedGreetingRow(
-                          greeting: UserService.getGreetingForNow(),
-                          temperature: _kMockTemperature,
-                          city: _kMockCity,
-                          sunColor: sunColor,
-                          scheme: scheme,
-                          isDark: isDark,
-                          weatherOpacity: (1 - t).clamp(0.0, 1.0),
+                        child: Align(
+                          alignment: Alignment.bottomLeft,
+                          child: _ExpandedGreetingRow(
+                            greeting: UserService.getGreetingForNow(),
+                            temperature: _kMockTemperature,
+                            city: _kMockCity,
+                            sunColor: sunColor,
+                            scheme: scheme,
+                            isDark: isDark,
+                            weatherOpacity: (1 - t).clamp(0.0, 1.0),
+                          ),
                         ),
                       ),
                     ),
@@ -178,7 +199,7 @@ class _HeaderShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        AppSpacing.homeFixedDateLeftInsetH,
+        AppSpacing.homePageMarginH,
         AppSpacing.homeFixedDateTopGap,
         AppSpacing.homePageMarginH,
         bottomPadding,
