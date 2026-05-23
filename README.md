@@ -2,11 +2,11 @@
 
 Proyecto **Flutter** del producto **Aris** (asistente personal / agenda, mobile-first, orientado a iOS).
 
-## Versión actual — frontend congelado
+## Versión actual
 
-**Tag:** `v0.49.78`
+**Tag:** `v0.49.85`
 
-Cliente UI cerrado en esta versión. Home, Calendario, Tareas, Notas y shell de navegación no se modificarán en esta fase salvo correcciones críticas. Detalle en `docs/versions/v0.49.78_cierre_frontend_premium_press.md`.
+Calendario Día, Semana y Mes con despliegue fiable y tarjetas coherentes. Detalle en `docs/versions/v0.49.85_calendario_semana_mes_toggle_y_subtitulo_unificado.md`.
 
 ## Desarrollo
 
@@ -28,6 +28,8 @@ flutter build web --release
 
 ## Documentación
 
+- Índice de docs: `docs/README.md`
+- Versión actual v0.49.85: `docs/versions/v0.49.85_calendario_semana_mes_toggle_y_subtitulo_unificado.md`
 - Cierre frontend v0.49.78: `docs/versions/v0.49.78_cierre_frontend_premium_press.md`
 - Roadmap y fases: `docs/roadmap_v0_22.md`
 - Diseño: `docs/design_system_v0_23.md`
