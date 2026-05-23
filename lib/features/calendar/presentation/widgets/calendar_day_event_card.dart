@@ -6,7 +6,7 @@ import '../../../../theme/app_spacing.dart';
 import 'calendar_event_format.dart';
 import 'calendar_event_icon.dart';
 
-/// Tarjeta de evento en agenda Día — colapsada o desplegada (v0.49.63).
+/// Tarjeta de evento en agenda Día — colapsada o desplegada (v0.49.64).
 class CalendarDayEventCard extends StatelessWidget {
   const CalendarDayEventCard({
     super.key,
@@ -26,7 +26,6 @@ class CalendarDayEventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = CalendarEventIconResolver.resolve(event);
-    final timeSimple = CalendarEventFormat.timeHm(event.start);
 
     return Material(
       color: Colors.transparent,
@@ -91,16 +90,6 @@ class CalendarDayEventCard extends StatelessWidget {
                       ),
                   ],
                 ),
-                SizedBox(height: AppSpacing.calendarDayEventTitleTimeGap),
-                Text(
-                  timeSimple,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    height: 1.2,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.calendarListAccentSky,
-                  ),
-                ),
                 if (isExpanded)
                   CalendarDayEventExpandedContent(
                     event: event,
@@ -115,7 +104,7 @@ class CalendarDayEventCard extends StatelessWidget {
   }
 }
 
-/// Cuerpo desplegado mínimo de evento en agenda Día (v0.49.63).
+/// Cuerpo desplegado mínimo de evento en agenda Día (v0.49.64).
 class CalendarDayEventExpandedContent extends StatelessWidget {
   const CalendarDayEventExpandedContent({
     super.key,

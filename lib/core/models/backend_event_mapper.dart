@@ -82,6 +82,9 @@ abstract final class BackendEventMapper {
         updatedAt: updatedAt,
         weekIconKey: weekIcon.isEmpty ? null : weekIcon,
         weekLabelText: weekText.isEmpty ? null : weekText,
+        reminderMinutesBefore: _intOrNull(m['reminder_minutes_before']) ??
+            _intOrNull(m['reminderMinutesBefore']) ??
+            _intOrNull(m['alert_minutes_before']),
       );
     } on Object {
       return null;

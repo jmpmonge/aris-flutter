@@ -49,8 +49,35 @@ abstract final class CalendarEventFormat {
     return desc.isNotEmpty ? desc : null;
   }
 
-  /// Aviso/reminder cuando exista en el modelo (v0.49.63).
-  static String? expandedReminder(EventModel event) => null;
+  /// Aviso/alarma para tarjeta expandida Día (v0.49.64).
+  /// Solo devuelve texto si el evento tiene minutos de aviso configurados.
+  static String? expandedReminder(EventModel event) {
+    return reminderLabel(_reminderMinutesBefore(event));
+  }
+
+  static int? _reminderMinutesBefore(EventModel event) {
+    if (event.reminderMinutesBefore != null &&
+        event.reminderMinutesBefore! > 0) {
+      return event.reminderMinutesBefore;
+    }
+    return null;
+  }
+
+  /// Etiqueta legible de aviso: «Aviso 15 min antes», «Aviso 1 h antes», etc.
+  static String? reminderLabel(int? minutesBefore) {
+    if (minutesBefore == null || minutesBefore <= 0) return null;
+    if (minutesBefore >= 1440 && minutesBefore % 1440 == 0) {
+      final days = minutesBefore ~/ 1440;
+      final unit = days == 1 ? '1 día' : '$days días';
+      return 'Aviso $unit antes';
+    }
+    if (minutesBefore >= 60 && minutesBefore % 60 == 0) {
+      final hours = minutesBefore ~/ 60;
+      final unit = hours == 1 ? '1 h' : '$hours h';
+      return 'Aviso $unit antes';
+    }
+    return 'Aviso $minutesBefore min antes';
+  }
 
   static String timeHm(DateTime dt) {
     final h = dt.hour.toString().padLeft(2, '0');

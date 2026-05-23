@@ -6,6 +6,12 @@ String? _jsonOptionalTrimmed(Object? raw) {
   return s.isEmpty ? null : s;
 }
 
+int? _jsonIntOrNull(Object? raw) {
+  if (raw == null) return null;
+  if (raw is int) return raw;
+  return int.tryParse(raw.toString().trim());
+}
+
 class EventModel {
   const EventModel({
     required this.id,
@@ -30,6 +36,7 @@ class EventModel {
     this.updatedAt,
     this.weekIconKey,
     this.weekLabelText,
+    this.reminderMinutesBefore,
   });
 
   /// `true` cuando el id es generado en cliente (**no** valido para PATCH/DELETE servidor).
@@ -69,6 +76,9 @@ class EventModel {
 
   /// Etiqueta corta para vista Semana (`texto_semana` backend, opcional).
   final String? weekLabelText;
+
+  /// Minutos de antelación del aviso/alarma (opcional; v0.49.64).
+  final int? reminderMinutesBefore;
 
   /// Eventos **`mock_*`** del CalendarService offline no llaman servidor.
   bool get supportsBackendMutation =>
@@ -127,6 +137,8 @@ class EventModel {
       'icono_semana': weekIconKey,
     if (weekLabelText != null && weekLabelText!.trim().isNotEmpty)
       'texto_semana': weekLabelText,
+    if (reminderMinutesBefore != null && reminderMinutesBefore! > 0)
+      'reminder_minutes_before': reminderMinutesBefore,
   };
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
@@ -180,6 +192,9 @@ class EventModel {
           _jsonOptionalTrimmed(json['weekIconKey']),
       weekLabelText: _jsonOptionalTrimmed(json['texto_semana']) ??
           _jsonOptionalTrimmed(json['weekLabelText']),
+      reminderMinutesBefore: _jsonIntOrNull(json['reminder_minutes_before']) ??
+          _jsonIntOrNull(json['reminderMinutesBefore']) ??
+          _jsonIntOrNull(json['alert_minutes_before']),
     );
   }
 }
