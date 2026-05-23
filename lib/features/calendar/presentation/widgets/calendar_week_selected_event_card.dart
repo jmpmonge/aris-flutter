@@ -3,126 +3,129 @@ import 'package:flutter/material.dart';
 import '../../../../core/models/event_model.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
+import 'calendar_day_event_card.dart';
 import 'calendar_event_format.dart';
 import 'calendar_event_icon.dart';
 
-/// Tarjeta inferior de detalle del evento seleccionado en Semana (v0.49.70).
+/// Tarjeta inferior de detalle del evento seleccionado en Semana (v0.49.71).
 class CalendarWeekSelectedEventCard extends StatelessWidget {
   const CalendarWeekSelectedEventCard({
     super.key,
     required this.event,
-    this.onOpenDetail,
+    required this.isExpanded,
+    required this.onToggle,
+    required this.onEdit,
   });
 
   final EventModel event;
-  final VoidCallback? onOpenDetail;
+  final bool isExpanded;
+  final VoidCallback onToggle;
+  final VoidCallback onEdit;
 
   static const double _radius = AppSpacing.radiusMd;
 
   @override
   Widget build(BuildContext context) {
     final icon = CalendarEventIconResolver.resolve(event);
-    final subtitle = CalendarEventFormat.weekSelectedCardSubtitle(event);
-    final reminder = CalendarEventFormat.expandedReminder(event);
+    final summaryLine = CalendarEventFormat.weekSelectedCardSubtitle(event);
+    final timeLine = CalendarEventFormat.weekCardTimeLine(event);
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onOpenDetail,
+        onTap: onToggle,
         borderRadius: BorderRadius.circular(_radius),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: AppColors.calendarListCardFill.withValues(alpha: 0.94),
+            color: isExpanded
+                ? AppColors.calendarListCardExpanded
+                : AppColors.calendarListCardFill.withValues(alpha: 0.94),
             borderRadius: BorderRadius.circular(_radius),
             border: Border.all(
-              color: AppColors.calendarListBorderSelected.withValues(alpha: 0.75),
+              color: isExpanded
+                  ? AppColors.calendarListBorderSelected
+                  : AppColors.calendarListBorderNormal.withValues(alpha: 0.85),
+              width: isExpanded ? 1.15 : 1,
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.sm + 2,
-              AppSpacing.sm,
-              AppSpacing.sm + 2,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.calendarDayEventCardPaddingH,
+              vertical: AppSpacing.calendarDayEventCardPaddingV,
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Icon(
-                    icon,
-                    size: 22,
-                    color: AppColors.calendarListAccent,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        event.title,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          height: 1.22,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.calendarListTextPrimary,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 1),
+                      child: Icon(
+                        icon,
+                        size: 20,
+                        color: AppColors.calendarListAccent,
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontSize: 13,
-                          height: 1.25,
-                          color: AppColors.calendarListTextSecondary,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (reminder != null) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.notifications_outlined,
-                              size: 14,
-                              color: AppColors.calendarListAccent.withValues(
-                                alpha: 0.85,
-                              ),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            event.title,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              height: 1.22,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.calendarListTextPrimary,
                             ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                reminder,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  height: 1.2,
-                                  color: AppColors.calendarListTextMuted,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            maxLines: isExpanded ? 4 : 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (!isExpanded) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              summaryLine,
+                              style: TextStyle(
+                                fontSize: 13,
+                                height: 1.25,
+                                color: AppColors.calendarListTextSecondary,
                               ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                if (onOpenDetail != null)
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    onPressed: onOpenDetail,
-                    icon: Icon(
-                      Icons.chevron_right_rounded,
-                      color: AppColors.calendarListAccent.withValues(alpha: 0.9),
+                        ],
+                      ),
                     ),
-                    tooltip: 'Ver detalle',
+                    Icon(
+                      isExpanded
+                          ? Icons.expand_less_rounded
+                          : Icons.expand_more_rounded,
+                      size: 20,
+                      color: AppColors.calendarListTextMuted,
+                    ),
+                  ],
+                ),
+                if (isExpanded) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    timeLine,
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.25,
+                      color: AppColors.calendarListTextSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  CalendarDayEventExpandedContent(
+                    event: event,
+                    onEdit: onEdit,
+                  ),
+                ],
               ],
             ),
           ),

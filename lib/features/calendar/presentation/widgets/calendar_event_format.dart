@@ -36,7 +36,7 @@ abstract final class CalendarEventFormat {
 
   /// Subtítulo compacto tarjeta inferior Semana: «09:00 · Lugar» o rango horario.
   static String weekSelectedCardSubtitle(EventModel event) {
-    final timePart = _weekCardTimePart(event);
+    final timePart = weekCardTimeLine(event);
     final loc = event.location.trim();
     if (loc.isNotEmpty) return '$timePart · $loc';
     final fallbackLoc = expandedLocation(event);
@@ -46,7 +46,7 @@ abstract final class CalendarEventFormat {
     return timePart;
   }
 
-  static String _weekCardTimePart(EventModel event) {
+  static String weekCardTimeLine(EventModel event) {
     final start = timeHm(event.start);
     final end = event.end;
     if (end != null && end.isAfter(event.start)) {
