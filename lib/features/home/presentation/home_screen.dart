@@ -36,13 +36,12 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
   final _scrollController = ScrollController();
-  final _todaySummaryKey = GlobalKey<TodaySummaryCardState>();
+  final _todaySummaryKey = GlobalKey();
   final _arisCardKey = GlobalKey();
 
   int _homeArisInstructionCount = 0;
   bool _arisSending = false;
   int _layoutTightenSteps = 0;
-  bool _homeEventExpanded = false;
   bool _arisGuardScheduled = false;
   bool _viewportSyncScheduled = false;
   double? _lastListViewportHeight;
@@ -190,8 +189,6 @@ class HomeScreenState extends State<HomeScreen> {
   /// Aprieta o afloja HOY según si Aris cabe en el viewport del scroll.
   void _guardArisVisibleInViewport() {
     if (!mounted) return;
-
-    if (_homeEventExpanded) return;
 
     final arisContext = _arisCardKey.currentContext;
     if (arisContext == null) return;
@@ -360,7 +357,6 @@ class HomeScreenState extends State<HomeScreen> {
                     top: _homeListTopPadding(),
                     bottom: HomeScrollLayout.scrollContentBottomPadding(
                       context,
-                      homeEventExpanded: _homeEventExpanded,
                     ),
                   ),
                   children: [
@@ -375,13 +371,6 @@ class HomeScreenState extends State<HomeScreen> {
                       onOpenCalendar: widget.onOpenCalendar,
                       onOpenTasks: widget.onOpenTasks,
                       onOpenNotes: widget.onOpenNotes,
-                      onHomeEventExpandChanged: (expanded) {
-                        setState(() {
-                          _homeEventExpanded = expanded;
-                          if (expanded) _layoutTightenSteps = 0;
-                        });
-                        _scheduleArisVisibilityGuard();
-                      },
                     ),
                     SizedBox(
                       height: HomeScrollLayout.sectionGapBeforeAris(context),

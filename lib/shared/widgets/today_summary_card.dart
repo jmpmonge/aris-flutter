@@ -7,7 +7,7 @@ import '../../core/repositories/repositories.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/home_card_theme.dart';
-import '../../features/calendar/presentation/widgets/event_detail_sheet.dart';
+import '../../features/home/presentation/widgets/home_event_detail_sheet.dart';
 import '../../features/home/presentation/widgets/home_event_timeline_row.dart';
 import '../navigation/app_bottom_navigation.dart';
 import 'premium_pressable.dart';
@@ -41,7 +41,6 @@ class TodaySummaryCard extends StatefulWidget {
     this.onOpenCalendar,
     this.onOpenTasks,
     this.onOpenNotes,
-    this.onHomeEventExpandChanged,
   });
 
   final List<EventModel> events;
@@ -53,8 +52,6 @@ class TodaySummaryCard extends StatefulWidget {
   final VoidCallback? onOpenCalendar;
   final VoidCallback? onOpenTasks;
   final VoidCallback? onOpenNotes;
-  /// Notifica al Home cuando se abre/cierra la ficha de un evento.
-  final ValueChanged<bool>? onHomeEventExpandChanged;
 
   @override
   State<TodaySummaryCard> createState() => TodaySummaryCardState();
@@ -62,9 +59,6 @@ class TodaySummaryCard extends StatefulWidget {
 
 class TodaySummaryCardState extends State<TodaySummaryCard> {
   String? _expandedTaskId;
-  String? _expandedHomeEventId;
-
-  bool get hasExpandedHomeEvent => _expandedHomeEventId != null;
 
   /// Copias temporales de tareas recién completadas (persisten aunque salgan de
   /// [widget.tasks] tras el PATCH).
@@ -79,25 +73,10 @@ class TodaySummaryCardState extends State<TodaySummaryCard> {
   void didUpdateWidget(covariant TodaySummaryCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     _mergeHomeTaskOrderIds();
-    final visibleIds = widget.events
-        .take(widget.maxAgendaItems.clamp(0, widget.events.length))
-        .map((e) => e.id)
-        .toSet();
-    if (_expandedHomeEventId != null && !visibleIds.contains(_expandedHomeEventId)) {
-      _expandedHomeEventId = null;
-      widget.onHomeEventExpandChanged?.call(false);
-    }
   }
 
-  void _toggleHomeEventExpand(String id) {
-    setState(() {
-      _expandedHomeEventId = _expandedHomeEventId == id ? null : id;
-    });
-    widget.onHomeEventExpandChanged?.call(_expandedHomeEventId != null);
-  }
-
-  Future<void> _openHomeEventEditor(EventModel event) async {
-    await EventDetailSheet.show(context, event);
+  void _openHomeEventDetail(EventModel event) {
+    HomeEventDetailSheet.show(context, event);
   }
 
   void _ensureHomeTaskOrderIds() {
@@ -697,9 +676,7 @@ class TodaySummaryCardState extends State<TodaySummaryCard> {
           events: visibleEvents,
           scheme: scheme,
           isDark: isDark,
-          expandedEventId: _expandedHomeEventId,
-          onToggleEvent: _toggleHomeEventExpand,
-          onEditEvent: _openHomeEventEditor,
+          onEventTap: _openHomeEventDetail,
         )
       else
         Text(_emptyCalendarLine, style: emptyLineStyle),
@@ -758,17 +735,13 @@ class _EventCalendarStackedTable extends StatelessWidget {
     required this.events,
     required this.scheme,
     required this.isDark,
-    required this.expandedEventId,
-    required this.onToggleEvent,
-    required this.onEditEvent,
+    required this.onEventTap,
   });
 
   final List<EventModel> events;
   final ColorScheme scheme;
   final bool isDark;
-  final String? expandedEventId;
-  final ValueChanged<String> onToggleEvent;
-  final ValueChanged<EventModel> onEditEvent;
+  final ValueChanged<EventModel> onEventTap;
 
   @override
   Widget build(BuildContext context) {
@@ -793,10 +766,9 @@ class _EventCalendarStackedTable extends StatelessWidget {
       scheme,
       isDark,
     );
-    final allCompact = expandedEventId == null;
 
     final axisLeft = tw + (cw - lineW) / 2;
-    final showSpine = allCompact && n >= 2;
+    final showSpine = n >= 2;
     final dotCenterOffsetY = dotPadTop + dotSize / 2;
     final spineTop = dotCenterOffsetY + trim;
     final spineHeight = (n - 1) * (rowH + rowGap) - 2 * trim;
@@ -830,10 +802,8 @@ class _EventCalendarStackedTable extends StatelessWidget {
                     ? events[i].timeText.trim()
                     : events[i].timeHm,
                 subtitle: homeEventCompactSubtitle(events[i]),
-                isExpanded: expandedEventId == events[i].id,
                 isDark: isDark,
-                onToggle: () => onToggleEvent(events[i].id),
-                onEdit: () => onEditEvent(events[i]),
+                onTap: () => onEventTap(events[i]),
                 timeColumnWidth: tw,
                 timelineColumnWidth: cw,
                 timelineTextGap: gw,

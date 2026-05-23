@@ -2,22 +2,16 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/models/event_model.dart';
 import '../../../../shared/widgets/premium_pressable.dart';
-import '../../../../shared/widgets/smooth_card_expand.dart';
-import '../../../../theme/app_spacing.dart';
-import '../../../../theme/aris_list_palette.dart';
-import '../../../calendar/presentation/widgets/event_expanded_details_content.dart';
 
-/// Fila compacta HOY + ficha detalle tipo Día al expandir (v0.49.92).
+/// Fila compacta de evento en HOY — sin despliegue inline (v0.49.93).
 class HomeEventTimelineRow extends StatelessWidget {
   const HomeEventTimelineRow({
     super.key,
     required this.event,
     required this.timeLabel,
     required this.subtitle,
-    required this.isExpanded,
     required this.isDark,
-    required this.onToggle,
-    required this.onEdit,
+    required this.onTap,
     required this.timeColumnWidth,
     required this.timelineColumnWidth,
     required this.timelineTextGap,
@@ -37,10 +31,8 @@ class HomeEventTimelineRow extends StatelessWidget {
   final EventModel event;
   final String timeLabel;
   final String subtitle;
-  final bool isExpanded;
   final bool isDark;
-  final VoidCallback onToggle;
-  final VoidCallback onEdit;
+  final VoidCallback onTap;
   final double timeColumnWidth;
   final double timelineColumnWidth;
   final double timelineTextGap;
@@ -56,165 +48,99 @@ class HomeEventTimelineRow extends StatelessWidget {
   final double textBorderRadius;
   final double textTopOffset;
 
-  static const double _expandedPanelTopGap = 4;
-
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: timeColumnWidth,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 1),
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Text(
-                timeLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13,
-                  height: 1.25,
-                  fontWeight: FontWeight.w500,
-                  color: timeTextColor,
-                ),
-              ),
-            ),
-          ),
-        ),
-        SizedBox(
-          width: timelineColumnWidth,
-          child: Padding(
-            padding: EdgeInsets.only(top: dotPaddingTop),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Container(
-                width: dotSize,
-                height: dotSize,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: dotColor,
-                ),
-              ),
-            ),
-          ),
-        ),
-        SizedBox(width: timelineTextGap),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Transform.translate(
-                offset: Offset(0, textTopOffset),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: rowHeight - textTopOffset,
+    return SizedBox(
+      height: rowHeight,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: timeColumnWidth,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Text(
+                  timeLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.25,
+                    fontWeight: FontWeight.w500,
+                    color: timeTextColor,
                   ),
-                  child: PremiumPressable(
-                    onTap: onToggle,
-                    borderRadius: BorderRadius.circular(textBorderRadius),
-                    pressTint: PremiumPressTints.neutral(isDark),
-                    child: Padding(
-                      padding: EdgeInsetsDirectional.only(
-                        start: 0,
-                        end: textPaddingH,
-                        top: textPaddingV,
-                        bottom: textPaddingV,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: timelineColumnWidth,
+            child: Padding(
+              padding: EdgeInsets.only(top: dotPaddingTop),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Container(
+                  width: dotSize,
+                  height: dotSize,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: dotColor,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: timelineTextGap),
+          Expanded(
+            child: Transform.translate(
+              offset: Offset(0, textTopOffset),
+              child: PremiumPressable(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(textBorderRadius),
+                pressTint: PremiumPressTints.neutral(isDark),
+                child: Padding(
+                  padding: EdgeInsetsDirectional.only(
+                    start: 0,
+                    end: textPaddingH,
+                    top: textPaddingV,
+                    bottom: textPaddingV,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        event.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14.75,
+                          height: 1.2,
+                          fontWeight: FontWeight.w600,
+                          color: titleTextColor,
+                        ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            event.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 14.75,
-                              height: 1.2,
-                              fontWeight: FontWeight.w600,
-                              color: titleTextColor,
-                            ),
+                      if (subtitle.isNotEmpty)
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            height: 1.22,
+                            fontWeight: FontWeight.w400,
+                            color: subtitleTextColor,
                           ),
-                          if (subtitle.isNotEmpty)
-                            Text(
-                              subtitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                height: 1.22,
-                                fontWeight: FontWeight.w400,
-                                color: subtitleTextColor,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
+                        ),
+                    ],
                   ),
                 ),
               ),
-              SmoothCardExpandReveal(
-                isExpanded: isExpanded,
-                animateSize: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: _expandedPanelTopGap),
-                    _HomeEventExpandedDetail(
-                      event: event,
-                      onEdit: onEdit,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Ficha expandida Home — mismo contenido que Agenda Día (v0.49.92).
-class _HomeEventExpandedDetail extends StatelessWidget {
-  const _HomeEventExpandedDetail({
-    required this.event,
-    required this.onEdit,
-  });
-
-  final EventModel event;
-  final VoidCallback onEdit;
-
-  static const double _radius = 12;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(_radius),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: context.arisList.cardExpanded,
-          borderRadius: BorderRadius.circular(_radius),
-          border: Border.all(
-            color: context.arisList.borderSelected,
-            width: 1.15,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.calendarDayEventCardPaddingH,
-            vertical: AppSpacing.calendarDayEventCardPaddingV,
-          ),
-          child: EventExpandedDetailsContent(
-            event: event,
-            onEdit: onEdit,
-            showTitleRow: true,
-          ),
-        ),
+        ],
       ),
     );
   }
