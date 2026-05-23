@@ -92,6 +92,7 @@ class EventExpandedDetailsContent extends StatelessWidget {
           EventExpandedIconLine(
             icon: detailLines[i].icon,
             text: detailLines[i].text,
+            maxLines: detailLines[i].icon == Icons.notes_outlined ? 6 : 3,
           ),
         ],
         SizedBox(
@@ -136,10 +137,12 @@ class EventExpandedIconLine extends StatelessWidget {
     super.key,
     required this.icon,
     required this.text,
+    this.maxLines = 3,
   });
 
   final IconData icon;
   final String text;
+  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +167,7 @@ class EventExpandedIconLine extends StatelessWidget {
               fontWeight: FontWeight.w400,
               color: context.arisList.textSecondary,
             ),
-            maxLines: 3,
+            maxLines: maxLines,
             overflow: TextOverflow.ellipsis,
           ),
         ),

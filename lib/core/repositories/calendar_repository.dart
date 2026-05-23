@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../api/api_client.dart';
+import '../mock/mock_events.dart';
 import '../models/backend_event_mapper.dart';
 import '../models/event_model.dart';
 import '../models/local_action_model.dart';
@@ -118,6 +119,24 @@ final class HybridCalendarRepository implements CalendarRepository {
         al.day == bl.day;
   }
 
+  /// Superpone el día demo enriquecido sobre backend (v0.49.95).
+  /// Los eventos `mock_evt_*` sustituyen entradas del mismo título ese día.
+  static List<EventModel> _withDemoDayOverlay(
+    List<EventModel> backend,
+    List<EventModel> demo,
+  ) {
+    final demoTitles =
+        demo.map((e) => e.title.trim().toLowerCase()).toSet();
+    final filtered = backend.where((e) {
+      if (MockEvents.demoDayEventIds.contains(e.id)) return false;
+      if (!e.hasCivilCalendarDate) return true;
+      return !demoTitles.contains(e.title.trim().toLowerCase());
+    }).toList();
+    final merged = [...demo, ...filtered];
+    merged.sort((a, b) => a.start.compareTo(b.start));
+    return merged;
+  }
+
   List<EventModel> _civilCalendarDay(DateTime day) {
     if (!_readsOk || _backendEvents.isEmpty) return [];
     final d =
@@ -156,11 +175,12 @@ final class HybridCalendarRepository implements CalendarRepository {
   @override
   List<EventModel> getTodayEvents([DateTime? day]) {
     final d = day ?? DateTime.now();
-    if (!_readsOk) return CalendarService.getTodayEvents(day);
-    // Cuando el backend está conectado, mostrar solo datos reales (sin fallback mock).
-    final civil = _civilCalendarDay(d);
+    final anchored = DateTime(d.year, d.month, d.day);
+    final demo = MockEvents.daySchedule(anchored);
+    if (!_readsOk) return demo;
+    final civil = _civilCalendarDay(anchored);
     final textual = _textualOnlyDateBackendSorted();
-    return [...civil, ...textual];
+    return _withDemoDayOverlay([...civil, ...textual], demo);
   }
 
   @override
