@@ -9,7 +9,7 @@ import 'calendar_event_format.dart';
 import 'calendar_free_gap_divider.dart';
 import 'event_detail_sheet.dart';
 
-/// Agenda vertical del día con timeline adaptativa (v0.49.79).
+/// Agenda vertical del día — horas fijas + timeline adaptativa (v0.49.80).
 class CalendarDayView extends StatefulWidget {
   const CalendarDayView({
     super.key,
@@ -129,7 +129,7 @@ class _CalendarDayViewState extends State<CalendarDayView> {
   }
 }
 
-/// Lista del día con spine vertical por tramos (centro punto → centro punto).
+/// Lista del día: columna de filas estable + spine en capa aparte.
 class _DayTimelineStack extends StatefulWidget {
   const _DayTimelineStack({
     required this.events,
@@ -152,17 +152,22 @@ class _DayTimelineStack extends StatefulWidget {
 class _DayTimelineStackState extends State<_DayTimelineStack> {
   final _stackKey = GlobalKey();
   final List<GlobalKey> _dotKeys = [];
-  List<(double top, double height)> _spineSegments = [];
-  int _spineUpdateGeneration = 0;
+  final ValueNotifier<int> _spineRemeasureTick = ValueNotifier(0);
+  int _spineAnimationGeneration = 0;
 
   static const double _timelineColWidth = 16;
-  static const double _spineWidth = AppSpacing.calendarDayTimelineSpineWidth;
 
   @override
   void initState() {
     super.initState();
     _syncDotKeys();
-    _scheduleSpineUpdate();
+    _requestSpineRemeasure();
+  }
+
+  @override
+  void dispose() {
+    _spineRemeasureTick.dispose();
+    super.dispose();
   }
 
   @override
@@ -174,7 +179,9 @@ class _DayTimelineStackState extends State<_DayTimelineStack> {
         oldWidget.events.map((e) => e.id).join() !=
             widget.events.map((e) => e.id).join();
     if (keysChanged) _syncDotKeys();
-    if (layoutChanged) _scheduleSpineUpdate(trackExpandAnimation: true);
+    if (layoutChanged) {
+      _requestSpineRemeasure(trackExpandAnimation: true);
+    }
   }
 
   void _syncDotKeys() {
@@ -186,80 +193,21 @@ class _DayTimelineStackState extends State<_DayTimelineStack> {
     }
   }
 
-  void _scheduleSpineUpdate({bool trackExpandAnimation = false}) {
-    final generation = ++_spineUpdateGeneration;
-
-    void measure() {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || generation != _spineUpdateGeneration) return;
-        _updateSpineGeometry();
-      });
-    }
-
-    measure();
+  void _requestSpineRemeasure({bool trackExpandAnimation = false}) {
+    _spineRemeasureTick.value++;
 
     if (!trackExpandAnimation) return;
 
-    // AnimatedSize de tarjeta (~cardExpandSizeMs): remediar spine durante el despliegue.
-    final totalMs =
-        AppSpacing.cardExpandSizeMs + AppSpacing.calendarDayTimelineSpineAnimationPadMs;
+    final generation = ++_spineAnimationGeneration;
+    final totalMs = AppSpacing.cardExpandSizeMs +
+        AppSpacing.calendarDayTimelineSpineAnimationPadMs;
     const stepMs = 16;
     for (var elapsed = stepMs; elapsed <= totalMs; elapsed += stepMs) {
       Future<void>.delayed(Duration(milliseconds: elapsed), () {
-        if (!mounted || generation != _spineUpdateGeneration) return;
-        measure();
+        if (!mounted || generation != _spineAnimationGeneration) return;
+        _spineRemeasureTick.value++;
       });
     }
-  }
-
-  void _updateSpineGeometry() {
-    if (widget.events.length < 2) {
-      if (_spineSegments.isNotEmpty) setState(() => _spineSegments = []);
-      return;
-    }
-
-    final stackBox = _stackKey.currentContext?.findRenderObject() as RenderBox?;
-    if (stackBox == null) return;
-
-    final stackOrigin = stackBox.localToGlobal(Offset.zero);
-    final nextSegments = <(double top, double height)>[];
-
-    for (var i = 0; i < widget.events.length - 1; i++) {
-      final boxA = _dotKeys[i].currentContext?.findRenderObject() as RenderBox?;
-      final boxB =
-          _dotKeys[i + 1].currentContext?.findRenderObject() as RenderBox?;
-      if (boxA == null || boxB == null) return;
-
-      final centerA = boxA.localToGlobal(
-        Offset(boxA.size.width / 2, boxA.size.height / 2),
-      );
-      final centerB = boxB.localToGlobal(
-        Offset(boxB.size.width / 2, boxB.size.height / 2),
-      );
-
-      final top = centerA.dy - stackOrigin.dy;
-      final height = centerB.dy - centerA.dy;
-      if (height > 0.5) {
-        nextSegments.add((top, height));
-      }
-    }
-
-    if (_segmentsEqual(_spineSegments, nextSegments)) return;
-
-    setState(() => _spineSegments = nextSegments);
-  }
-
-  bool _segmentsEqual(
-    List<(double top, double height)> a,
-    List<(double top, double height)> b,
-  ) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if ((a[i].$1 - b[i].$1).abs() > 0.5 || (a[i].$2 - b[i].$2).abs() > 0.5) {
-        return false;
-      }
-    }
-    return true;
   }
 
   Widget _buildGapRow(int index) {
@@ -282,50 +230,163 @@ class _DayTimelineStackState extends State<_DayTimelineStack> {
   Widget build(BuildContext context) {
     final spineLeft = AppSpacing.calendarTimeColumnWidth +
         _timelineColWidth / 2 -
-        _spineWidth / 2;
+        AppSpacing.calendarDayTimelineSpineWidth / 2;
 
     return Stack(
       key: _stackKey,
       clipBehavior: Clip.none,
       children: [
-        for (final segment in _spineSegments)
-          Positioned(
-            left: spineLeft,
-            top: segment.$1,
-            child: IgnorePointer(
+        Positioned.fill(
+          child: _TimelineSpineLayer(
+            stackKey: _stackKey,
+            dotKeys: _dotKeys,
+            spineLeft: spineLeft,
+            remeasureTick: _spineRemeasureTick,
+          ),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < widget.events.length; i++) ...[
+              if (i > 0) _buildGapRow(i),
+              _TimelineEventRow(
+                event: widget.events[i],
+                dotKey: _dotKeys[i],
+                isExpanded: widget.expandedEventId == widget.events[i].id,
+                onToggle: () => widget.onToggle(widget.events[i].id),
+                onEdit: () => widget.onEdit(widget.events[i]),
+                onCardSizeChanged: _requestSpineRemeasure,
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Spine en capa propia — setState no reconstruye las filas de hora.
+class _TimelineSpineLayer extends StatefulWidget {
+  const _TimelineSpineLayer({
+    required this.stackKey,
+    required this.dotKeys,
+    required this.spineLeft,
+    required this.remeasureTick,
+  });
+
+  final GlobalKey stackKey;
+  final List<GlobalKey> dotKeys;
+  final double spineLeft;
+  final ValueNotifier<int> remeasureTick;
+
+  @override
+  State<_TimelineSpineLayer> createState() => _TimelineSpineLayerState();
+}
+
+class _TimelineSpineLayerState extends State<_TimelineSpineLayer> {
+  List<(double top, double height)> _segments = [];
+
+  @override
+  void initState() {
+    super.initState();
+    widget.remeasureTick.addListener(_scheduleMeasure);
+    _scheduleMeasure();
+  }
+
+  @override
+  void didUpdateWidget(covariant _TimelineSpineLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.remeasureTick != widget.remeasureTick) {
+      oldWidget.remeasureTick.removeListener(_scheduleMeasure);
+      widget.remeasureTick.addListener(_scheduleMeasure);
+    }
+    _scheduleMeasure();
+  }
+
+  @override
+  void dispose() {
+    widget.remeasureTick.removeListener(_scheduleMeasure);
+    super.dispose();
+  }
+
+  void _scheduleMeasure() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _measure();
+    });
+  }
+
+  void _measure() {
+    if (widget.dotKeys.length < 2) {
+      if (_segments.isNotEmpty) setState(() => _segments = []);
+      return;
+    }
+
+    final stackBox =
+        widget.stackKey.currentContext?.findRenderObject() as RenderBox?;
+    if (stackBox == null) return;
+
+    final stackOrigin = stackBox.localToGlobal(Offset.zero);
+    final nextSegments = <(double top, double height)>[];
+
+    for (var i = 0; i < widget.dotKeys.length - 1; i++) {
+      final boxA =
+          widget.dotKeys[i].currentContext?.findRenderObject() as RenderBox?;
+      final boxB =
+          widget.dotKeys[i + 1].currentContext?.findRenderObject() as RenderBox?;
+      if (boxA == null || boxB == null) return;
+
+      final centerA = boxA.localToGlobal(
+        Offset(boxA.size.width / 2, boxA.size.height / 2),
+      );
+      final centerB = boxB.localToGlobal(
+        Offset(boxB.size.width / 2, boxB.size.height / 2),
+      );
+
+      final top = centerA.dy - stackOrigin.dy;
+      final height = centerB.dy - centerA.dy;
+      if (height > 0.5) {
+        nextSegments.add((top, height));
+      }
+    }
+
+    if (_segmentsEqual(_segments, nextSegments)) return;
+    setState(() => _segments = nextSegments);
+  }
+
+  bool _segmentsEqual(
+    List<(double top, double height)> a,
+    List<(double top, double height)> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if ((a[i].$1 - b[i].$1).abs() > 0.5 || (a[i].$2 - b[i].$2).abs() > 0.5) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          for (final segment in _segments)
+            Positioned(
+              left: widget.spineLeft,
+              top: segment.$1,
               child: Container(
-                width: _spineWidth,
+                width: AppSpacing.calendarDayTimelineSpineWidth,
                 height: segment.$2,
                 color: AppColors.calendarListBorderNormal.withValues(
                   alpha: AppSpacing.calendarDayTimelineSpineOpacity,
                 ),
               ),
             ),
-          ),
-        NotificationListener<SizeChangedLayoutNotification>(
-          onNotification: (_) {
-            _scheduleSpineUpdate();
-            return false;
-          },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (var i = 0; i < widget.events.length; i++) ...[
-                if (i > 0) _buildGapRow(i),
-                SizeChangedLayoutNotifier(
-                  child: _TimelineEventRow(
-                    event: widget.events[i],
-                    dotKey: _dotKeys[i],
-                    isExpanded: widget.expandedEventId == widget.events[i].id,
-                    onToggle: () => widget.onToggle(widget.events[i].id),
-                    onEdit: () => widget.onEdit(widget.events[i]),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -401,17 +462,40 @@ class _TimelineGapRow extends StatelessWidget {
             ),
             child: SizedBox(
               height: minHeight,
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 1),
-                  child: child,
-                ),
-              ),
+              child: Center(child: child),
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Hora fija — fuera de cualquier animación de tarjeta (v0.49.80).
+class _DayEventTimeLabel extends StatelessWidget {
+  const _DayEventTimeLabel({required this.label});
+
+  final String label;
+
+  static const TextStyle _style = TextStyle(
+    fontSize: 12,
+    height: 1.2,
+    fontWeight: FontWeight.w500,
+    color: AppColors.calendarListTextSecondary,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: SizedBox(
+        width: AppSpacing.calendarTimeColumnWidth,
+        child: Padding(
+          padding: const EdgeInsets.only(
+            top: AppSpacing.calendarDayTimeColumnTop,
+          ),
+          child: Text(label, style: _style),
+        ),
+      ),
     );
   }
 }
@@ -423,6 +507,7 @@ class _TimelineEventRow extends StatelessWidget {
     required this.isExpanded,
     required this.onToggle,
     required this.onEdit,
+    required this.onCardSizeChanged,
   });
 
   final EventModel event;
@@ -430,40 +515,35 @@ class _TimelineEventRow extends StatelessWidget {
   final bool isExpanded;
   final VoidCallback onToggle;
   final VoidCallback onEdit;
+  final VoidCallback onCardSizeChanged;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: AppSpacing.calendarTimeColumnWidth,
-          child: Padding(
-            padding: const EdgeInsets.only(
-              top: AppSpacing.calendarDayTimeColumnTop,
-            ),
-            child: Text(
-              CalendarEventFormat.timeHm(event.start),
-              style: const TextStyle(
-                fontSize: 12,
-                height: 1.2,
-                fontWeight: FontWeight.w500,
-                color: AppColors.calendarListTextSecondary,
-              ),
-            ),
-          ),
+        _DayEventTimeLabel(label: CalendarEventFormat.timeHm(event.start)),
+        RepaintBoundary(
+          child: _TimelineDot(key: dotKey, filled: true),
         ),
-        _TimelineDot(key: dotKey, filled: true),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(
               left: AppSpacing.calendarDayTimelineContentGap,
             ),
-            child: CalendarDayEventCard(
-              event: event,
-              isExpanded: isExpanded,
-              onToggle: onToggle,
-              onEdit: onEdit,
+            child: NotificationListener<SizeChangedLayoutNotification>(
+              onNotification: (_) {
+                onCardSizeChanged();
+                return false;
+              },
+              child: SizeChangedLayoutNotifier(
+                child: CalendarDayEventCard(
+                  event: event,
+                  isExpanded: isExpanded,
+                  onToggle: onToggle,
+                  onEdit: onEdit,
+                ),
+              ),
             ),
           ),
         ),

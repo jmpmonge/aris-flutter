@@ -68,7 +68,8 @@ abstract final class AppSpacing {
   static const double calendarDayFreeGapLineWidth = 56;
 
   /// Desplazamiento vertical hacia arriba del separador (v0.49.61).
-  static const double calendarDayFreeGapVerticalOffset = -6;
+  /// Offset vertical legacy del separador de hueco (v0.49.61; sin uso desde v0.49.80).
+  static const double calendarDayFreeGapVerticalOffset = 0;
 
   /// Opacidad línea separador hueco libre vista Día (v0.49.61).
   static const double calendarDayFreeGapLineOpacity = 0.44;
