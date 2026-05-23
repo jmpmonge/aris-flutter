@@ -6,14 +6,24 @@ abstract final class MockNotes {
   static List<NoteModel> recent() {
     return const [
       NoteModel(
-        id: 'mock_note_ideas',
-        title: 'Ideas reunión',
-        body: 'Bullet: timing, presupuesto, follow-up…',
+        id: 'mock_note_ideas_aris',
+        title: 'Ideas para Aris',
+        body: 'Roadmap UI, voz y calendario…',
+      ),
+      NoteModel(
+        id: 'mock_note_calendar_review',
+        title: 'Revisión calendario',
+        body: 'Semana, avisos y huecos libres…',
+      ),
+      NoteModel(
+        id: 'mock_note_trip',
+        title: 'Lista de viaje',
+        body: 'Pasaporte, reservas, equipaje…',
       ),
       NoteModel(
         id: 'mock_note_books',
         title: 'Libros 2026',
-        body: 'Ficción · ensayo · cómic (lista simulada)',
+        body: 'Ficción · ensayo · cómic',
       ),
       NoteModel(
         id: 'mock_note_shop',
@@ -23,18 +33,6 @@ abstract final class MockNotes {
     ];
   }
 
-  static List<NoteModel> homeHighlights() {
-    return const [
-      NoteModel(
-        id: 'mock_home_note_playlist',
-        title: 'Idea: playlist “concentración suave”',
-        body: '',
-      ),
-      NoteModel(
-        id: 'mock_home_note_gift',
-        title: 'Nota: regalo cumple Ana (libro)',
-        body: '',
-      ),
-    ];
-  }
+  static List<NoteModel> homeHighlights() =>
+      List<NoteModel>.unmodifiable(recent().take(4));
 }

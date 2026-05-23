@@ -3,21 +3,21 @@ import 'package:flutter/material.dart';
 import 'home_scroll_layout.dart';
 import '../../../../theme/app_spacing.dart';
 
-/// Conteos visibles de HOY según altura útil (v0.48.47).
+/// Conteos visibles de HOY según altura útil (v0.49.73).
 class HomeVisibleCounts {
   const HomeVisibleCounts({
     required this.agendaItems,
     required this.taskItems,
-    required this.mailItems,
+    required this.noteItems,
   });
 
   static const int agendaMin = 2;
   static const int taskMin = 3;
-  static const int mailMin = 1;
+  static const int noteMin = 3;
 
   final int agendaItems;
   final int taskItems;
-  final int mailItems;
+  final int noteItems;
 
   /// Resuelve conteos: HOY crece con el viewport si Aris cabe (v0.48.54).
   static HomeVisibleCounts forListViewport({
@@ -25,16 +25,16 @@ class HomeVisibleCounts {
     required BuildContext context,
     required int availableEvents,
     required int availableTasks,
-    required int availableMails,
+    required int availableNotes,
   }) {
     var agenda = agendaMin;
     var tasks = taskMin;
-    var mail = mailMin;
+    var notes = noteMin;
 
     var usedHeight = HomeSummaryLayoutMetrics.estimateCardHeight(
       agendaItems: agenda,
       taskItems: tasks,
-      mailItems: mail,
+      noteItems: notes,
     );
 
     final budget = listViewportHeight -
@@ -44,7 +44,7 @@ class HomeVisibleCounts {
       return HomeVisibleCounts(
         agendaItems: agenda.clamp(0, availableEvents),
         taskItems: tasks.clamp(0, availableTasks),
-        mailItems: mail.clamp(0, availableMails),
+        noteItems: notes.clamp(0, availableNotes),
       );
     }
 
@@ -56,7 +56,7 @@ class HomeVisibleCounts {
       final canAdd = switch (section) {
         0 => agenda < availableEvents,
         1 => tasks < availableTasks,
-        2 => mail < availableMails,
+        2 => notes < availableNotes,
         _ => false,
       };
       slotRound++;
@@ -74,7 +74,7 @@ class HomeVisibleCounts {
         case 1:
           tasks++;
         case 2:
-          mail++;
+          notes++;
       }
       usedHeight += delta;
     }
@@ -82,12 +82,12 @@ class HomeVisibleCounts {
     return HomeVisibleCounts(
       agendaItems: agenda,
       taskItems: tasks,
-      mailItems: mail,
+      noteItems: notes,
     );
   }
 }
 
-/// Alturas de referencia alineadas con [TodaySummaryCard] (v0.48.47).
+/// Alturas de referencia alineadas con [TodaySummaryCard] (v0.49.73).
 abstract final class HomeSummaryLayoutMetrics {
   HomeSummaryLayoutMetrics._();
 
@@ -95,8 +95,8 @@ abstract final class HomeSummaryLayoutMetrics {
   static const double eventRowGap = 4;
   static const double taskRowHeight = 35;
   static const double taskRowGap = 3;
-  static const double mailFirstBlockHeight = 47;
-  static const double mailExtraBlockHeight = 44;
+  static const double noteLineHeight = 20;
+  static const double noteLineGap = 6;
 
   static const double _sectionHeaderHeight =
       AppSpacing.homeCardHeaderInkPaddingV * 2 + 12;
@@ -110,7 +110,7 @@ abstract final class HomeSummaryLayoutMetrics {
     return switch (section) {
       0 => eventRowHeight + eventRowGap + _rowEstimateSlack,
       1 => taskRowHeight + taskRowGap + _rowEstimateSlack,
-      2 => mailExtraBlockHeight + _rowEstimateSlack,
+      2 => noteLineHeight + noteLineGap + _rowEstimateSlack,
       _ => 0,
     };
   }
@@ -118,7 +118,7 @@ abstract final class HomeSummaryLayoutMetrics {
   static double estimateCardHeight({
     required int agendaItems,
     required int taskItems,
-    required int mailItems,
+    required int noteItems,
   }) {
     var h = AppSpacing.homeCardPadding * 2;
     h += _sectionHeaderHeight * 3;
@@ -139,13 +139,10 @@ abstract final class HomeSummaryLayoutMetrics {
       h += _emptyLineHeight;
     }
 
-    if (mailItems <= 0) {
+    if (noteItems <= 0) {
       h += _emptyLineHeight;
-    } else if (mailItems == 1) {
-      h += mailFirstBlockHeight;
     } else {
-      h += mailFirstBlockHeight +
-          (mailItems - 1) * mailExtraBlockHeight;
+      h += noteItems * noteLineHeight + (noteItems - 1) * noteLineGap;
     }
 
     return h + 12;
@@ -154,11 +151,11 @@ abstract final class HomeSummaryLayoutMetrics {
 
 /// Ajuste fino si Aris sigue quedando cortada tras el layout (v0.48.53).
 extension HomeVisibleCountsTighten on HomeVisibleCounts {
-  /// Quita filas de HOY (agenda → tareas → mail) hasta [steps] pasos.
+  /// Quita filas de HOY (agenda → tareas → notas) hasta [steps] pasos.
   HomeVisibleCounts tightened(int steps) {
     var agenda = agendaItems;
     var tasks = taskItems;
-    var mail = mailItems;
+    var notes = noteItems;
 
     for (var i = 0; i < steps; i++) {
       if (agenda > HomeVisibleCounts.agendaMin) {
@@ -169,8 +166,8 @@ extension HomeVisibleCountsTighten on HomeVisibleCounts {
         tasks--;
         continue;
       }
-      if (mail > HomeVisibleCounts.mailMin) {
-        mail--;
+      if (notes > HomeVisibleCounts.noteMin) {
+        notes--;
         continue;
       }
       break;
@@ -179,7 +176,7 @@ extension HomeVisibleCountsTighten on HomeVisibleCounts {
     return HomeVisibleCounts(
       agendaItems: agenda,
       taskItems: tasks,
-      mailItems: mail,
+      noteItems: notes,
     );
   }
 }

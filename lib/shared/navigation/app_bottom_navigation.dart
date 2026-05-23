@@ -6,6 +6,9 @@ import '../../theme/app_spacing.dart';
 /// Compartido con el microencabezado TAREAS de [TodaySummaryCard] (v0.48.29).
 const IconData kAppNavTasksTabIcon = Icons.task_alt_outlined;
 
+/// Icono pestaña **Notas** en barra inferior — compartido con HOY (v0.49.73).
+const IconData kAppNavNotesTabIcon = Icons.note_alt_outlined;
+
 /// Destino para [AppBottomNavigation].
 class AppNavDestination {
   const AppNavDestination({

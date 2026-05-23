@@ -23,10 +23,12 @@ class HomeScreen extends StatefulWidget {
     super.key,
     this.onOpenCalendar,
     this.onOpenTasks,
+    this.onOpenNotes,
   });
 
   final VoidCallback? onOpenCalendar;
   final VoidCallback? onOpenTasks;
+  final VoidCallback? onOpenNotes;
 
   @override
   State<HomeScreen> createState() => HomeScreenState();
@@ -315,6 +317,7 @@ class HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final homeEvents = Repositories.calendar.getHomeHighlightEvents();
     final homeTasks = Repositories.task.getHomeHighlightTasks();
+    final homeNotes = Repositories.note.getRecentNotes();
     final pendingTaskCount =
         homeTasks.where((t) => !t.completed).length;
     final arisDisplayMessage = homeArisCardDisplayMessage(
@@ -340,7 +343,7 @@ class HomeScreenState extends State<HomeScreen> {
                   context: context,
                   availableEvents: homeEvents.length,
                   availableTasks: homeTasks.length,
-                  availableMails: TodaySummaryCard.demoMailCatalogLength,
+                  availableNotes: homeNotes.length,
                 );
                 final visibleCounts =
                     baseCounts.tightened(_layoutTightenSteps);
@@ -361,11 +364,13 @@ class HomeScreenState extends State<HomeScreen> {
                       key: _todaySummaryKey,
                       events: homeEvents,
                       tasks: homeTasks,
+                      notes: homeNotes,
                       maxAgendaItems: visibleCounts.agendaItems,
                       maxTaskItems: visibleCounts.taskItems,
-                      maxMailItems: visibleCounts.mailItems,
+                      maxNoteItems: visibleCounts.noteItems,
                       onOpenCalendar: widget.onOpenCalendar,
                       onOpenTasks: widget.onOpenTasks,
+                      onOpenNotes: widget.onOpenNotes,
                     ),
                     SizedBox(
                       height: HomeScrollLayout.sectionGapBeforeAris(context),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/models/event_model.dart';
+import '../../core/models/note_model.dart';
 import '../../core/models/task_model.dart';
 import '../../core/repositories/repositories.dart';
 import '../../theme/app_colors.dart';
@@ -20,22 +21,9 @@ const Color _kTimelineSpineDark = Color(0xFF416A98);
 const Color _kTasksSectionIconLight = Color(0xFFF59E0B);
 const Color _kTasksSectionIconDark = AppColors.tasksOrangeDark;
 
-/// Icono sección MAIL — verde (v0.48.44).
-const Color _kMailSectionIconLight = AppColors.mailModuleGreen;
-const Color _kMailSectionIconDark = AppColors.mailModuleGreenDark;
-
-/// Vista previa mail Home — mock hasta API real (v0.48.42).
-class _HomeMailPreview {
-  const _HomeMailPreview({
-    required this.sender,
-    required this.subject,
-    required this.requiresAttention,
-  });
-
-  final String sender;
-  final String subject;
-  final bool requiresAttention;
-}
+/// Icono sección NOTAS — azul Aris (v0.49.73).
+const Color _kNotesSectionIconLight = AppColors.noteArisBlue;
+const Color _kNotesSectionIconDark = AppColors.noteArisBlue;
 
 /// Overlay cabecera HOY → Calendario (claro azul; oscuro neutro v0.48.33).
 WidgetStateProperty<Color?> _hoyHeaderOverlayColor(bool isDark) {
@@ -105,81 +93,30 @@ WidgetStateProperty<Color?> _taskTextBlockOverlayColor(bool isDark) {
   });
 }
 
-// TODO: ocultar sección MAIL cuando no haya datos reales.
-const int _demoMailTotalCount = 21;
-
-const List<_HomeMailPreview> _demoMailSeeds = [
-  _HomeMailPreview(
-    sender: 'Luis',
-    subject: 'Reunión del lunes',
-    requiresAttention: true,
-  ),
-  _HomeMailPreview(
-    sender: 'Ana',
-    subject: 'Presupuesto Q2',
-    requiresAttention: false,
-  ),
-  _HomeMailPreview(
-    sender: 'Equipo',
-    subject: 'Acta reunión',
-    requiresAttention: false,
-  ),
-  _HomeMailPreview(
-    sender: 'María',
-    subject: 'Factura pendiente',
-    requiresAttention: true,
-  ),
-  _HomeMailPreview(
-    sender: 'Carlos',
-    subject: 'Entrega documentación',
-    requiresAttention: false,
-  ),
-  _HomeMailPreview(
-    sender: 'Soporte',
-    subject: 'Ticket resuelto',
-    requiresAttention: false,
-  ),
-];
-
-/// Catálogo demo alineado con [_demoMailTotalCount] (v0.48.47).
-List<_HomeMailPreview> get _demoMails => List<_HomeMailPreview>.generate(
-      _demoMailTotalCount,
-      (i) {
-        if (i < _demoMailSeeds.length) return _demoMailSeeds[i];
-        final seed = _demoMailSeeds[i % _demoMailSeeds.length];
-        return _HomeMailPreview(
-          sender: seed.sender,
-          subject: '${seed.subject} (${i + 1})',
-          requiresAttention: seed.requiresAttention,
-        );
-      },
-    );
-
-/// Bloque **HOY** — v0.48.14 cabecera completa pulsable + timeline/alineación eventos.
+/// Bloque **HOY** — v0.49.73 sustituye MAIL por NOTAS en Home.
 class TodaySummaryCard extends StatefulWidget {
   const TodaySummaryCard({
     super.key,
     required this.events,
     required this.tasks,
+    required this.notes,
     this.maxAgendaItems = 2,
     this.maxTaskItems = 3,
-    this.maxMailItems = 1,
+    this.maxNoteItems = 3,
     this.onOpenCalendar,
     this.onOpenTasks,
-    this.onOpenMail,
+    this.onOpenNotes,
   });
 
   final List<EventModel> events;
   final List<TaskModel> tasks;
+  final List<NoteModel> notes;
   final int maxAgendaItems;
   final int maxTaskItems;
-  final int maxMailItems;
+  final int maxNoteItems;
   final VoidCallback? onOpenCalendar;
   final VoidCallback? onOpenTasks;
-  final VoidCallback? onOpenMail;
-
-  /// Correos demo en catálogo (v0.48.47).
-  static int get demoMailCatalogLength => _demoMails.length;
+  final VoidCallback? onOpenNotes;
 
   @override
   State<TodaySummaryCard> createState() => _TodaySummaryCardState();
@@ -464,8 +401,8 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
   String _moreTasksLabel(int count) =>
       count == 1 ? '+ 1 tarea más' : '+ $count tareas más';
 
-  String _moreMailsLabel(int count) =>
-      count == 1 ? '+ 1 correo más' : '+ $count correos más';
+  String _moreNotesLabel(int count) =>
+      count == 1 ? '+ 1 nota más' : '+ $count notas más';
 
   /// Fila compacta cabecera HOY (v0.48.29): sin `minHeight`; chevron 26×26.
   static Widget _buildHoyHeaderRow({
@@ -536,10 +473,10 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
     );
   }
 
-  static Widget _buildMailHeaderRow({
+  static Widget _buildNotesHeaderRow({
     required ColorScheme scheme,
     required bool isDark,
-    required Color mailIconColor,
+    required Color notesIconColor,
     required Color chevronColor,
     bool showChevron = true,
   }) {
@@ -547,12 +484,12 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Icon(
-          Icons.mail_outline_rounded,
+          kAppNavNotesTabIcon,
           size: AppSpacing.homeCardHeaderIconSize,
-          color: mailIconColor,
+          color: notesIconColor,
         ),
         const SizedBox(width: AppSpacing.homeCardHeaderIconTitleGap),
-        Text('MAIL', style: _hoyLabelStyle(scheme, isDark)),
+        Text('NOTAS', style: _hoyLabelStyle(scheme, isDark)),
         if (showChevron) ...[
           const Spacer(),
           SizedBox(
@@ -571,58 +508,56 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
     );
   }
 
-  Widget _buildMailEntry(
-    _HomeMailPreview mail,
+  Widget _buildNoteEntry(
+    NoteModel note,
     ColorScheme scheme,
     bool isDark,
   ) {
     return Text(
-      'De: ${mail.sender} · ${mail.subject}',
+      '• ${note.title}',
       style: TextStyle(
-        fontSize: 12.75,
-        height: 1.3,
+        fontSize: 13.5,
+        height: 1.28,
         fontWeight: FontWeight.w400,
         color: homeCardSecondaryText(scheme, isDark),
       ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 
-  Widget _buildMailBody(ColorScheme scheme, bool isDark) {
-    final visibleCount = widget.maxMailItems.clamp(1, _demoMails.length);
-    final visibleMails = _demoMails.take(visibleCount).toList();
-    final attentionCount =
-        visibleMails.where((m) => m.requiresAttention).length;
-    final headline = attentionCount <= 1
-        ? '1 correo requiere atención'
-        : '$attentionCount correos requieren atención';
-    final moreMails = _demoMailTotalCount - visibleMails.length;
-
-    final children = <Widget>[
-      Text(
-        headline,
+  Widget _buildNotesBody(ColorScheme scheme, bool isDark) {
+    final total = widget.notes.length;
+    if (total == 0) {
+      return Text(
+        'Sin notas recientes.',
         style: TextStyle(
-          fontSize: 14.25,
+          fontSize: 13.5,
           height: 1.3,
-          fontWeight: FontWeight.w600,
-          color: scheme.onSurface,
+          fontWeight: FontWeight.w400,
+          color: homeCardSecondaryText(scheme, isDark),
         ),
-      ),
-      const SizedBox(height: 4),
-    ];
-
-    for (var i = 0; i < visibleMails.length; i++) {
-      if (i > 0) {
-        children.add(const SizedBox(height: 8));
-      }
-      children.add(_buildMailEntry(visibleMails[i], scheme, isDark));
+      );
     }
 
-    if (moreMails > 0) {
+    final visibleCount = widget.maxNoteItems.clamp(1, total);
+    final visibleNotes = widget.notes.take(visibleCount).toList();
+    final moreNotes = total - visibleNotes.length;
+
+    final children = <Widget>[];
+    for (var i = 0; i < visibleNotes.length; i++) {
+      if (i > 0) {
+        children.add(const SizedBox(height: 6));
+      }
+      children.add(_buildNoteEntry(visibleNotes[i], scheme, isDark));
+    }
+
+    if (moreNotes > 0) {
       children.add(const SizedBox(height: _lastLineToMoreLinkPad));
       children.add(
         _buildMoreLink(
-          label: _moreMailsLabel(moreMails),
-          onTap: widget.onOpenMail,
+          label: _moreNotesLabel(moreNotes),
+          onTap: widget.onOpenNotes,
           scheme: scheme,
           isDark: isDark,
         ),
@@ -648,8 +583,8 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
         isDark ? _kCalendarBlueDark : _kCalendarBlueLight;
     final tasksOrange =
         isDark ? _kTasksSectionIconDark : _kTasksSectionIconLight;
-    final mailGreen =
-        isDark ? _kMailSectionIconDark : _kMailSectionIconLight;
+    final notesBlue =
+        isDark ? _kNotesSectionIconDark : _kNotesSectionIconLight;
 
     final maxEvents = widget.maxAgendaItems.clamp(0, widget.events.length);
     final maxTasks = widget.maxTaskItems;
@@ -729,21 +664,21 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
             ),
           );
 
-    final mailHeader = widget.onOpenMail != null
+    final notesHeader = widget.onOpenNotes != null
         ? Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: widget.onOpenMail,
+              onTap: widget.onOpenNotes,
               borderRadius: BorderRadius.circular(
                 AppSpacing.homeCardHeaderInkBorderRadius,
               ),
               overlayColor: _hoyHeaderOverlayColor(isDark),
               child: Padding(
                 padding: _sectionHeaderPadding,
-                child: _buildMailHeaderRow(
+                child: _buildNotesHeaderRow(
                   scheme: scheme,
                   isDark: isDark,
-                  mailIconColor: mailGreen,
+                  notesIconColor: notesBlue,
                   chevronColor: neutralChevron,
                 ),
               ),
@@ -751,10 +686,10 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
           )
         : Padding(
             padding: _sectionHeaderPadding,
-            child: _buildMailHeaderRow(
+            child: _buildNotesHeaderRow(
               scheme: scheme,
               isDark: isDark,
-              mailIconColor: mailGreen,
+              notesIconColor: notesBlue,
               chevronColor: neutralChevron,
               showChevron: false,
             ),
@@ -843,9 +778,9 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
         ),
       ),
       _thinGroupDivider(scheme, isDark),
-      mailHeader,
+      notesHeader,
       const SizedBox(height: _labelToContentGap),
-      _buildMailBody(scheme, isDark),
+      _buildNotesBody(scheme, isDark),
     ];
 
     return Padding(

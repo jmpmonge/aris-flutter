@@ -35,6 +35,7 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
         key: _homeKey,
         onOpenCalendar: _goToCalendarTab,
         onOpenTasks: _goToTasksTab,
+        onOpenNotes: _goToNotesTab,
       ),
       const CalendarScreen(),
       const TasksScreen(),
@@ -64,6 +65,8 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
 
   void _goToTasksTab() => _onTabSelected(_tabTasks);
 
+  void _goToNotesTab() => _onTabSelected(_tabNotes);
+
   void _onTabSelected(int index) {
     assert(_mainSectionTabs.contains(index));
     setState(() => _tabIndex = index);
@@ -91,7 +94,7 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
       label: 'Tareas',
     ),
     AppNavDestination(
-      icon: Icons.note_alt_outlined,
+      icon: kAppNavNotesTabIcon,
       selectedIcon: Icons.note_alt_rounded,
       label: 'Notas',
     ),
