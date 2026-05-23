@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 
+import 'editor_compact_meta_field.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 
-/// Geometría unificada del chip de hora en editores manuales (v0.49.23).
+/// Geometría unificada del campo de hora en editores manuales (v0.49.23).
 abstract final class ManualEditorTimeMetaChipStyle {
-  static const double iconSize = 15;
-  static const double borderRadius = 14;
-  static const EdgeInsets padding =
-      EdgeInsets.symmetric(horizontal: 7, vertical: 4);
-  static const double iconLabelGap = 4;
-  static const double fillAlpha = 0.14;
+  static const double iconSize = EditorCompactMetaFieldStyle.iconSize;
+  static const double borderRadius = EditorCompactMetaFieldStyle.borderRadius;
+  static const EdgeInsets padding = EditorCompactMetaFieldStyle.padding;
+  static const double iconLabelGap = EditorCompactMetaFieldStyle.iconLabelGap;
+  static const double fillAlpha = EditorCompactMetaFieldStyle.activeFillAlpha;
 }
 
-/// Chip compacto de hora; el acento lo define cada sección.
+/// Campo compacto de hora; el acento lo define cada sección.
 class ManualEditorTimeMetaChip extends StatelessWidget {
   const ManualEditorTimeMetaChip({
     super.key,
@@ -22,6 +22,9 @@ class ManualEditorTimeMetaChip extends StatelessWidget {
     required this.onTap,
     this.valueLabel,
     this.enabled = true,
+    this.surfaceColor,
+    this.borderColor,
+    this.mutedForeground,
   });
 
   final Color accent;
@@ -29,53 +32,24 @@ class ManualEditorTimeMetaChip extends StatelessWidget {
   final VoidCallback? onTap;
   final String? valueLabel;
   final bool enabled;
+  final Color? surfaceColor;
+  final Color? borderColor;
+  final Color? mutedForeground;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final color = active
-        ? accent
-        : scheme.onSurfaceVariant.withValues(alpha: 0.38);
-
-    return Material(
-      color: active
-          ? accent.withValues(alpha: ManualEditorTimeMetaChipStyle.fillAlpha)
-          : scheme.surfaceContainerHighest.withValues(alpha: 0.35),
-      borderRadius:
-          BorderRadius.circular(ManualEditorTimeMetaChipStyle.borderRadius),
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        borderRadius:
-            BorderRadius.circular(ManualEditorTimeMetaChipStyle.borderRadius),
-        child: Padding(
-          padding: ManualEditorTimeMetaChipStyle.padding,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.access_time_rounded,
-                size: ManualEditorTimeMetaChipStyle.iconSize,
-                color: color,
-              ),
-              if (valueLabel != null && valueLabel!.isNotEmpty) ...[
-                const SizedBox(width: ManualEditorTimeMetaChipStyle.iconLabelGap),
-                Text(
-                  valueLabel!,
-                  style: tt.labelSmall?.copyWith(
-                    color: color,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.05,
-                    height: 1.1,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
+    return EditorCompactMetaField(
+      icon: Icons.access_time_rounded,
+      accent: accent,
+      active: active,
+      onTap: onTap,
+      valueLabel: valueLabel,
+      enabled: enabled,
+      surfaceColor:
+          surfaceColor ?? scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      borderColor: borderColor ?? scheme.outlineVariant,
+      mutedForeground: mutedForeground,
     );
   }
 }

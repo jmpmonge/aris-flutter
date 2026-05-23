@@ -14,6 +14,12 @@ abstract final class AppSpacing {
   static const double radiusMd = 14;
   static const double radiusLg = 18;
 
+  /// Campos meta compactos en editores manuales (v0.49.69).
+  static const double editorMetaFieldHeight = 36;
+  static const double editorMetaFieldIconSize = 17;
+  static const double editorMetaFieldGap = 6;
+  static const double editorMetaFieldPaddingH = sm;
+
   /// Esquina “cola” en burbujas de chat.
   static const double radiusTail = 4;
 

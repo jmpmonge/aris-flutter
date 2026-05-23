@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/models/task_model.dart';
 import '../../../core/repositories/repositories.dart';
 import '../../../shared/layout/breakpoints.dart';
+import '../../../shared/widgets/editor_compact_meta_field.dart';
 import '../../../shared/widgets/manual_editor_time_meta_chip.dart';
 import '../../../shared/widgets/section_accent_time_wheel_picker.dart';
 import '../../../theme/app_colors.dart';
@@ -276,51 +277,24 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
     Navigator.of(context).pop();
   }
 
-  Widget _metaChip({
+  Widget _metaField({
     required IconData icon,
     required bool active,
     required VoidCallback onTap,
     String? valueLabel,
     bool iconOnly = false,
   }) {
-    final tt = Theme.of(context).textTheme;
-    final color = active
-        ? TaskManualEditorAccent.metaActive
-        : AppColors.taskListTextMuted.withValues(alpha: 0.55);
-    final iconSize = iconOnly ? 18.0 : 17.0;
-
-    return Material(
-      color: active
-          ? TaskManualEditorAccent.metaActive.withValues(alpha: 0.14)
-          : AppColors.taskListElevated,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: _busy ? null : onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: iconOnly ? 8 : 10,
-            vertical: 6,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: iconSize, color: color),
-              if (!iconOnly && valueLabel != null && valueLabel.isNotEmpty) ...[
-                const SizedBox(width: 5),
-                Text(
-                  valueLabel,
-                  style: tt.labelSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.1,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
+    return EditorCompactMetaField(
+      icon: icon,
+      accent: TaskManualEditorAccent.metaActive,
+      active: active,
+      onTap: onTap,
+      valueLabel: valueLabel,
+      iconOnly: iconOnly,
+      enabled: !_busy,
+      surfaceColor: AppColors.taskListElevated,
+      borderColor: AppColors.taskListCardBorder,
+      mutedForeground: AppColors.taskListTextMuted,
     );
   }
 
@@ -413,7 +387,7 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
                 const SizedBox(height: AppSpacing.xs),
                 Row(
                   children: [
-                    _metaChip(
+                    _metaField(
                       icon: Icons.calendar_today_outlined,
                       active: _date != null,
                       onTap: _pickDate,
@@ -426,9 +400,12 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
                       onTap: _pickTime,
                       enabled: !_busy,
                       valueLabel: _time != null ? _timeLabel(_time!) : null,
+                      surfaceColor: AppColors.taskListElevated,
+                      borderColor: AppColors.taskListCardBorder,
+                      mutedForeground: AppColors.taskListTextMuted,
                     ),
                     const SizedBox(width: AppSpacing.xs),
-                    _metaChip(
+                    _metaField(
                       icon: _priorityHigh
                           ? Icons.flag_rounded
                           : Icons.flag_outlined,

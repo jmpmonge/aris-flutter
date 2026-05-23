@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/models/event_model.dart';
 import '../../../../core/repositories/repositories.dart';
+import '../../../../shared/widgets/editor_compact_meta_field.dart';
 import '../../../../shared/widgets/manual_editor_time_meta_chip.dart';
 import '../../../../shared/widgets/section_accent_time_wheel_picker.dart';
 import '../../../../theme/app_colors.dart';
@@ -205,51 +206,24 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
     );
   }
 
-  Widget _metaChip({
+  Widget _metaField({
     required IconData icon,
     required bool active,
     required VoidCallback onTap,
     String? valueLabel,
     bool iconOnly = false,
   }) {
-    final tt = Theme.of(context).textTheme;
-    final color = active
-        ? AppColors.calendarListAccent
-        : AppColors.calendarListTextMuted.withValues(alpha: 0.55);
-    final iconSize = iconOnly ? 18.0 : 17.0;
-
-    return Material(
-      color: active
-          ? AppColors.calendarListAccent.withValues(alpha: 0.14)
-          : AppColors.calendarListElevated,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: _saving ? null : onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: iconOnly ? 8 : 10,
-            vertical: 6,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: iconSize, color: color),
-              if (!iconOnly && valueLabel != null && valueLabel.isNotEmpty) ...[
-                const SizedBox(width: 5),
-                Text(
-                  valueLabel,
-                  style: tt.labelSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.1,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
+    return EditorCompactMetaField(
+      icon: icon,
+      accent: AppColors.calendarListAccent,
+      active: active,
+      onTap: onTap,
+      valueLabel: valueLabel,
+      iconOnly: iconOnly,
+      enabled: !_saving,
+      surfaceColor: AppColors.calendarListElevated,
+      borderColor: AppColors.calendarListBorderNormal,
+      mutedForeground: AppColors.calendarListTextMuted,
     );
   }
 
@@ -419,8 +393,8 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     final reminderActive =
         _reminderMinutes != null && _reminderMinutes! > 0;
-    final reminderChipLabel =
-        CalendarEventFormat.reminderChipLabel(_reminderMinutes);
+    final reminderLabel =
+        CalendarEventFormat.reminderChipLabel(_reminderMinutes) ?? 'Sin aviso';
 
     final titleStyle = tt.titleMedium?.copyWith(
       fontWeight: FontWeight.w600,
@@ -505,7 +479,7 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
                   const SizedBox(height: AppSpacing.xs),
                   Row(
                     children: [
-                      _metaChip(
+                      _metaField(
                         icon: Icons.calendar_today_outlined,
                         active: true,
                         onTap: _pickDate,
@@ -518,16 +492,18 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
                         onTap: _pickTime,
                         enabled: !_saving,
                         valueLabel: _previewTime,
+                        surfaceColor: AppColors.calendarListElevated,
+                        borderColor: AppColors.calendarListBorderNormal,
+                        mutedForeground: AppColors.calendarListTextMuted,
                       ),
                       const SizedBox(width: AppSpacing.xs),
-                      _metaChip(
+                      _metaField(
                         icon: reminderActive
                             ? Icons.notifications_active_outlined
                             : Icons.notifications_outlined,
                         active: reminderActive,
                         onTap: _pickReminder,
-                        valueLabel: reminderChipLabel,
-                        iconOnly: !reminderActive,
+                        valueLabel: reminderLabel,
                       ),
                     ],
                   ),
