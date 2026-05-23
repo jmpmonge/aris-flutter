@@ -8,6 +8,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/home_card_theme.dart';
 import '../navigation/app_bottom_navigation.dart';
+import 'premium_pressable.dart';
 
 /// Azul calendario HOY — v0.48.17 contraste reforzado (claro/oscuro).
 const Color _kCalendarBlueLight = Color(0xFF1F6FEB);
@@ -378,17 +379,14 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
 
     return Padding(
       padding: EdgeInsets.only(left: contentLeftInset),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-          child: Padding(
-            padding: _moreLinkPadding,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(label, style: style),
-            ),
+      child: PremiumPressable(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        child: Padding(
+          padding: _moreLinkPadding,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(label, style: style),
           ),
         ),
       ),
@@ -603,22 +601,19 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
     );
 
     final hoyHeader = widget.onOpenCalendar != null
-        ? Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: widget.onOpenCalendar,
-              borderRadius: BorderRadius.circular(
-                AppSpacing.homeCardHeaderInkBorderRadius,
-              ),
-              overlayColor: _hoyHeaderOverlayColor(isDark),
-              child: Padding(
-                padding: _sectionHeaderPadding,
-                child: _buildHoyHeaderRow(
-                  scheme: scheme,
-                  isDark: isDark,
-                  calendarIconColor: calendarBlue,
-                  chevronColor: neutralChevron,
-                ),
+        ? PremiumPressable(
+            onTap: widget.onOpenCalendar,
+            borderRadius: BorderRadius.circular(
+              AppSpacing.homeCardHeaderInkBorderRadius,
+            ),
+            overlayColor: _hoyHeaderOverlayColor(isDark),
+            child: Padding(
+              padding: _sectionHeaderPadding,
+              child: _buildHoyHeaderRow(
+                scheme: scheme,
+                isDark: isDark,
+                calendarIconColor: calendarBlue,
+                chevronColor: neutralChevron,
               ),
             ),
           )
@@ -634,22 +629,19 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
           );
 
     final tasksHeader = widget.onOpenTasks != null
-        ? Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: widget.onOpenTasks,
-              borderRadius: BorderRadius.circular(
-                AppSpacing.homeCardHeaderInkBorderRadius,
-              ),
-              overlayColor: _hoyHeaderOverlayColor(isDark),
-              child: Padding(
-                padding: _sectionHeaderPadding,
-                child: _buildTasksHeaderRow(
-                  scheme: scheme,
-                  isDark: isDark,
-                  iconColor: tasksOrange,
-                  chevronColor: neutralChevron,
-                ),
+        ? PremiumPressable(
+            onTap: widget.onOpenTasks,
+            borderRadius: BorderRadius.circular(
+              AppSpacing.homeCardHeaderInkBorderRadius,
+            ),
+            overlayColor: _hoyHeaderOverlayColor(isDark),
+            child: Padding(
+              padding: _sectionHeaderPadding,
+              child: _buildTasksHeaderRow(
+                scheme: scheme,
+                isDark: isDark,
+                iconColor: tasksOrange,
+                chevronColor: neutralChevron,
               ),
             ),
           )
@@ -665,22 +657,19 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
           );
 
     final notesHeader = widget.onOpenNotes != null
-        ? Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: widget.onOpenNotes,
-              borderRadius: BorderRadius.circular(
-                AppSpacing.homeCardHeaderInkBorderRadius,
-              ),
-              overlayColor: _hoyHeaderOverlayColor(isDark),
-              child: Padding(
-                padding: _sectionHeaderPadding,
-                child: _buildNotesHeaderRow(
-                  scheme: scheme,
-                  isDark: isDark,
-                  notesIconColor: notesIconColor,
-                  chevronColor: neutralChevron,
-                ),
+        ? PremiumPressable(
+            onTap: widget.onOpenNotes,
+            borderRadius: BorderRadius.circular(
+              AppSpacing.homeCardHeaderInkBorderRadius,
+            ),
+            overlayColor: _hoyHeaderOverlayColor(isDark),
+            child: Padding(
+              padding: _sectionHeaderPadding,
+              child: _buildNotesHeaderRow(
+                scheme: scheme,
+                isDark: isDark,
+                notesIconColor: notesIconColor,
+                chevronColor: neutralChevron,
               ),
             ),
           )
@@ -951,15 +940,11 @@ Widget _calendarEventRow(
               0,
               _TodaySummaryCardState._eventTextTopOffset,
             ),
-            child: Material(
-              color: Colors.transparent,
-              clipBehavior: Clip.antiAlias,
+            child: PremiumPressable(
+              onTap: () {},
               borderRadius: BorderRadius.circular(textRadius),
-              child: InkWell(
-                onTap: () {},
-                borderRadius: BorderRadius.circular(textRadius),
-                overlayColor: _calendarEventRowOverlayColor(isDark),
-                child: Padding(
+              overlayColor: _calendarEventRowOverlayColor(isDark),
+              child: Padding(
                   padding: EdgeInsetsDirectional.only(
                     start: 0,
                     end: textPadH,
@@ -1003,7 +988,6 @@ Widget _calendarEventRow(
               ),
             ),
           ),
-        ),
       ],
     ),
   );
@@ -1157,23 +1141,20 @@ class _TaskRow extends StatelessWidget {
             child: SizedBox(
               width: _iconColWidth,
               height: _iconHitHeight,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => onCompleteTap(),
-                  customBorder: const CircleBorder(),
-                  overlayColor: _calendarEventRowOverlayColor(isDark),
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        top: _taskIconTopWhenStartAligned,
-                      ),
-                      child: Icon(
-                        iconData,
-                        size: _iconSize,
-                        color: iconColor,
-                      ),
+              child: PremiumPressable(
+                onTap: () => onCompleteTap(),
+                borderRadius: BorderRadius.circular(_iconHitHeight / 2),
+                overlayColor: _calendarEventRowOverlayColor(isDark),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      top: _taskIconTopWhenStartAligned,
+                    ),
+                    child: Icon(
+                      iconData,
+                      size: _iconSize,
+                      color: iconColor,
                     ),
                   ),
                 ),
@@ -1182,60 +1163,55 @@ class _TaskRow extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: Material(
-            color: Colors.transparent,
-            clipBehavior: Clip.antiAlias,
+          child: PremiumPressable(
+            onTap: onToggleExpand,
             borderRadius: BorderRadius.circular(_textBlockInkBorderRadius),
-            child: InkWell(
-              onTap: onToggleExpand,
-              borderRadius: BorderRadius.circular(_textBlockInkBorderRadius),
-              overlayColor: _taskTextBlockOverlayColor(isDark),
-              child: Padding(
-                padding: const EdgeInsetsDirectional.only(
-                  top: _textBlockInkPaddingV,
-                  bottom: _textBlockInkPaddingV,
-                  end: _textBlockInkPaddingH,
-                ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+            overlayColor: _taskTextBlockOverlayColor(isDark),
+            child: Padding(
+              padding: const EdgeInsetsDirectional.only(
+                top: _textBlockInkPaddingV,
+                bottom: _textBlockInkPaddingV,
+                end: _textBlockInkPaddingH,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              task.title,
-                              maxLines: isExpanded ? 6 : 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: titleStyle,
-                            ),
-                          ),
-                          if (metaStr.isNotEmpty && !isExpanded)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                left: _titleMetaGap,
-                              ),
-                              child: Text(
-                                metaStr,
-                                textAlign: TextAlign.end,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: metaSmallStyle,
-                              ),
-                            ),
-                        ],
+                      Expanded(
+                        child: Text(
+                          task.title,
+                          maxLines: isExpanded ? 6 : 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: titleStyle,
+                        ),
                       ),
-                      if (expandedPanel != null) ...[
-                        const SizedBox(height: _titleDescriptionGap),
-                        expandedPanel,
-                      ],
+                      if (metaStr.isNotEmpty && !isExpanded)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            left: _titleMetaGap,
+                          ),
+                          child: Text(
+                            metaStr,
+                            textAlign: TextAlign.end,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: metaSmallStyle,
+                          ),
+                        ),
                     ],
                   ),
-                ),
+                  if (expandedPanel != null) ...[
+                    const SizedBox(height: _titleDescriptionGap),
+                    expandedPanel,
+                  ],
+                ],
               ),
             ),
           ),
+        ),
       ],
     );
   }

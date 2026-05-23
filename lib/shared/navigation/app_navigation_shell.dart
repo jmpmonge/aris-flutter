@@ -11,6 +11,7 @@ import '../../features/tasks/presentation/tasks_screen.dart';
 import '../layout/app_scaffold.dart';
 import '../../theme/app_spacing.dart';
 import 'app_bottom_navigation.dart';
+import 'premium_section_transition.dart';
 
 /// Shell v1: **Inicio · Calendario · Tareas · Notas · Perfil** (v0.49.40).
 /// Mail queda fuera de la navegación visible — módulo futuro.
@@ -110,7 +111,7 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
     final scheme = Theme.of(context).colorScheme;
 
     return AppScaffold(
-      body: IndexedStack(index: _tabIndex, children: _pages),
+      body: PremiumSectionTransition(index: _tabIndex, children: _pages),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

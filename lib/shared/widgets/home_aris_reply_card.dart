@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'aris_thinking_indicator.dart';
+import 'premium_pressable.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/home_card_theme.dart';
@@ -104,16 +105,13 @@ class HomeArisReplyCard extends StatelessWidget {
 
     if (onOpenFullConversation == null) return padded;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onOpenFullConversation,
-        borderRadius: BorderRadius.circular(
-          AppSpacing.homeCardHeaderInkBorderRadius,
-        ),
-        overlayColor: _arisHeaderOverlayColor(isDark),
-        child: padded,
+    return PremiumPressable(
+      onTap: onOpenFullConversation,
+      borderRadius: BorderRadius.circular(
+        AppSpacing.homeCardHeaderInkBorderRadius,
       ),
+      overlayColor: _arisHeaderOverlayColor(isDark),
+      child: padded,
     );
   }
 

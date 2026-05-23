@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/models/note_model.dart';
+import '../../../../shared/widgets/premium_pressable.dart';
 import '../../../../theme/app_colors.dart';
 
 /// Tarjeta ligera del listado de notas (v0.49.43).
@@ -64,17 +65,16 @@ class NoteListCard extends StatelessWidget {
     final visibleTags = tags.take(_maxVisibleTags).toList();
     final extraTags = tags.length - visibleTags.length;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(_radius),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: AppColors.noteListCardFill.withValues(alpha: 0.88),
-            borderRadius: BorderRadius.circular(_radius),
-            border: Border.all(color: AppColors.noteListCardBorder),
-          ),
+    return PremiumPressable(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(_radius),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.noteListCardFill.withValues(alpha: 0.88),
+          borderRadius: BorderRadius.circular(_radius),
+          border: Border.all(color: AppColors.noteListCardBorder),
+        ),
+        child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 9, 8, 9),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,

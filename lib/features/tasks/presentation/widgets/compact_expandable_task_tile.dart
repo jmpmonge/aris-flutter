@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/models/task_model.dart';
 import '../../../../core/models/task_ui_buckets.dart';
+import '../../../../shared/widgets/premium_pressable.dart';
 import '../../../../shared/widgets/smooth_card_expand.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
@@ -113,37 +114,33 @@ class CompactExpandableTaskTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: onToggleExpand,
-                      borderRadius:
-                          BorderRadius.circular(AppSpacing.radiusSm),
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                          top: 1,
-                          bottom: 1,
-                          right: 2,
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                task.title,
-                                style: titleStyle,
-                                maxLines: isExpanded ? 3 : 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                  PremiumPressable(
+                    onTap: onToggleExpand,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        top: 1,
+                        bottom: 1,
+                        right: 2,
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              task.title,
+                              style: titleStyle,
+                              maxLines: isExpanded ? 3 : 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(width: AppSpacing.xxs),
-                            SmoothCardExpandChevron(
-                              isExpanded: isExpanded,
-                              color: AppColors.taskListTextMuted
-                                  .withValues(alpha: 0.82),
-                            ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: AppSpacing.xxs),
+                          SmoothCardExpandChevron(
+                            isExpanded: isExpanded,
+                            color: AppColors.taskListTextMuted
+                                .withValues(alpha: 0.82),
+                          ),
+                        ],
                       ),
                     ),
                   ),

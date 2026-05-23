@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/models/event_model.dart';
+import '../../../../shared/widgets/premium_pressable.dart';
 import '../../../../shared/widgets/smooth_card_expand.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
@@ -31,12 +32,10 @@ class CalendarDayEventCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final icon = CalendarEventIconResolver.resolve(event);
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onToggle,
-        borderRadius: BorderRadius.circular(_radius),
-        child: AnimatedContainer(
+    return PremiumPressable(
+      onTap: onToggle,
+      borderRadius: BorderRadius.circular(_radius),
+      child: AnimatedContainer(
           duration: _surfaceDuration,
           curve: isExpanded ? Curves.easeOutCubic : Curves.easeInOutCubic,
           decoration: BoxDecoration(
@@ -105,7 +104,6 @@ class CalendarDayEventCard extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }

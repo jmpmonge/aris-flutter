@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/models/event_model.dart';
+import '../../../../shared/widgets/premium_pressable.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import 'calendar_day_event_card.dart';
@@ -129,13 +130,10 @@ class CalendarWeekSelectedEventCard extends StatelessWidget {
       return card;
     }
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onExpand,
-        borderRadius: BorderRadius.circular(_radius),
-        child: card,
-      ),
+    return PremiumPressable(
+      onTap: onExpand,
+      borderRadius: BorderRadius.circular(_radius),
+      child: card,
     );
   }
 }
