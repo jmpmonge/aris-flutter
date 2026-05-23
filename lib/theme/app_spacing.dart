@@ -73,6 +73,15 @@ abstract final class AppSpacing {
   /// Fecha fija → bloque saludo «Hola, …» (v0.49.31: compacto).
   static const double homeFixedDateToEphemeralGap = 0;
 
+  /// Respiro bajo cabecera viva con saludo visible (v0.49.46).
+  static const double homeLiveHeaderBottomWithGreeting = 4;
+
+  /// Respiro bajo cabecera compacta sin saludo (v0.49.46).
+  static const double homeLiveHeaderBottomCompact = 8;
+
+  /// ListView → HOY mientras el saludo ocupa cabecera (v0.49.46).
+  static const double homeGreetingToHoyGapVisible = 6;
+
   /// Fecha fija → HOY cuando el saludo temporal está oculto (v0.48.41).
   static const double homeFixedDateToHoyWhenGreetingHidden = 12;
 

@@ -3,23 +3,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../core/services/user_service.dart';
-import '../../../../shared/widgets/home_weather_icon.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import 'home_greeting_session.dart';
+import 'home_weather_block.dart';
 
-const _kWeatherIconLarge = 38.0;
-const _kWeatherIconCompact = 20.0;
-const _kWeatherTempLarge = 17.5;
-const _kWeatherTempCompact = 19.0;
-const _kWeatherCityCompact = 11.5;
-const _kWeatherBlockShiftLeft = 5.0;
 const _kSunTintLight = Color(0xFFF0A830);
 const _kSunTintDark = Color(0xFFE8C547);
 const _kMockTemperature = '21°';
 const _kMockCity = 'Madrid';
 
-/// Cabecera viva de Home: saludo temporal + clima que colapsa (v0.49.35).
+/// Cabecera viva de Home: saludo temporal + clima que colapsa (v0.49.46).
 class HomeLiveHeader extends StatefulWidget {
   const HomeLiveHeader({super.key});
 
@@ -32,9 +26,12 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
   static const Duration _visibleDuration = Duration(seconds: 7);
   static const Duration _fadeInDuration = Duration(milliseconds: 300);
   static const Duration _collapseDuration = Duration(milliseconds: 600);
+  static const Duration _sunPulseDuration = Duration(milliseconds: 150);
 
   AnimationController? _fadeInController;
   AnimationController? _collapseController;
+  AnimationController? _sunPulseController;
+  Animation<double>? _sunPulseScale;
   Timer? _holdTimer;
 
   bool get _startCompact => HomeGreetingSession.hasReachedCompactMode;
@@ -52,9 +49,33 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
       vsync: this,
       duration: _collapseDuration,
     );
+    _sunPulseController = AnimationController(
+      vsync: this,
+      duration: _sunPulseDuration,
+    );
+    _sunPulseScale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1, end: 1.03)
+            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 45,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.03, end: 1)
+            .chain(CurveTween(curve: Curves.easeInOutCubic)),
+        weight: 55,
+      ),
+    ]).animate(_sunPulseController!);
+
+    _collapseController!.addStatusListener(_onCollapseStatus);
 
     _fadeInController!.forward();
     _holdTimer = Timer(_visibleDuration, _beginCollapse);
+  }
+
+  void _onCollapseStatus(AnimationStatus status) {
+    if (status == AnimationStatus.completed && mounted) {
+      _sunPulseController?.forward(from: 0);
+    }
   }
 
   void _beginCollapse() {
@@ -69,9 +90,16 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
   @override
   void dispose() {
     _holdTimer?.cancel();
+    _collapseController?.removeStatusListener(_onCollapseStatus);
     _fadeInController?.dispose();
     _collapseController?.dispose();
+    _sunPulseController?.dispose();
     super.dispose();
+  }
+
+  double _weatherScale(double collapse) {
+    return HomeWeatherBlock.compactScale +
+        (1 - HomeWeatherBlock.compactScale) * (1 - collapse);
   }
 
   @override
@@ -83,6 +111,7 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
 
     if (_startCompact) {
       return _HeaderShell(
+        bottomPadding: AppSpacing.homeLiveHeaderBottomCompact,
         child: _CompactHeaderRow(
           date: date,
           temperature: _kMockTemperature,
@@ -91,6 +120,7 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
           scheme: scheme,
           isDark: isDark,
           compactProgress: 1,
+          weatherScale: HomeWeatherBlock.compactScale,
         ),
       );
     }
@@ -99,6 +129,7 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
       animation: Listenable.merge([
         _fadeInController!,
         _collapseController!,
+        ?_sunPulseController,
       ]),
       builder: (context, _) {
         final fadeIn = Curves.easeOutCubic.transform(_fadeInController!.value);
@@ -106,9 +137,17 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
           _collapseController!.value,
         );
         final greetingOpacity = (1 - collapse) * fadeIn;
-        final greetingSlide = 6 * (1 - fadeIn) + (-6 * collapse);
+        final greetingSlide = 4 * (1 - fadeIn);
+        final weatherScale = _weatherScale(collapse);
+        final iconExtraScale = _collapseController!.isCompleted
+            ? (_sunPulseScale?.value ?? 1.0)
+            : 1.0;
 
         return _HeaderShell(
+          bottomPadding: AppSpacing.homeLiveHeaderBottomWithGreeting +
+              (AppSpacing.homeLiveHeaderBottomCompact -
+                      AppSpacing.homeLiveHeaderBottomWithGreeting) *
+                  collapse,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
@@ -121,6 +160,8 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
                 scheme: scheme,
                 isDark: isDark,
                 compactProgress: collapse,
+                weatherScale: weatherScale,
+                iconExtraScale: iconExtraScale,
               ),
               ClipRect(
                 child: Align(
@@ -131,9 +172,8 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
                     child: Transform.translate(
                       offset: Offset(0, greetingSlide),
                       child: Padding(
-                        padding: EdgeInsets.only(
+                        padding: const EdgeInsets.only(
                           top: AppSpacing.homeFixedDateToEphemeralGap,
-                          bottom: collapse < 1 ? AppSpacing.xxs : 0,
                         ),
                         child: _ExpandedGreetingRow(
                           greeting: UserService.getGreetingForNow(),
@@ -158,25 +198,29 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
 }
 
 class _HeaderShell extends StatelessWidget {
-  const _HeaderShell({required this.child});
+  const _HeaderShell({
+    required this.child,
+    required this.bottomPadding,
+  });
 
   final Widget child;
+  final double bottomPadding;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppSpacing.homeFixedDateLeftInsetH,
         AppSpacing.homeFixedDateTopGap,
         AppSpacing.homePageMarginH,
-        AppSpacing.homeFixedDateMinPadding,
+        bottomPadding,
       ),
       child: child,
     );
   }
 }
 
-/// Fila superior: fecha izquierda + mini-bloque clima derecha al colapsar.
+/// Fila superior: fecha izquierda + clima escalado a la derecha al colapsar.
 class _CompactHeaderRow extends StatelessWidget {
   const _CompactHeaderRow({
     required this.date,
@@ -186,6 +230,8 @@ class _CompactHeaderRow extends StatelessWidget {
     required this.scheme,
     required this.isDark,
     required this.compactProgress,
+    required this.weatherScale,
+    this.iconExtraScale = 1.0,
   });
 
   final String date;
@@ -195,100 +241,57 @@ class _CompactHeaderRow extends StatelessWidget {
   final ColorScheme scheme;
   final bool isDark;
   final double compactProgress;
+  final double weatherScale;
+  final double iconExtraScale;
 
   @override
   Widget build(BuildContext context) {
-    final dateSize = 12.0 + (2.5 * compactProgress.clamp(0, 1));
+    final t = compactProgress.clamp(0.0, 1.0);
+    final dateSize = 12.0 + (2.5 * t);
     final dateColor = isDark
         ? AppColors.textSecondaryDark.withValues(alpha: 0.88)
         : AppColors.textSecondaryLight;
+    final weatherRise = Curves.easeOutCubic.transform(t);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: Text(
-            date,
-            style: TextStyle(
-              fontSize: dateSize,
-              height: 1.2,
-              fontWeight: FontWeight.w400,
-              letterSpacing: 0.1,
-              color: dateColor,
+          child: Padding(
+            padding: EdgeInsets.only(top: 2 * t),
+            child: Text(
+              date,
+              style: TextStyle(
+                fontSize: dateSize,
+                height: 1.2,
+                fontWeight: FontWeight.w400,
+                letterSpacing: 0.1,
+                color: dateColor,
+              ),
             ),
           ),
         ),
-        if (compactProgress > 0.001) ...[
+        if (t > 0.001) ...[
           const SizedBox(width: 12),
           Opacity(
-            opacity: compactProgress.clamp(0, 1),
+            opacity: t,
             child: Transform.translate(
-              offset: Offset(0, 34 * (1 - compactProgress)),
-              child: Transform.scale(
-                scale: 0.88 + (0.12 * compactProgress),
-                alignment: Alignment.topRight,
-                child: _CompactWeatherBlock(
+              offset: Offset(0, 36 * (1 - weatherRise)),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 1, right: 2),
+                child: HomeWeatherBlock(
                   temperature: temperature,
                   city: city,
                   sunColor: sunColor,
                   scheme: scheme,
                   isDark: isDark,
+                  scale: weatherScale,
+                  iconExtraScale: iconExtraScale,
                 ),
               ),
             ),
           ),
         ],
-      ],
-    );
-  }
-}
-
-/// Mini-bloque clima superior derecho (v0.49.35).
-class _CompactWeatherBlock extends StatelessWidget {
-  const _CompactWeatherBlock({
-    required this.temperature,
-    required this.city,
-    required this.sunColor,
-    required this.scheme,
-    required this.isDark,
-  });
-
-  final String temperature;
-  final String city;
-  final Color sunColor;
-  final ColorScheme scheme;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final tempStyle = TextStyle(
-      fontSize: _kWeatherTempCompact,
-      height: 1.05,
-      fontWeight: FontWeight.w600,
-      color: scheme.onSurface,
-    );
-    final cityStyle = TextStyle(
-      fontSize: _kWeatherCityCompact,
-      height: 1.05,
-      fontWeight: FontWeight.w400,
-      color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.68 : 0.62),
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            HomeWeatherIcon(size: _kWeatherIconCompact, sunColor: sunColor),
-            const SizedBox(width: 5),
-            Text(temperature, style: tempStyle),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(city, style: cityStyle),
       ],
     );
   }
@@ -322,18 +325,6 @@ class _ExpandedGreetingRow extends StatelessWidget {
       letterSpacing: -0.35,
       color: isDark ? AppColors.textPrimaryDark : scheme.onSurface,
     );
-    final tempStyle = TextStyle(
-      fontSize: _kWeatherTempLarge,
-      height: 1.05,
-      fontWeight: FontWeight.w600,
-      color: scheme.onSurface,
-    );
-    final cityStyle = TextStyle(
-      fontSize: 11,
-      height: 1.05,
-      fontWeight: FontWeight.w400,
-      color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.70 : 0.65),
-    );
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -349,28 +340,13 @@ class _ExpandedGreetingRow extends StatelessWidget {
         const SizedBox(width: 8),
         Opacity(
           opacity: weatherOpacity.clamp(0, 1),
-          child: Transform.translate(
-            offset: const Offset(-_kWeatherBlockShiftLeft, 0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                HomeWeatherIcon(
-                  size: _kWeatherIconLarge,
-                  sunColor: sunColor,
-                ),
-                const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(temperature, style: tempStyle),
-                    const SizedBox(height: 3),
-                    Text(city, style: cityStyle),
-                  ],
-                ),
-              ],
-            ),
+          child: HomeWeatherBlock(
+            temperature: temperature,
+            city: city,
+            sunColor: sunColor,
+            scheme: scheme,
+            isDark: isDark,
+            scale: 1,
           ),
         ),
       ],

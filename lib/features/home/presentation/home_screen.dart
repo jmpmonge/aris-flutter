@@ -7,6 +7,7 @@ import '../../../core/services/chat_service.dart';
 import '../../../core/services/local_action_service.dart';
 import 'widgets/home_aris_chat_inside_sheet.dart';
 import 'widgets/home_aris_conversation_utils.dart';
+import 'widgets/home_greeting_session.dart';
 import 'widgets/home_live_header.dart';
 import 'widgets/home_scroll_layout.dart';
 import 'widgets/home_visible_counts.dart';
@@ -54,6 +55,7 @@ class HomeScreenState extends State<HomeScreen> {
     Repositories.calendar.readRevision.addListener(_onHomeDataRevision);
     ChatService.revision.addListener(_onConversationRevision);
     Repositories.history.revision.addListener(_onConversationRevision);
+    HomeGreetingSession.compactModeListenable.addListener(_onGreetingCompact);
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ensureScrollAtTop();
@@ -79,6 +81,7 @@ class HomeScreenState extends State<HomeScreen> {
     ChatService.revision.removeListener(_onConversationRevision);
     Repositories.history.revision.removeListener(_onConversationRevision);
     LocalActionService.revision.removeListener(_onLocalActions);
+    HomeGreetingSession.compactModeListenable.removeListener(_onGreetingCompact);
     _scrollController.dispose();
     super.dispose();
   }
@@ -246,6 +249,11 @@ class HomeScreenState extends State<HomeScreen> {
     _scheduleArisVisibilityGuard();
   }
 
+  void _onGreetingCompact() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
   List<ChatMessageModel> get _homeConversation =>
       Repositories.history.conversationForHome();
 
@@ -326,7 +334,9 @@ class HomeScreenState extends State<HomeScreen> {
                   controller: _scrollController,
                   physics: const ClampingScrollPhysics(),
                   padding: EdgeInsets.only(
-                    top: AppSpacing.homeFixedDateToHoyWhenGreetingHidden,
+                    top: HomeGreetingSession.hasReachedCompactMode
+                        ? AppSpacing.homeFixedDateToHoyWhenGreetingHidden
+                        : AppSpacing.homeGreetingToHoyGapVisible,
                     bottom: HomeScrollLayout.scrollContentBottomPadding(
                       context,
                     ),
