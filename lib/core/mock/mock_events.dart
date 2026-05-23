@@ -8,7 +8,10 @@ abstract final class MockEvents {
         id: 'mock_evt_cafe',
         start: DateTime(day.year, day.month, day.day, 9, 0),
         title: 'Café con Laura',
-        detail: 'Café Central (mock)',
+        location: 'Café Central',
+        description: 'Llevar documentación',
+        reminderMinutesBefore: 15,
+        detail: 'Café Central · Llevar documentación',
         weekIconKey: 'coffee',
       ),
       EventModel(
