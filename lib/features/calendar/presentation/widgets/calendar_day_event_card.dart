@@ -8,7 +8,7 @@ import '../../../../theme/app_spacing.dart';
 import 'calendar_event_format.dart';
 import 'calendar_event_icon.dart';
 
-/// Tarjeta de evento en agenda Día — colapsada o desplegada (v0.49.76).
+/// Tarjeta de evento en agenda Día — animación solo en columna tarjeta (v0.49.81).
 class CalendarDayEventCard extends StatelessWidget {
   const CalendarDayEventCard({
     super.key,
@@ -35,7 +35,9 @@ class CalendarDayEventCard extends StatelessWidget {
     return PremiumPressable(
       onTap: onToggle,
       borderRadius: BorderRadius.circular(_radius),
-      child: AnimatedContainer(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(_radius),
+        child: AnimatedContainer(
           duration: _surfaceDuration,
           curve: isExpanded ? Curves.easeOutCubic : Curves.easeInOutCubic,
           decoration: BoxDecoration(
@@ -104,6 +106,7 @@ class CalendarDayEventCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
     );
   }
 }

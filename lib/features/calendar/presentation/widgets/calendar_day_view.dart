@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/models/event_model.dart';
@@ -9,7 +10,7 @@ import 'calendar_event_format.dart';
 import 'calendar_free_gap_divider.dart';
 import 'event_detail_sheet.dart';
 
-/// Agenda vertical del día — horas fijas + timeline adaptativa (v0.49.80).
+/// Agenda vertical del día — horas ancladas + tarjeta animada aislada (v0.49.81).
 class CalendarDayView extends StatefulWidget {
   const CalendarDayView({
     super.key,
@@ -26,7 +27,6 @@ class CalendarDayView extends StatefulWidget {
 
 class _CalendarDayViewState extends State<CalendarDayView> {
   late DateTime _day;
-  String? _expandedDayEventId;
   final Map<String, EventModel> _localEventOverrides = {};
   final Set<String> _localDeletedEventIds = {};
 
@@ -40,7 +40,6 @@ class _CalendarDayViewState extends State<CalendarDayView> {
   void _shiftDay(int delta) {
     setState(() {
       _day = _day.add(Duration(days: delta));
-      _expandedDayEventId = null;
     });
   }
 
@@ -51,7 +50,6 @@ class _CalendarDayViewState extends State<CalendarDayView> {
       if (result.isDeleted) {
         _localDeletedEventIds.add(result.deletedEventId!);
         _localEventOverrides.remove(event.id);
-        if (_expandedDayEventId == event.id) _expandedDayEventId = null;
       } else if (result.event != null) {
         _localEventOverrides[event.id] = result.event!;
       }
@@ -97,13 +95,8 @@ class _CalendarDayViewState extends State<CalendarDayView> {
             )
           else
             _DayTimelineStack(
+              key: ValueKey(_day),
               events: events,
-              expandedEventId: _expandedDayEventId,
-              onToggle: (id) {
-                setState(() {
-                  _expandedDayEventId = _expandedDayEventId == id ? null : id;
-                });
-              },
               onEdit: _openEventEditor,
               buildGapBetween: _buildGapBetween,
             ),
@@ -132,16 +125,13 @@ class _CalendarDayViewState extends State<CalendarDayView> {
 /// Lista del día: columna de filas estable + spine en capa aparte.
 class _DayTimelineStack extends StatefulWidget {
   const _DayTimelineStack({
+    super.key,
     required this.events,
-    required this.expandedEventId,
-    required this.onToggle,
     required this.onEdit,
     required this.buildGapBetween,
   });
 
   final List<EventModel> events;
-  final String? expandedEventId;
-  final ValueChanged<String> onToggle;
   final ValueChanged<EventModel> onEdit;
   final Widget Function(EventModel prev, EventModel next) buildGapBetween;
 
@@ -153,6 +143,7 @@ class _DayTimelineStackState extends State<_DayTimelineStack> {
   final _stackKey = GlobalKey();
   final List<GlobalKey> _dotKeys = [];
   final ValueNotifier<int> _spineRemeasureTick = ValueNotifier(0);
+  final ValueNotifier<String?> _expandedEventId = ValueNotifier(null);
   int _spineAnimationGeneration = 0;
 
   static const double _timelineColWidth = 16;
@@ -167,6 +158,7 @@ class _DayTimelineStackState extends State<_DayTimelineStack> {
   @override
   void dispose() {
     _spineRemeasureTick.dispose();
+    _expandedEventId.dispose();
     super.dispose();
   }
 
@@ -174,14 +166,25 @@ class _DayTimelineStackState extends State<_DayTimelineStack> {
   void didUpdateWidget(covariant _DayTimelineStack oldWidget) {
     super.didUpdateWidget(oldWidget);
     final keysChanged = oldWidget.events.length != widget.events.length;
-    final layoutChanged = oldWidget.expandedEventId != widget.expandedEventId ||
-        keysChanged ||
-        oldWidget.events.map((e) => e.id).join() !=
-            widget.events.map((e) => e.id).join();
+    final expandedMissing = _expandedEventId.value != null &&
+        !widget.events.any((e) => e.id == _expandedEventId.value);
+    if (expandedMissing) {
+      _expandedEventId.value = null;
+    }
+    final layoutChanged = oldWidget.events.map((e) => e.id).join() !=
+            widget.events.map((e) => e.id).join() ||
+        keysChanged;
     if (keysChanged) _syncDotKeys();
-    if (layoutChanged) {
+    if (layoutChanged || expandedMissing) {
       _requestSpineRemeasure(trackExpandAnimation: true);
     }
+  }
+
+  void _toggleEvent(String id) {
+    final next = _expandedEventId.value == id ? null : id;
+    if (_expandedEventId.value == next) return;
+    _expandedEventId.value = next;
+    _requestSpineRemeasure(trackExpandAnimation: true);
   }
 
   void _syncDotKeys() {
@@ -210,11 +213,11 @@ class _DayTimelineStackState extends State<_DayTimelineStack> {
     }
   }
 
-  Widget _buildGapRow(int index) {
+  Widget _buildGapRow(int index, String? expandedId) {
     final prev = widget.events[index - 1];
     final next = widget.events[index];
-    final prevExpanded = widget.expandedEventId == prev.id;
-    final nextExpanded = widget.expandedEventId == next.id;
+    final prevExpanded = expandedId == prev.id;
+    final nextExpanded = expandedId == next.id;
 
     if (prevExpanded || nextExpanded) {
       return _TimelineGapRow(
@@ -248,12 +251,17 @@ class _DayTimelineStackState extends State<_DayTimelineStack> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             for (var i = 0; i < widget.events.length; i++) ...[
-              if (i > 0) _buildGapRow(i),
+              if (i > 0)
+                ListenableBuilder(
+                  listenable: _expandedEventId,
+                  builder: (context, _) => _buildGapRow(i, _expandedEventId.value),
+                ),
               _TimelineEventRow(
+                key: ValueKey('day-row-${widget.events[i].id}'),
                 event: widget.events[i],
                 dotKey: _dotKeys[i],
-                isExpanded: widget.expandedEventId == widget.events[i].id,
-                onToggle: () => widget.onToggle(widget.events[i].id),
+                expandedListenable: _expandedEventId,
+                onToggle: () => _toggleEvent(widget.events[i].id),
                 onEdit: () => widget.onEdit(widget.events[i]),
                 onCardSizeChanged: _requestSpineRemeasure,
               ),
@@ -471,9 +479,9 @@ class _TimelineGapRow extends StatelessWidget {
   }
 }
 
-/// Hora fija — fuera de cualquier animación de tarjeta (v0.49.80).
+/// Hora anclada — fuera de ListenableBuilder / animación de tarjeta (v0.49.81).
 class _DayEventTimeLabel extends StatelessWidget {
-  const _DayEventTimeLabel({required this.label});
+  const _DayEventTimeLabel({super.key, required this.label});
 
   final String label;
 
@@ -502,9 +510,10 @@ class _DayEventTimeLabel extends StatelessWidget {
 
 class _TimelineEventRow extends StatelessWidget {
   const _TimelineEventRow({
+    super.key,
     required this.event,
     required this.dotKey,
-    required this.isExpanded,
+    required this.expandedListenable,
     required this.onToggle,
     required this.onEdit,
     required this.onCardSizeChanged,
@@ -512,39 +521,52 @@ class _TimelineEventRow extends StatelessWidget {
 
   final EventModel event;
   final GlobalKey dotKey;
-  final bool isExpanded;
+  final ValueListenable<String?> expandedListenable;
   final VoidCallback onToggle;
   final VoidCallback onEdit;
   final VoidCallback onCardSizeChanged;
 
   @override
   Widget build(BuildContext context) {
+    final timeLabel = CalendarEventFormat.timeHm(event.start);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _DayEventTimeLabel(label: CalendarEventFormat.timeHm(event.start)),
+        _DayEventTimeLabel(
+          key: ValueKey('day-time-${event.id}'),
+          label: timeLabel,
+        ),
         RepaintBoundary(
           child: _TimelineDot(key: dotKey, filled: true),
         ),
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(
-              left: AppSpacing.calendarDayTimelineContentGap,
-            ),
-            child: NotificationListener<SizeChangedLayoutNotification>(
-              onNotification: (_) {
-                onCardSizeChanged();
-                return false;
-              },
-              child: SizeChangedLayoutNotifier(
-                child: CalendarDayEventCard(
-                  event: event,
-                  isExpanded: isExpanded,
-                  onToggle: onToggle,
-                  onEdit: onEdit,
+          child: ListenableBuilder(
+            listenable: expandedListenable,
+            builder: (context, _) {
+              final isExpanded =
+                  expandedListenable.value == event.id;
+              return Padding(
+                padding: const EdgeInsets.only(
+                  left: AppSpacing.calendarDayTimelineContentGap,
                 ),
-              ),
-            ),
+                child: NotificationListener<SizeChangedLayoutNotification>(
+                  onNotification: (_) {
+                    onCardSizeChanged();
+                    return false;
+                  },
+                  child: SizeChangedLayoutNotifier(
+                    child: CalendarDayEventCard(
+                      key: ValueKey('day-card-${event.id}'),
+                      event: event,
+                      isExpanded: isExpanded,
+                      onToggle: onToggle,
+                      onEdit: onEdit,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],
