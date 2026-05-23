@@ -16,7 +16,6 @@ class HomeWeatherBlock extends StatelessWidget {
     required this.isDark,
     this.scale = 1,
     this.shiftLeft = 5.0,
-    this.iconExtraScale = 1.0,
   });
 
   static const double compactScale = 0.78;
@@ -34,11 +33,10 @@ class HomeWeatherBlock extends StatelessWidget {
   final bool isDark;
   final double scale;
   final double shiftLeft;
-  final double iconExtraScale;
 
   @override
   Widget build(BuildContext context) {
-    final s = scale.clamp(0.01, 1.5);
+    final double s = scale.clamp(0.01, 1.5);
     final iconSize = baseIconSize * s;
     final tempSize = baseTemperatureFontSize * s;
     final citySize = baseCityFontSize * s;
@@ -64,11 +62,7 @@ class HomeWeatherBlock extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Transform.scale(
-            scale: iconExtraScale.clamp(0.01, 1.5),
-            alignment: Alignment.center,
-            child: HomeWeatherIcon(size: iconSize, sunColor: sunColor),
-          ),
+          HomeWeatherIcon(size: iconSize, sunColor: sunColor),
           SizedBox(width: iconGap),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
