@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../api/api_client.dart';
+import '../mock/mock_notes.dart';
 import '../models/backend_note_mapper.dart';
 import '../models/local_action_model.dart';
 import '../models/note_model.dart';
@@ -89,21 +90,35 @@ final class HybridNoteRepository implements NoteRepository {
     readRevision.value++;
   }
 
+  /// Superpone notas demo enriquecidas sobre backend (v0.49.96).
+  static List<NoteModel> _withDemoNotesOverlay(
+    List<NoteModel> backend,
+    List<NoteModel> demo,
+  ) {
+    final demoTitles =
+        demo.map((n) => n.title.trim().toLowerCase()).toSet();
+    final filtered = backend.where((n) {
+      if (MockNotes.demoNoteIds.contains(n.id)) return false;
+      return !demoTitles.contains(n.title.trim().toLowerCase());
+    }).toList();
+    return [...demo, ...filtered];
+  }
+
   @override
   List<String> getQuickLabels() => NoteService.getQuickLabels();
 
   @override
   List<NoteModel> getRecentNotes() {
-    if (!_readsOk) return NoteService.getRecentNotes();
-    return List<NoteModel>.unmodifiable(_cached);
+    final demo = MockNotes.recent();
+    if (!_readsOk) return demo;
+    return _withDemoNotesOverlay(_cached, demo);
   }
 
   @override
   List<NoteModel> getHomeHighlightNotes() {
-    if (!_readsOk) {
-      return NoteService.getHomeHighlightNotes();
-    }
-    return List<NoteModel>.from(_cached.take(4));
+    final demo = MockNotes.homeHighlights();
+    if (!_readsOk) return demo;
+    return _withDemoNotesOverlay(_cached, demo).take(4).toList();
   }
 
   @override

@@ -9,6 +9,7 @@ import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../theme/aris_list_palette.dart';
 import '../../../theme/app_spacing.dart';
 import 'manual_note_canvas_sheet.dart';
+import 'widgets/note_detail_sheet.dart';
 import 'widgets/note_list_card.dart';
 
 /// Notas — creación manual (+), listado y canal Aris (sin tags visibles, v0.49.15).
@@ -87,7 +88,7 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 
   void _onNoteTap(NoteModel n) {
-    unawaited(ManualNoteCanvasSheet.openExisting(context, n));
+    NoteDetailSheet.show(context, n);
   }
 
   Future<void> _onRecentNoteMenu(String action, NoteModel n) async {

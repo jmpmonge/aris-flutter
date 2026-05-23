@@ -9,6 +9,7 @@ import '../../theme/app_spacing.dart';
 import '../../theme/home_card_theme.dart';
 import '../../features/home/presentation/widgets/home_event_detail_sheet.dart';
 import '../../features/home/presentation/widgets/home_event_timeline_row.dart';
+import '../../features/notes/presentation/widgets/note_detail_sheet.dart';
 import '../navigation/app_bottom_navigation.dart';
 import 'premium_pressable.dart';
 
@@ -77,6 +78,10 @@ class TodaySummaryCardState extends State<TodaySummaryCard> {
 
   void _openHomeEventDetail(EventModel event) {
     HomeEventDetailSheet.show(context, event);
+  }
+
+  void _openHomeNoteDetail(NoteModel note) {
+    NoteDetailSheet.show(context, note);
   }
 
   void _ensureHomeTaskOrderIds() {
@@ -445,16 +450,24 @@ class TodaySummaryCardState extends State<TodaySummaryCard> {
     ColorScheme scheme,
     bool isDark,
   ) {
-    return Text(
-      '• ${note.title}',
-      style: TextStyle(
-        fontSize: 13.5,
-        height: 1.28,
-        fontWeight: FontWeight.w400,
-        color: homeCardSecondaryText(scheme, isDark),
+    return PremiumPressable(
+      onTap: () => _openHomeNoteDetail(note),
+      borderRadius: BorderRadius.circular(6),
+      pressTint: PremiumPressTints.neutral(isDark),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Text(
+          '• ${note.title}',
+          style: TextStyle(
+            fontSize: 13.5,
+            height: 1.28,
+            fontWeight: FontWeight.w400,
+            color: homeCardSecondaryText(scheme, isDark),
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
     );
   }
 
