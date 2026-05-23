@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/models/event_model.dart';
 import '../../../../shared/widgets/premium_pressable.dart';
+import '../../../../shared/widgets/smooth_card_expand.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import 'calendar_day_event_card.dart';
@@ -14,13 +15,13 @@ class CalendarWeekSelectedEventCard extends StatelessWidget {
     super.key,
     required this.event,
     required this.isExpanded,
-    required this.onExpand,
+    required this.onToggle,
     required this.onEdit,
   });
 
   final EventModel event;
   final bool isExpanded;
-  final VoidCallback onExpand;
+  final VoidCallback onToggle;
   final VoidCallback onEdit;
 
   static const double _radius = AppSpacing.radiusMd;
@@ -29,7 +30,6 @@ class CalendarWeekSelectedEventCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final icon = CalendarEventIconResolver.resolve(event);
     final summaryLine = CalendarEventFormat.weekSelectedCardSubtitle(event);
-    final timeLine = CalendarEventFormat.weekCardTimeLine(event);
 
     final card = DecoratedBox(
       decoration: BoxDecoration(
@@ -80,45 +80,31 @@ class CalendarWeekSelectedEventCard extends StatelessWidget {
                         maxLines: isExpanded ? 4 : 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (!isExpanded) ...[
-                        const SizedBox(height: 3),
-                        Text(
-                          summaryLine,
-                          style: TextStyle(
-                            fontSize: 13,
-                            height: 1.25,
-                            color: AppColors.calendarListTextSecondary,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 3),
+                      Text(
+                        summaryLine,
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.25,
+                          color: AppColors.calendarListTextSecondary,
                         ),
-                      ],
+                        maxLines: isExpanded ? 2 : 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
                 ),
-                if (!isExpanded)
-                  Icon(
-                    Icons.expand_more_rounded,
-                    size: 20,
-                    color: AppColors.calendarListTextMuted,
-                  ),
+                SmoothCardExpandChevron(
+                  isExpanded: isExpanded,
+                  color: AppColors.calendarListTextMuted,
+                ),
               ],
             ),
             if (isExpanded) ...[
-              const SizedBox(height: 4),
-              Text(
-                timeLine,
-                style: TextStyle(
-                  fontSize: 13,
-                  height: 1.25,
-                  color: AppColors.calendarListTextSecondary,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
               CalendarDayEventExpandedContent(
                 event: event,
                 onEdit: onEdit,
+                hideLocation: true,
               ),
             ],
           ],
@@ -126,12 +112,8 @@ class CalendarWeekSelectedEventCard extends StatelessWidget {
       ),
     );
 
-    if (isExpanded) {
-      return card;
-    }
-
     return PremiumPressable(
-      onTap: onExpand,
+      onTap: onToggle,
       borderRadius: BorderRadius.circular(_radius),
       child: card,
     );

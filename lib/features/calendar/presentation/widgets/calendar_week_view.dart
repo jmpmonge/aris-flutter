@@ -336,7 +336,7 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
             CalendarWeekSelectedEventCard(
               event: selection.event!,
               isExpanded: _detailExpanded,
-              onExpand: () => setState(() => _detailExpanded = true),
+              onToggle: () => setState(() => _detailExpanded = !_detailExpanded),
               onEdit: () => _openEventEditor(selection.event!),
             ),
             SizedBox(height: AppSpacing.calendarWeekBottomClearanceExtra),

@@ -113,14 +113,17 @@ class CalendarDayEventExpandedContent extends StatelessWidget {
     super.key,
     required this.event,
     required this.onEdit,
+    this.hideLocation = false,
   });
 
   final EventModel event;
   final VoidCallback onEdit;
+  final bool hideLocation;
 
   @override
   Widget build(BuildContext context) {
-    final location = CalendarEventFormat.expandedLocation(event);
+    final location =
+        hideLocation ? null : CalendarEventFormat.expandedLocation(event);
     final reminder = CalendarEventFormat.expandedReminder(event);
     final observations = CalendarEventFormat.expandedObservations(event);
 

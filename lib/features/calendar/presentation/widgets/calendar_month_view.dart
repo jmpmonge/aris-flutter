@@ -224,9 +224,13 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
                 child: CalendarWeekSelectedEventCard(
                   event: e,
                   isExpanded: _selectedEventId == e.id && _detailExpanded,
-                  onExpand: () => setState(() {
-                    _selectedEventId = e.id;
-                    _detailExpanded = true;
+                  onToggle: () => setState(() {
+                    if (_selectedEventId == e.id && _detailExpanded) {
+                      _detailExpanded = false;
+                    } else {
+                      _selectedEventId = e.id;
+                      _detailExpanded = true;
+                    }
                   }),
                   onEdit: () => _openEventEditor(e),
                 ),
