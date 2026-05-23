@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/models/event_model.dart';
 import '../../../../core/repositories/calendar_repository.dart';
-import '../../../../theme/app_colors.dart';
+import '../../../../theme/aris_list_palette.dart';
 import '../../../../theme/app_spacing.dart';
 import 'calendar_day_event_card.dart';
 import 'calendar_event_format.dart';
@@ -88,7 +88,7 @@ class _CalendarDayViewState extends State<CalendarDayView> {
                 'Sin eventos para este día.',
                 style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.calendarListTextMuted,
+                  color: context.arisList.textMuted,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -374,7 +374,7 @@ class _TimelineSpineLayerState extends State<_TimelineSpineLayer> {
               child: Container(
                 width: AppSpacing.calendarDayTimelineSpineWidth,
                 height: segment.$2,
-                color: AppColors.calendarListBorderNormal.withValues(
+                color: context.arisList.borderNormal.withValues(
                   alpha: AppSpacing.calendarDayTimelineSpineOpacity,
                 ),
               ),
@@ -405,18 +405,18 @@ class _DayNavHeader extends StatelessWidget {
           onPressed: onPrev,
           icon: Icon(
             Icons.chevron_left_rounded,
-            color: AppColors.calendarListAccent,
+            color: context.arisList.accent,
           ),
         ),
         Expanded(
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               height: 1.25,
               fontWeight: FontWeight.w600,
-              color: AppColors.calendarListTextPrimary,
+              color: context.arisList.textPrimary,
             ),
           ),
         ),
@@ -425,7 +425,7 @@ class _DayNavHeader extends StatelessWidget {
           onPressed: onNext,
           icon: Icon(
             Icons.chevron_right_rounded,
-            color: AppColors.calendarListAccent,
+            color: context.arisList.accent,
           ),
         ),
       ],
@@ -471,22 +471,22 @@ class _DayEventTimeLabel extends StatelessWidget {
 
   final String label;
 
-  static const TextStyle _style = TextStyle(
-    fontSize: 12,
-    height: 1.2,
-    fontWeight: FontWeight.w500,
-    color: AppColors.calendarListTextSecondary,
-  );
-
   @override
   Widget build(BuildContext context) {
+    final labelStyle = TextStyle(
+      fontSize: 12,
+      height: 1.2,
+      fontWeight: FontWeight.w500,
+      color: context.arisList.textSecondary,
+    );
+
     return SizedBox(
       width: AppSpacing.calendarTimeColumnWidth,
       child: Padding(
         padding: const EdgeInsets.only(
           top: AppSpacing.calendarDayTimeColumnTop,
         ),
-        child: Text(label, style: _style),
+        child: Text(label, style: labelStyle),
       ),
     );
   }
@@ -573,12 +573,12 @@ class _TimelineDot extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: filled
-                  ? AppColors.calendarListTimelineDot
+                  ? context.arisList.timelineDot
                   : Colors.transparent,
               border: Border.all(
                 color: filled
-                    ? AppColors.calendarListTimelineDot
-                    : AppColors.calendarListEventDotMuted.withValues(alpha: 0.65),
+                    ? context.arisList.timelineDot
+                    : context.arisList.eventDotMuted.withValues(alpha: 0.65),
                 width: 1.4,
               ),
             ),

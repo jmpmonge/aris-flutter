@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/models/event_model.dart';
 import '../../../../shared/widgets/premium_pressable.dart';
 import '../../../../shared/widgets/smooth_card_expand.dart';
-import '../../../../theme/app_colors.dart';
+import '../../../../theme/aris_list_palette.dart';
 import '../../../../theme/app_spacing.dart';
 import 'calendar_event_format.dart';
 import 'calendar_event_icon.dart';
@@ -37,13 +37,13 @@ class CalendarDayEventCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: isExpanded
-                ? AppColors.calendarListCardExpanded
-                : AppColors.calendarListCardFill.withValues(alpha: 0.92),
+                ? context.arisList.cardExpanded
+                : context.arisList.cardFill.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(_radius),
             border: Border.all(
               color: isExpanded
-                  ? AppColors.calendarListBorderSelected
-                  : AppColors.calendarListBorderNormal,
+                  ? context.arisList.borderSelected
+                  : context.arisList.borderNormal,
               width: isExpanded ? 1.15 : 1,
             ),
           ),
@@ -64,18 +64,18 @@ class CalendarDayEventCard extends StatelessWidget {
                       child: Icon(
                         icon,
                         size: 18,
-                        color: AppColors.calendarListAccent,
+                        color: context.arisList.accent,
                       ),
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     Expanded(
                       child: Text(
                         event.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           height: 1.22,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.calendarListTextPrimary,
+                          color: context.arisList.textPrimary,
                         ),
                         maxLines: isExpanded ? 4 : 2,
                         overflow: TextOverflow.ellipsis,
@@ -85,7 +85,7 @@ class CalendarDayEventCard extends StatelessWidget {
                       padding: const EdgeInsets.only(left: AppSpacing.xs),
                       child: SmoothCardExpandChevron(
                         isExpanded: isExpanded,
-                        color: AppColors.calendarListTextMuted,
+                        color: context.arisList.textMuted,
                       ),
                     ),
                   ],
@@ -170,7 +170,7 @@ class CalendarDayEventExpandedContent extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              foregroundColor: AppColors.calendarListAccent,
+              foregroundColor: context.arisList.accent,
             ),
             child: const Text(
               'Editar',
@@ -205,18 +205,18 @@ class _ExpandedIconLine extends StatelessWidget {
           child: Icon(
             icon,
             size: 15,
-            color: AppColors.calendarListTextMuted.withValues(alpha: 0.9),
+            color: context.arisList.textMuted.withValues(alpha: 0.9),
           ),
         ),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12.5,
               height: 1.28,
               fontWeight: FontWeight.w400,
-              color: AppColors.calendarListTextSecondary,
+              color: context.arisList.textSecondary,
             ),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,

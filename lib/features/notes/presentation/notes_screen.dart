@@ -7,6 +7,7 @@ import '../../../core/repositories/repositories.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/aris_list_palette.dart';
 import '../../../theme/app_spacing.dart';
 import 'manual_note_canvas_sheet.dart';
 import 'widgets/note_list_card.dart';
@@ -172,7 +173,7 @@ class _NotesScreenState extends State<NotesScreen> {
                     style: text.labelSmall?.copyWith(
                       fontSize: 12,
                       letterSpacing: 0.6,
-                      color: AppColors.noteListSectionLabel,
+                      color: context.arisList.noteSectionLabel,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/models/task_model.dart';
 import '../../../../core/models/task_ui_buckets.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/aris_list_palette.dart';
 
 /// Cuerpo expandido de una tarea en la lista (v0.49.44 paso 4).
 class TaskExpandedCard extends StatefulWidget {
@@ -95,7 +96,7 @@ class _TaskExpandedCardState extends State<TaskExpandedCard> {
         Divider(
           height: 1,
           thickness: 1,
-          color: AppColors.taskListBorderNormal.withValues(alpha: 0.85),
+          color: context.arisList.borderNormal.withValues(alpha: 0.85),
         ),
         SizedBox(height: _sectionGap - 2),
         Row(
@@ -131,10 +132,10 @@ class _MetaChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.taskListChipFill,
+        color: context.arisList.chipFill,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: AppColors.taskListBorderNormal.withValues(alpha: 0.9),
+          color: context.arisList.borderNormal.withValues(alpha: 0.9),
         ),
       ),
       child: Padding(
@@ -145,16 +146,16 @@ class _MetaChip extends StatelessWidget {
             Icon(
               icon,
               size: 13,
-              color: AppColors.taskListChipIcon,
+              color: context.arisList.chipIcon,
             ),
             const SizedBox(width: 5),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 height: 1.15,
                 fontWeight: FontWeight.w500,
-                color: AppColors.taskListChipText,
+                color: context.arisList.chipText,
               ),
             ),
           ],
@@ -204,11 +205,11 @@ class _DescriptionBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        const style = TextStyle(
+        final style = TextStyle(
           fontSize: 14,
           height: 1.38,
           fontWeight: FontWeight.w400,
-          color: AppColors.taskListTextSecondary,
+          color: context.arisList.textSecondary,
         );
         final direction = Directionality.of(context);
         final maxW = constraints.maxWidth.isFinite && constraints.maxWidth > 0
@@ -239,11 +240,11 @@ class _DescriptionBlock extends StatelessWidget {
                   behavior: HitTestBehavior.opaque,
                   child: Text(
                     expanded ? 'Ver menos' : 'Ver más',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       height: 1.2,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.taskListAccent,
+                      color: context.arisList.accent,
                     ),
                   ),
                 ),
@@ -282,8 +283,8 @@ class _ActionLink extends StatelessWidget {
               height: 1.2,
               fontWeight: FontWeight.w600,
               color: destructive
-                  ? AppColors.taskListDestructive.withValues(alpha: 0.78)
-                  : AppColors.taskListAccent,
+                  ? context.arisList.destructive.withValues(alpha: 0.78)
+                  : context.arisList.accent,
             ),
           ),
         ),

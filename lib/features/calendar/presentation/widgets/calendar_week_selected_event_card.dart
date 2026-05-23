@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/models/event_model.dart';
 import '../../../../shared/widgets/premium_pressable.dart';
 import '../../../../shared/widgets/smooth_card_expand.dart';
-import '../../../../theme/app_colors.dart';
+import '../../../../theme/aris_list_palette.dart';
 import '../../../../theme/app_spacing.dart';
 import 'calendar_day_event_card.dart';
 import 'calendar_event_format.dart';
@@ -34,13 +34,13 @@ class CalendarWeekSelectedEventCard extends StatelessWidget {
     final card = DecoratedBox(
       decoration: BoxDecoration(
         color: isExpanded
-            ? AppColors.calendarListCardExpanded
-            : AppColors.calendarListCardFill.withValues(alpha: 0.94),
+            ? context.arisList.cardExpanded
+            : context.arisList.cardFill.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(_radius),
         border: Border.all(
           color: isExpanded
-              ? AppColors.calendarListBorderSelected
-              : AppColors.calendarListBorderNormal.withValues(alpha: 0.85),
+              ? context.arisList.borderSelected
+              : context.arisList.borderNormal.withValues(alpha: 0.85),
           width: isExpanded ? 1.15 : 1,
         ),
       ),
@@ -61,7 +61,7 @@ class CalendarWeekSelectedEventCard extends StatelessWidget {
                   child: Icon(
                     icon,
                     size: 20,
-                    color: AppColors.calendarListAccent,
+                    color: context.arisList.accent,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
@@ -71,11 +71,11 @@ class CalendarWeekSelectedEventCard extends StatelessWidget {
                     children: [
                       Text(
                         event.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           height: 1.22,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.calendarListTextPrimary,
+                          color: context.arisList.textPrimary,
                         ),
                         maxLines: isExpanded ? 4 : 2,
                         overflow: TextOverflow.ellipsis,
@@ -86,7 +86,7 @@ class CalendarWeekSelectedEventCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           height: 1.25,
-                          color: AppColors.calendarListTextSecondary,
+                          color: context.arisList.textSecondary,
                         ),
                         maxLines: isExpanded ? 2 : 2,
                         overflow: TextOverflow.ellipsis,
@@ -96,7 +96,7 @@ class CalendarWeekSelectedEventCard extends StatelessWidget {
                 ),
                 SmoothCardExpandChevron(
                   isExpanded: isExpanded,
-                  color: AppColors.calendarListTextMuted,
+                  color: context.arisList.textMuted,
                 ),
               ],
             ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/models/event_model.dart';
 import '../../../../core/repositories/calendar_repository.dart';
-import '../../../../theme/app_colors.dart';
+import '../../../../theme/aris_list_palette.dart';
 import '../../../../theme/app_spacing.dart';
 import 'calendar_week_view.dart';
 import 'calendar_event_format.dart';
@@ -79,17 +79,17 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
                 onPressed: () => _shiftMonth(-1),
                 icon: Icon(
                   Icons.chevron_left_rounded,
-                  color: AppColors.calendarListAccent,
+                  color: context.arisList.accent,
                 ),
               ),
               Expanded(
                 child: Text(
                   _monthTitleLabel,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.calendarListTextPrimary,
+                    color: context.arisList.textPrimary,
                   ),
                 ),
               ),
@@ -98,7 +98,7 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
                 onPressed: () => _shiftMonth(1),
                 icon: Icon(
                   Icons.chevron_right_rounded,
-                  color: AppColors.calendarListAccent,
+                  color: context.arisList.accent,
                 ),
               ),
             ],
@@ -111,9 +111,9 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
                     child: Center(
                       child: Text(
                         l,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.calendarListTextMuted,
+                          color: context.arisList.textMuted,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -157,16 +157,16 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: selected
-                        ? AppColors.calendarListAccent.withValues(alpha: 0.16)
+                        ? context.arisList.accent.withValues(alpha: 0.16)
                         : isToday
-                            ? AppColors.calendarListElevated
+                            ? context.arisList.elevated
                                 .withValues(alpha: 0.5)
                             : null,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: selected
-                          ? AppColors.calendarListBorderSelected
-                          : AppColors.calendarListBorderNormal,
+                          ? context.arisList.borderSelected
+                          : context.arisList.borderNormal,
                     ),
                   ),
                   child: Column(
@@ -179,8 +179,8 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
                           fontWeight:
                               selected ? FontWeight.w800 : FontWeight.w500,
                           color: selected
-                              ? AppColors.calendarListAccent
-                              : AppColors.calendarListTextPrimary,
+                              ? context.arisList.accent
+                              : context.arisList.textPrimary,
                         ),
                       ),
                       if (hasDot)
@@ -188,8 +188,8 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
                           margin: const EdgeInsets.only(top: 3),
                           width: 5,
                           height: 5,
-                          decoration: const BoxDecoration(
-                            color: AppColors.calendarListAccent,
+                          decoration: BoxDecoration(
+                            color: context.arisList.accent,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -202,10 +202,10 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
           const SizedBox(height: AppSpacing.md),
           Text(
             CalendarEventFormat.monthDayHeader(_month, _selectedDay),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: AppColors.calendarListTextPrimary,
+              color: context.arisList.textPrimary,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -214,7 +214,7 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
               'Sin eventos para este día.',
               style: TextStyle(
                 fontSize: 14,
-                color: AppColors.calendarListTextMuted,
+                color: context.arisList.textMuted,
               ),
             )
           else

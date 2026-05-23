@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/models/event_model.dart';
-import '../../../../theme/app_colors.dart';
+import '../../../../theme/aris_list_palette.dart';
 import '../../../../theme/app_spacing.dart';
 import 'calendar_event_format.dart';
 import 'calendar_event_icon.dart';
@@ -46,13 +46,13 @@ class CalendarEventCard extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.calendarListCardExpanded
-                : AppColors.calendarListCardFill.withValues(alpha: 0.92),
+                ? context.arisList.cardExpanded
+                : context.arisList.cardFill.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(_radius),
             border: Border.all(
               color: isSelected
-                  ? AppColors.calendarListBorderSelected
-                  : AppColors.calendarListBorderNormal,
+                  ? context.arisList.borderSelected
+                  : context.arisList.borderNormal,
               width: isSelected ? 1.15 : 1,
             ),
           ),
@@ -69,7 +69,7 @@ class CalendarEventCard extends StatelessWidget {
                   child: Icon(
                     icon,
                     size: compact ? 16 : 18,
-                    color: AppColors.calendarListAccent,
+                    color: context.arisList.accent,
                   ),
                 ),
                 SizedBox(width: compact ? AppSpacing.xs : AppSpacing.sm),
@@ -85,7 +85,7 @@ class CalendarEventCard extends StatelessWidget {
                           fontSize: compact ? 14 : 15,
                           height: 1.22,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.calendarListTextPrimary,
+                          color: context.arisList.textPrimary,
                         ),
                         maxLines: compact ? 2 : 3,
                         overflow: TextOverflow.ellipsis,
@@ -94,21 +94,21 @@ class CalendarEventCard extends StatelessWidget {
                         const SizedBox(height: 3),
                         Text(
                           timeSimple,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             height: 1.2,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.calendarListAccentSky,
+                            color: context.arisList.accentSky,
                           ),
                         ),
                         if (location.isNotEmpty) ...[
                           const SizedBox(height: 2),
                           Text(
                             location,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               height: 1.2,
-                              color: AppColors.calendarListTextMuted,
+                              color: context.arisList.textMuted,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -119,11 +119,11 @@ class CalendarEventCard extends StatelessWidget {
                           const SizedBox(height: 3),
                           Text(
                             timeRange,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               height: 1.2,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.calendarListAccentSky,
+                              color: context.arisList.accentSky,
                             ),
                           ),
                         ],
@@ -131,10 +131,10 @@ class CalendarEventCard extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             notes,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               height: 1.32,
-                              color: AppColors.calendarListTextSecondary,
+                              color: context.arisList.textSecondary,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -144,10 +144,10 @@ class CalendarEventCard extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             location,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               height: 1.2,
-                              color: AppColors.calendarListTextMuted,
+                              color: context.arisList.textMuted,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -156,10 +156,10 @@ class CalendarEventCard extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             category,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               height: 1.2,
-                              color: AppColors.calendarListTextMuted,
+                              color: context.arisList.textMuted,
                             ),
                           ),
                         ],

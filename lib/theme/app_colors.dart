@@ -20,30 +20,37 @@ abstract final class AppColors {
   /// Violeta IA (acento; [ColorScheme.secondary]).
   static const Color secondaryViolet = Color(0xFF7B6FF2);
 
-  /// Superficies modo claro — crema / blanco cálido (v0.48.5+).
-  static const Color canvasLight = Color(0xFFF8F4EE);
-  static const Color surfaceLight = Color(0xFFFFFDF8);
-  static const Color surfaceRaisedLight = Color(0xFFFEFAF2);
-  static const Color surfaceTintLight = Color(0xFFF5EDE3);
-  static const Color surfaceInputLight = Color(0xFFEFE8DE);
+  /// Superficies modo claro — frío premium iOS (v0.49.86).
+  static const Color canvasLight = Color(0xFFF5F7FB);
+  static const Color surfaceLight = Color(0xFFFFFFFF);
+  static const Color surfaceRaisedLight = Color(0xFFF8FAFD);
+  static const Color surfaceTintLight = Color(0xFFF1F5FA);
+  static const Color surfaceInputLight = Color(0xFFEEF3FA);
 
-  /// Texto y contornos (claro) — v0.48.5.
-  static const Color textPrimaryLight = Color(0xFF132B4F);
-  static const Color textSecondaryLight = Color(0xFF6E7480);
-  static const Color textTertiaryLight = Color(0xFF7A8499);
+  /// Texto y contornos (claro) — v0.49.86.
+  static const Color textPrimaryLight = Color(0xFF142033);
+  static const Color textSecondaryLight = Color(0xFF5E6B7D);
+  static const Color textTertiaryLight = Color(0xFF8A97A8);
 
-  /// Línea divisoria Home HOY (v0.48.6).
-  static const Color outlineLight = Color(0xFFE6E1DA);
-  static const Color outlineVariantLight = Color(0xFFF0EBE2);
+  /// Líneas modo claro.
+  static const Color outlineLight = Color(0xFFD9E2EE);
+  static const Color outlineVariantLight = Color(0xFFE4EBF3);
 
   /// Sobre primario / secundario / error en claro (blanco cálido).
   static const Color onPrimaryContrast = Color(0xFFFFFBF7);
 
-  /// Calendario / eventos (HOY).
-  static const Color calendarBlue = Color(0xFF2F7DF6);
+  /// Primario claro — azul Aris (v0.49.86).
+  static const Color brandBlueLight = Color(0xFF79AFFF);
+  static const Color brandBlueStrongLight = Color(0xFF5E97F6);
+  static const Color brandBlueDeepLight = Color(0xFF2D5FA8);
+  static const Color brandBlueSoftLight = Color(0xFFEAF2FF);
+  static const Color brandBlueSurfaceLight = Color(0xFFDCEBFF);
 
-  /// Fondo calendario / agenda suave (referencia Clara).
-  static const Color calendarSurfaceSoft = Color(0xFFDDEBFF);
+  /// Calendario / eventos (HOY) — claro.
+  static const Color calendarBlue = Color(0xFF79AFFF);
+
+  /// Fondo calendario / agenda suave.
+  static const Color calendarSurfaceSoft = Color(0xFFDCEBFF);
 
   /// Sugerencia Home — verde (v0.48.6).
   static const Color suggestionGreen = Color(0xFF2FAE68);
@@ -59,8 +66,26 @@ abstract final class AppColors {
   /// Legado — preferir [taskCompletedGreen] / [suggestionGreen] según contexto.
   static const Color taskGreen = Color(0xFF45B36B);
 
-  /// Pastel documentados (extensiones UI, chips).
-  static const Color softBlue = Color(0xFFEAF1FF);
+  /// Home claro (v0.49.86).
+  static const Color homeHeaderTextLight = Color(0xFF1B2B44);
+  static const Color homeTimelineLineLight = Color(0xFFD7E4F5);
+  static const Color homeTimelineDotLight = Color(0xFF6EA8FF);
+  static const Color homeWeatherAccentLight = Color(0xFFE4B949);
+  static const Color noteSectionLabelLight = Color(0xFF7CCB9A);
+
+  /// Navegación claro.
+  static const Color navSelectedBackgroundLight = Color(0xFFDCE7FB);
+  static const Color navSelectedIconLight = Color(0xFF79AFFF);
+  static const Color navInactiveIconLight = Color(0xFF6E7C90);
+  static const Color floatingButtonBackgroundLight = Color(0xFF6E98D8);
+
+  /// Perfil claro.
+  static const Color profileIconAccentLight = Color(0xFF8FB5FF);
+  static const Color profileAvatarBgLight = Color(0xFFDCE7FB);
+  static const Color profileAvatarTextLight = Color(0xFF2D5FA8);
+
+  /// Pastel documentados (extensiones UI, chips) — claro v0.49.86.
+  static const Color softBlue = Color(0xFFEAF2FF);
   static const Color softGreen = Color(0xFFEAF7EF);
   static const Color softOrange = Color(0xFFFFF0DF);
   static const Color softPurple = Color(0xFFEFEAFF);
@@ -165,20 +190,20 @@ abstract final class AppColors {
   static const double taskListExpandedPadV = 15;
   static const double taskListExpandedSectionGap = 12;
 
-  /// Sombra modo claro — tinte marino, visible sobre crema.
-  static const Color shadowWarmLight = Color(0x45102A5C);
+  /// Sombra modo claro — tinte frío suave.
+  static const Color shadowWarmLight = Color(0x33142033);
 
   static ColorScheme get lightScheme {
     return ColorScheme(
       brightness: Brightness.light,
-      primary: primaryDeep,
+      primary: brandBlueStrongLight,
       onPrimary: onPrimaryContrast,
-      primaryContainer: softBlue,
-      onPrimaryContainer: primaryNavyDeep,
+      primaryContainer: brandBlueSurfaceLight,
+      onPrimaryContainer: brandBlueDeepLight,
       secondary: secondaryViolet,
       onSecondary: onPrimaryContrast,
-      secondaryContainer: violetContainer,
-      onSecondaryContainer: Color(0xFF2A1F55),
+      secondaryContainer: brandBlueSoftLight,
+      onSecondaryContainer: brandBlueDeepLight,
       tertiary: success,
       onTertiary: onPrimaryContrast,
       tertiaryContainer: softGreen,
@@ -193,7 +218,7 @@ abstract final class AppColors {
       surfaceContainerLow: surfaceRaisedLight,
       surfaceContainer: surfaceTintLight,
       surfaceContainerHigh: surfaceInputLight,
-      surfaceContainerHighest: Color(0xFFE8E0D6),
+      surfaceContainerHighest: Color(0xFFE4EBF3),
       onSurfaceVariant: textSecondaryLight,
       outline: outlineLight,
       outlineVariant: outlineVariantLight,
@@ -201,7 +226,7 @@ abstract final class AppColors {
       scrim: Color(0x80000000),
       inverseSurface: surfaceDark,
       onInverseSurface: textPrimaryDark,
-      inversePrimary: Color(0xFF8FABD9),
+      inversePrimary: calendarBlueDark,
     );
   }
 

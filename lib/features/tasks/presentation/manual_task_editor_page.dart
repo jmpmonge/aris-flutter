@@ -6,12 +6,12 @@ import '../../../shared/layout/breakpoints.dart';
 import '../../../shared/widgets/editor_compact_meta_field.dart';
 import '../../../shared/widgets/manual_editor_time_meta_chip.dart';
 import '../../../shared/widgets/section_accent_time_wheel_picker.dart';
-import '../../../theme/app_colors.dart';
+import '../../../theme/aris_list_palette.dart';
 import '../../../theme/app_spacing.dart';
 
 /// Acento azul Aris para metadatos del editor de tareas (v0.49.44).
 abstract final class TaskManualEditorAccent {
-  static const Color metaActive = AppColors.taskListAccent;
+  static Color metaActive(BuildContext context) => context.arisList.accent;
 }
 
 /// Editor manual de tarea: sheet desde abajo, compacto (v0.49.44).
@@ -38,7 +38,7 @@ abstract final class ManualTaskEditorPage {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: AppColors.taskListCardFill,
+      backgroundColor: context.arisList.cardFill,
       barrierColor: scheme.scrim.withValues(alpha: 0.45),
       constraints: sheetConstraints,
       shape: const RoundedRectangleBorder(
@@ -173,10 +173,10 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
   }) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.taskListElevated,
+        color: context.arisList.elevated,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         border: Border.all(
-          color: AppColors.taskListCardBorder.withValues(alpha: 0.55),
+          color: context.arisList.borderNormal.withValues(alpha: 0.55),
         ),
       ),
       child: Padding(
@@ -205,7 +205,7 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
   Future<void> _pickTime() async {
     final picked = await SectionAccentTimeWheelPicker.show(
       context: context,
-      accent: TaskManualEditorAccent.metaActive,
+      accent: TaskManualEditorAccent.metaActive(context),
       initialTime: _time,
     );
     if (!mounted || picked == null) return;
@@ -219,8 +219,8 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
   ButtonStyle _primaryButtonStyle() {
     return FilledButton.styleFrom(
       elevation: 0,
-      backgroundColor: AppColors.taskListAccent,
-      foregroundColor: AppColors.taskListCanvas,
+      backgroundColor: context.arisList.accent,
+      foregroundColor: context.arisList.canvas,
       padding: const EdgeInsets.symmetric(vertical: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
@@ -286,15 +286,15 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
   }) {
     return EditorCompactMetaField(
       icon: icon,
-      accent: TaskManualEditorAccent.metaActive,
+      accent: TaskManualEditorAccent.metaActive(context),
       active: active,
       onTap: onTap,
       valueLabel: valueLabel,
       iconOnly: iconOnly,
       enabled: !_busy,
-      surfaceColor: AppColors.taskListElevated,
-      borderColor: AppColors.taskListCardBorder,
-      mutedForeground: AppColors.taskListTextMuted,
+      surfaceColor: context.arisList.elevated,
+      borderColor: context.arisList.borderNormal,
+      mutedForeground: context.arisList.textMuted,
     );
   }
 
@@ -307,18 +307,18 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
       fontWeight: FontWeight.w600,
       height: 1.2,
       fontSize: 17,
-      color: AppColors.taskListTextPrimary,
+      color: context.arisList.textPrimary,
     );
     final bodyStyle = tt.bodyMedium?.copyWith(
       height: 1.4,
-      color: AppColors.taskListTextPrimary,
+      color: context.arisList.textPrimary,
     );
     final titleHint = titleStyle?.copyWith(
-      color: AppColors.taskListTextMuted.withValues(alpha: 0.65),
+      color: context.arisList.textMuted.withValues(alpha: 0.65),
       fontWeight: FontWeight.w600,
     );
     final bodyHint = bodyStyle?.copyWith(
-      color: AppColors.taskListTextMuted.withValues(alpha: 0.55),
+      color: context.arisList.textMuted.withValues(alpha: 0.55),
     );
 
     return Column(
@@ -339,7 +339,7 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
                   style: tt.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
-                    color: AppColors.taskListTextPrimary,
+                    color: context.arisList.textPrimary,
                   ),
                 ),
               ),
@@ -348,7 +348,7 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
                 icon: Icon(
                   Icons.close_rounded,
                   size: 22,
-                  color: AppColors.taskListTextMuted,
+                  color: context.arisList.textMuted,
                 ),
                 tooltip: 'Cerrar',
                 onPressed: _busy ? null : () => Navigator.of(context).pop(),
@@ -395,14 +395,14 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     ManualEditorTimeMetaChip(
-                      accent: TaskManualEditorAccent.metaActive,
+                      accent: TaskManualEditorAccent.metaActive(context),
                       active: _time != null,
                       onTap: _pickTime,
                       enabled: !_busy,
                       valueLabel: _time != null ? _timeLabel(_time!) : null,
-                      surfaceColor: AppColors.taskListElevated,
-                      borderColor: AppColors.taskListCardBorder,
-                      mutedForeground: AppColors.taskListTextMuted,
+                      surfaceColor: context.arisList.elevated,
+                      borderColor: context.arisList.borderNormal,
+                      mutedForeground: context.arisList.textMuted,
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     _metaField(
@@ -447,7 +447,7 @@ class _ManualTaskEditorSheetState extends State<_ManualTaskEditorSheet> {
                 Text(
                   _submitError!,
                   style: tt.bodySmall?.copyWith(
-                    color: AppColors.taskListDestructive,
+                    color: context.arisList.destructive,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),

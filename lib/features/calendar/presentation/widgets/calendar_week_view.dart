@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/models/event_model.dart';
 import '../../../../core/repositories/calendar_repository.dart';
-import '../../../../theme/app_colors.dart';
+import '../../../../theme/aris_list_palette.dart';
 import '../../../../theme/app_spacing.dart';
 import '../calendar_body_views.dart' show calendarSameLocalDay, mondayOfWeek;
 import '../calendar_week_event_bubble.dart';
@@ -37,7 +37,8 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
   static const int _firstHour = 7;
   static const int _lastHour = 21;
 
-  static Color get _gridLineColor => AppColors.calendarListBorderNormal.withValues(
+  static Color _gridLineColor(BuildContext context) =>
+      context.arisList.borderNormal.withValues(
         alpha: AppSpacing.calendarWeekGridLineOpacity,
       );
 
@@ -110,8 +111,8 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
   }) {
     final highlight = isSelected || isToday;
     final dayNumberColor = highlight
-        ? AppColors.calendarListCanvas
-        : AppColors.calendarListTextPrimary;
+        ? context.arisList.canvas
+        : context.arisList.textPrimary;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -122,21 +123,21 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
             fontSize: AppSpacing.calendarWeekDayLetterSize,
             fontWeight: FontWeight.w600,
             height: 1.1,
-            color: AppColors.calendarListTextMuted.withValues(alpha: 0.9),
+            color: context.arisList.textMuted.withValues(alpha: 0.9),
           ),
         ),
         const SizedBox(height: 3),
         DecoratedBox(
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.calendarListAccent
+                ? context.arisList.accent
                 : isToday
-                    ? AppColors.calendarListAccent.withValues(alpha: 0.16)
+                    ? context.arisList.accent.withValues(alpha: 0.16)
                     : Colors.transparent,
             shape: BoxShape.circle,
             border: isToday && !isSelected
                 ? Border.all(
-                    color: AppColors.calendarListAccent.withValues(alpha: 0.45),
+                    color: context.arisList.accent.withValues(alpha: 0.45),
                   )
                 : null,
           ),
@@ -153,8 +154,8 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
                   color: isSelected
                       ? dayNumberColor
                       : isToday
-                          ? AppColors.calendarListAccent
-                          : AppColors.calendarListTextPrimary,
+                          ? context.arisList.accent
+                          : context.arisList.textPrimary,
                 ),
               ),
             ),
@@ -200,8 +201,10 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           border: Border(
-            left: BorderSide(color: _gridLineColor),
-            bottom: isLastHour ? BorderSide.none : BorderSide(color: _gridLineColor),
+            left: BorderSide(color: _gridLineColor(context)),
+            bottom: isLastHour
+                ? BorderSide.none
+                : BorderSide(color: _gridLineColor(context)),
           ),
         ),
         child: Padding(
@@ -242,11 +245,11 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
               Expanded(
                 child: Text(
                   CalendarEventFormat.monthYearTitle(_weekStart),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: AppSpacing.calendarWeekHeaderTitleSize,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.2,
-                    color: AppColors.calendarListTextPrimary,
+                    color: context.arisList.textPrimary,
                   ),
                 ),
               ),
@@ -257,7 +260,7 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
                 onPressed: () => _shiftWeek(-1),
                 icon: Icon(
                   Icons.chevron_left_rounded,
-                  color: AppColors.calendarListAccent,
+                  color: context.arisList.accent,
                 ),
               ),
               IconButton(
@@ -267,7 +270,7 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
                 onPressed: () => _shiftWeek(1),
                 icon: Icon(
                   Icons.chevron_right_rounded,
-                  color: AppColors.calendarListAccent,
+                  color: context.arisList.accent,
                 ),
               ),
             ],
@@ -308,7 +311,7 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.calendarListTextMuted.withValues(
+                          color: context.arisList.textMuted.withValues(
                             alpha: AppSpacing.calendarWeekHourLabelOpacity,
                           ),
                           height: 1.1,

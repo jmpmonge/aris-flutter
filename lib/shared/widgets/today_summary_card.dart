@@ -10,20 +10,20 @@ import '../../theme/home_card_theme.dart';
 import '../navigation/app_bottom_navigation.dart';
 import 'premium_pressable.dart';
 
-/// Azul calendario HOY — v0.48.17 contraste reforzado (claro/oscuro).
-const Color _kCalendarBlueLight = Color(0xFF1F6FEB);
+/// Azul calendario HOY — v0.49.86 paleta clara iOS.
+const Color _kCalendarBlueLight = AppColors.brandBlueStrongLight;
 const Color _kCalendarBlueDark = AppColors.calendarBlueDark;
 
-/// Línea vertical timeline — secundaria frente a los puntos (v0.48.27).
-const Color _kTimelineSpineLight = Color(0xFFC7DCFF);
+/// Línea vertical timeline — v0.49.86.
+const Color _kTimelineSpineLight = AppColors.homeTimelineLineLight;
 const Color _kTimelineSpineDark = Color(0xFF416A98);
 
-/// Icono microsección TAREAS (v0.48.28).
-const Color _kTasksSectionIconLight = Color(0xFFF59E0B);
+/// Icono microsección TAREAS — v0.49.86.
+const Color _kTasksSectionIconLight = AppColors.homeWeatherAccentLight;
 const Color _kTasksSectionIconDark = AppColors.tasksOrangeDark;
 
-/// Icono sección NOTAS en Home — verde Aris (v0.49.74).
-const Color _kNotesSectionIconLight = AppColors.suggestionGreen;
+/// Icono sección NOTAS en Home — v0.49.86.
+const Color _kNotesSectionIconLight = AppColors.noteSectionLabelLight;
 const Color _kNotesSectionIconDark = AppColors.suggestionGreenDark;
 
 /// Bloque **HOY** — v0.49.73 sustituye MAIL por NOTAS en Home.
@@ -990,9 +990,9 @@ class _TaskRow extends StatelessWidget {
   static const double _expandPadH = 11;
   static const double _expandPadV = 7.5;
   /// Panel expandido — misma familia que hover de tarea (v0.48.30, sin amarillo).
-  static const Color _expandBgLight = Color(0xFFF3F5F8);
+  static const Color _expandBgLight = AppColors.surfaceRaisedLight;
   static const Color _expandBgDark = AppColors.surfaceRaisedDark;
-  static const Color _expandBorderLight = Color(0xFFDDE3EA);
+  static const Color _expandBorderLight = AppColors.outlineLight;
   static const Color _expandBorderDark = AppColors.outlineVariantDark;
 
   /// Meta texto panel expandido oscuro.

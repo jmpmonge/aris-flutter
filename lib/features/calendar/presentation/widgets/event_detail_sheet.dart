@@ -5,7 +5,7 @@ import '../../../../core/repositories/repositories.dart';
 import '../../../../shared/widgets/editor_compact_meta_field.dart';
 import '../../../../shared/widgets/manual_editor_time_meta_chip.dart';
 import '../../../../shared/widgets/section_accent_time_wheel_picker.dart';
-import '../../../../theme/app_colors.dart';
+import '../../../../theme/aris_list_palette.dart';
 import '../../../../theme/app_spacing.dart';
 import '../calendar_event_sheet.dart';
 import 'calendar_event_format.dart';
@@ -63,7 +63,7 @@ abstract final class EventDetailSheet {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: AppColors.calendarListCardFill,
+      backgroundColor: context.arisList.cardFill,
       barrierColor: scheme.scrim.withValues(alpha: 0.45),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
@@ -143,7 +143,7 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
   Future<void> _pickTime() async {
     final picked = await SectionAccentTimeWheelPicker.show(
       context: context,
-      accent: AppColors.calendarListAccent,
+      accent: context.arisList.accent,
       initialTime: _selectedTime,
     );
     if (picked != null) setState(() => _selectedTime = picked);
@@ -154,7 +154,7 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
       context: context,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: AppColors.calendarListCardFill,
+      backgroundColor: context.arisList.cardFill,
       builder: (ctx) {
         final options = CalendarEventFormat.reminderChipOptions;
         return SafeArea(
@@ -162,8 +162,8 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
                   AppSpacing.lg,
                   AppSpacing.xs,
                   AppSpacing.lg,
@@ -174,7 +174,7 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.calendarListTextPrimary,
+                    color: context.arisList.textPrimary,
                   ),
                 ),
               ),
@@ -182,14 +182,14 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
                 ListTile(
                   title: Text(
                     options[i].value,
-                    style: const TextStyle(
-                      color: AppColors.calendarListTextPrimary,
+                    style: TextStyle(
+                      color: context.arisList.textPrimary,
                     ),
                   ),
                   trailing: _reminderMinutes == options[i].key
                       ? Icon(
                           Icons.check_rounded,
-                          color: AppColors.calendarListAccent,
+                          color: context.arisList.accent,
                         )
                       : null,
                   onTap: () => Navigator.pop(ctx, i),
@@ -215,15 +215,15 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
   }) {
     return EditorCompactMetaField(
       icon: icon,
-      accent: AppColors.calendarListAccent,
+      accent: context.arisList.accent,
       active: active,
       onTap: onTap,
       valueLabel: valueLabel,
       iconOnly: iconOnly,
       enabled: !_saving,
-      surfaceColor: AppColors.calendarListElevated,
-      borderColor: AppColors.calendarListBorderNormal,
-      mutedForeground: AppColors.calendarListTextMuted,
+      surfaceColor: context.arisList.elevated,
+      borderColor: context.arisList.borderNormal,
+      mutedForeground: context.arisList.textMuted,
     );
   }
 
@@ -314,14 +314,14 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
     final yes = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.calendarListElevated,
-        title: const Text(
+        backgroundColor: context.arisList.elevated,
+        title: Text(
           '¿Eliminar este evento?',
-          style: TextStyle(color: AppColors.calendarListTextPrimary),
+          style: TextStyle(color: context.arisList.textPrimary),
         ),
         content: Text(
           'Se eliminará «$title».',
-          style: const TextStyle(color: AppColors.calendarListTextSecondary),
+          style: TextStyle(color: context.arisList.textSecondary),
         ),
         actions: [
           TextButton(
@@ -371,10 +371,10 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
   Widget _textSurface({required Widget child, bool titleField = false}) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.calendarListElevated,
+        color: context.arisList.elevated,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         border: Border.all(
-          color: AppColors.calendarListBorderNormal.withValues(alpha: 0.55),
+          color: context.arisList.borderNormal.withValues(alpha: 0.55),
         ),
       ),
       child: Padding(
@@ -400,18 +400,18 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
       fontWeight: FontWeight.w600,
       height: 1.2,
       fontSize: 17,
-      color: AppColors.calendarListTextPrimary,
+      color: context.arisList.textPrimary,
     );
     final bodyStyle = tt.bodyMedium?.copyWith(
       height: 1.4,
-      color: AppColors.calendarListTextPrimary,
+      color: context.arisList.textPrimary,
     );
     final titleHint = titleStyle?.copyWith(
-      color: AppColors.calendarListTextMuted.withValues(alpha: 0.65),
+      color: context.arisList.textMuted.withValues(alpha: 0.65),
       fontWeight: FontWeight.w600,
     );
     final bodyHint = bodyStyle?.copyWith(
-      color: AppColors.calendarListTextMuted.withValues(alpha: 0.55),
+      color: context.arisList.textMuted.withValues(alpha: 0.55),
     );
 
     return Padding(
@@ -429,13 +429,13 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
             ),
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Editar evento',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.calendarListTextPrimary,
+                      color: context.arisList.textPrimary,
                     ),
                   ),
                 ),
@@ -444,7 +444,7 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
                   icon: Icon(
                     Icons.close_rounded,
                     size: 22,
-                    color: AppColors.calendarListTextMuted,
+                    color: context.arisList.textMuted,
                   ),
                   tooltip: 'Cerrar',
                   onPressed: _saving ? null : () => Navigator.pop(context),
@@ -487,14 +487,14 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       ManualEditorTimeMetaChip(
-                        accent: AppColors.calendarListAccent,
+                        accent: context.arisList.accent,
                         active: true,
                         onTap: _pickTime,
                         enabled: !_saving,
                         valueLabel: _previewTime,
-                        surfaceColor: AppColors.calendarListElevated,
-                        borderColor: AppColors.calendarListBorderNormal,
-                        mutedForeground: AppColors.calendarListTextMuted,
+                        surfaceColor: context.arisList.elevated,
+                        borderColor: context.arisList.borderNormal,
+                        mutedForeground: context.arisList.textMuted,
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       _metaField(
@@ -551,7 +551,7 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
                   onPressed: _saving ? null : _save,
                   style: FilledButton.styleFrom(
                     elevation: 0,
-                    backgroundColor: AppColors.calendarListAccent,
+                    backgroundColor: context.arisList.accent,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -577,7 +577,7 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
                   onPressed: _saving ? null : _confirmDelete,
                   style: TextButton.styleFrom(
                     foregroundColor:
-                        AppColors.calendarListDestructive.withValues(alpha: 0.9),
+                        context.arisList.destructive.withValues(alpha: 0.9),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   child: const Text(

@@ -6,7 +6,7 @@ import '../../../core/repositories/repositories.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/home_aris_reply_card.dart';
 import '../../../shared/widgets/local_action_form_sheet.dart';
-import '../../../theme/app_colors.dart';
+import '../../../theme/aris_list_palette.dart';
 import '../../../theme/app_spacing.dart';
 import 'calendar_body_views.dart';
 
@@ -104,15 +104,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       visualDensity: VisualDensity.compact,
                       foregroundColor: WidgetStateProperty.resolveWith((s) {
                         if (s.contains(WidgetState.selected)) {
-                          return AppColors.calendarListCanvas;
+                          return context.arisList.canvas;
                         }
-                        return AppColors.calendarListTextSecondary;
+                        return context.arisList.textSecondary;
                       }),
                       backgroundColor: WidgetStateProperty.resolveWith((s) {
                         if (s.contains(WidgetState.selected)) {
-                          return AppColors.calendarListAccent;
+                          return context.arisList.accent;
                         }
-                        return AppColors.calendarListElevated;
+                        return context.arisList.elevated;
                       }),
                     ),
                   ),

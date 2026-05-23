@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/models/note_model.dart';
 import '../../../../shared/widgets/premium_pressable.dart';
-import '../../../../theme/app_colors.dart';
+import '../../../../theme/aris_list_palette.dart';
 
 /// Tarjeta ligera del listado de notas (v0.49.43).
 class NoteListCard extends StatelessWidget {
@@ -19,45 +19,30 @@ class NoteListCard extends StatelessWidget {
 
   static const double _radius = 14;
   static const double _pinSize = 15;
-
-  static const TextStyle _titleStyle = TextStyle(
-    fontSize: 17,
-    height: 1.22,
-    fontWeight: FontWeight.w600,
-    color: AppColors.noteWideTextPrimary,
-  );
-
-  static const TextStyle _previewStyle = TextStyle(
-    fontSize: 15,
-    height: 1.32,
-    fontWeight: FontWeight.w400,
-    color: AppColors.noteWideTextSecondary,
-  );
-
-  static const TextStyle _timeStyle = TextStyle(
-    fontSize: 14,
-    height: 1.2,
-    fontWeight: FontWeight.w500,
-    color: AppColors.noteWideTextMuted,
-  );
-
   static const double _metaFontSize = 13;
   static const double _metaIconSize = 14;
   static const int _maxVisibleTags = 2;
 
-  static const TextStyle _metaStyle = TextStyle(
-    fontSize: _metaFontSize,
-    height: 1.2,
-    fontWeight: FontWeight.w500,
-    color: AppColors.noteWideTextMuted,
-  );
+  TextStyle _titleStyle(BuildContext context) => TextStyle(
+        fontSize: 17,
+        height: 1.22,
+        fontWeight: FontWeight.w600,
+        color: context.arisList.textPrimary,
+      );
 
-  static const TextStyle _tagStyle = TextStyle(
-    fontSize: _metaFontSize,
-    height: 1.2,
-    fontWeight: FontWeight.w500,
-    color: AppColors.noteListTagTint,
-  );
+  TextStyle _previewStyle(BuildContext context) => TextStyle(
+        fontSize: 15,
+        height: 1.32,
+        fontWeight: FontWeight.w400,
+        color: context.arisList.textSecondary,
+      );
+
+  TextStyle _timeStyle(BuildContext context) => TextStyle(
+        fontSize: 14,
+        height: 1.2,
+        fontWeight: FontWeight.w500,
+        color: context.arisList.textMuted,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -70,9 +55,9 @@ class NoteListCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(_radius),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppColors.noteListCardFill.withValues(alpha: 0.88),
+          color: context.arisList.cardFill.withValues(alpha: 0.88),
           borderRadius: BorderRadius.circular(_radius),
-          border: Border.all(color: AppColors.noteListCardBorder),
+          border: Border.all(color: context.arisList.borderNormal),
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 9, 8, 9),
@@ -91,24 +76,27 @@ class NoteListCard extends StatelessWidget {
                             note.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: _titleStyle,
+                            style: _titleStyle(context),
                           ),
                         ),
                         if (note.pinned) ...[
                           const SizedBox(width: 5),
-                          const Padding(
-                            padding: EdgeInsets.only(top: 2),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
                             child: Icon(
                               Icons.push_pin_rounded,
                               size: _pinSize,
-                              color: AppColors.noteListPinTint,
+                              color: context.arisList.accent,
                             ),
                           ),
                         ],
                         if (note.listTimeLabel != null &&
                             note.listTimeLabel!.isNotEmpty) ...[
                           const SizedBox(width: 8),
-                          Text(note.listTimeLabel!, style: _timeStyle),
+                          Text(
+                            note.listTimeLabel!,
+                            style: _timeStyle(context),
+                          ),
                         ],
                       ],
                     ),
@@ -118,7 +106,7 @@ class NoteListCard extends StatelessWidget {
                         note.body,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: _previewStyle,
+                        style: _previewStyle(context),
                       ),
                     ],
                     if (note.hasListMetadataRow) ...[
@@ -154,27 +142,39 @@ class _MetadataRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final metaStyle = TextStyle(
+      fontSize: NoteListCard._metaFontSize,
+      height: 1.2,
+      fontWeight: FontWeight.w500,
+      color: context.arisList.textMuted,
+    );
+    final tagStyle = TextStyle(
+      fontSize: NoteListCard._metaFontSize,
+      height: 1.2,
+      fontWeight: FontWeight.w500,
+      color: context.arisList.chipText,
+    );
+
     return Wrap(
       spacing: 10,
       runSpacing: 2,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         if (note.hasAttachments) ...[
-          const Icon(
+          Icon(
             Icons.attach_file_rounded,
             size: NoteListCard._metaIconSize,
-            color: AppColors.noteWideTextMuted,
+            color: context.arisList.textMuted,
           ),
           Text(
             note.attachmentName ?? 'Adjunto',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: NoteListCard._metaStyle,
+            style: metaStyle,
           ),
         ],
-        for (final tag in visibleTags) Text(tag, style: NoteListCard._tagStyle),
-        if (extraTags > 0)
-          Text('+$extraTags', style: NoteListCard._tagStyle),
+        for (final tag in visibleTags) Text(tag, style: tagStyle),
+        if (extraTags > 0) Text('+$extraTags', style: tagStyle),
       ],
     );
   }

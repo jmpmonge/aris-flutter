@@ -9,7 +9,7 @@ import '../../../../theme/app_spacing.dart';
 import 'home_greeting_session.dart';
 import 'home_weather_block.dart';
 
-const _kSunTintLight = Color(0xFFF0A830);
+const _kSunTintLight = AppColors.homeWeatherAccentLight;
 const _kSunTintDark = Color(0xFFE8C547);
 const _kMockTemperature = '21°';
 const _kMockCity = 'Madrid';

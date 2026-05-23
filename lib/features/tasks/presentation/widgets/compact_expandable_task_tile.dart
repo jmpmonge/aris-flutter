@@ -5,6 +5,7 @@ import '../../../../core/models/task_ui_buckets.dart';
 import '../../../../shared/widgets/premium_pressable.dart';
 import '../../../../shared/widgets/smooth_card_expand.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/aris_list_palette.dart';
 import '../../../../theme/app_spacing.dart';
 import 'task_expanded_card.dart';
 
@@ -49,18 +50,18 @@ class CompactExpandableTaskTile extends StatelessWidget {
       height: 1.22,
       fontWeight: FontWeight.w600,
       color: muted
-          ? AppColors.taskListTextSecondary.withValues(alpha: 0.72)
-          : AppColors.taskListTextPrimary,
+          ? context.arisList.textSecondary.withValues(alpha: 0.72)
+          : context.arisList.textPrimary,
       decoration: muted ? TextDecoration.lineThrough : null,
-      decorationColor: AppColors.taskListTextMuted,
+      decorationColor: context.arisList.textMuted,
     );
 
     final cardFill = isExpanded
-        ? AppColors.taskListCardExpandedFill
-        : AppColors.taskListCardFill;
+        ? context.arisList.cardExpanded
+        : context.arisList.cardFill;
     final borderColor = isExpanded
-        ? AppColors.taskListBorderSelected
-        : AppColors.taskListBorderNormal;
+        ? context.arisList.borderSelected
+        : context.arisList.borderNormal;
 
     final padH = isExpanded
         ? AppColors.taskListExpandedPadH
@@ -96,12 +97,12 @@ class CompactExpandableTaskTile extends StatelessWidget {
                   shape: const CircleBorder(),
                   visualDensity: VisualDensity.compact,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  activeColor: AppColors.taskListCompletedCheck,
-                  checkColor: AppColors.taskListCanvas,
+                  activeColor: context.arisList.completedCheck,
+                  checkColor: context.arisList.canvas,
                   side: BorderSide(
                     color: muted
-                        ? AppColors.taskListAccent.withValues(alpha: 0.55)
-                        : AppColors.taskListTextMuted.withValues(alpha: 0.65),
+                        ? context.arisList.accent.withValues(alpha: 0.55)
+                        : context.arisList.textMuted.withValues(alpha: 0.65),
                     width: 1.4,
                   ),
                   value: completed,
@@ -137,7 +138,7 @@ class CompactExpandableTaskTile extends StatelessWidget {
                           const SizedBox(width: AppSpacing.xxs),
                           SmoothCardExpandChevron(
                             isExpanded: isExpanded,
-                            color: AppColors.taskListTextMuted
+                            color: context.arisList.textMuted
                                 .withValues(alpha: 0.82),
                           ),
                         ],

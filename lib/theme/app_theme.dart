@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
 import 'app_typography.dart';
+import 'aris_list_palette.dart';
 
 /// Tema global Aris: **claro y oscuro**, tarjetas con sombra suave, FAB circular.
 abstract final class AppTheme {
@@ -11,22 +12,25 @@ abstract final class AppTheme {
 
   static ThemeData get darkTheme => dark();
 
-  static ThemeData light() => _build(
-    scheme: AppColors.lightScheme,
-    scaffoldMuted: AppColors.canvasLight,
-    cardElevation: AppSpacing.cardElevationLight,
-  );
-
   static ThemeData dark() => _build(
     scheme: AppColors.darkScheme,
     scaffoldMuted: AppColors.canvasDark,
     cardElevation: AppSpacing.cardElevationDark,
+    listPalette: ArisListPalette.dark,
+  );
+
+  static ThemeData light() => _build(
+    scheme: AppColors.lightScheme,
+    scaffoldMuted: AppColors.canvasLight,
+    cardElevation: AppSpacing.cardElevationLight,
+    listPalette: ArisListPalette.light,
   );
 
   static ThemeData _build({
     required ColorScheme scheme,
     required Color scaffoldMuted,
     required double cardElevation,
+    required ArisListPalette listPalette,
   }) {
     final text = AppTypography.textTheme(scheme);
     final isLight = scheme.brightness == Brightness.light;
@@ -95,7 +99,7 @@ abstract final class AppTheme {
         elevation: 0,
         backgroundColor: scheme.surface,
         indicatorColor: isLight
-            ? scheme.secondaryContainer.withValues(alpha: 0.88)
+            ? AppColors.navSelectedBackgroundLight
             : AppColors.surfaceHoverDark.withValues(alpha: 0.92),
         surfaceTintColor: Colors.transparent,
         overlayColor: WidgetStateProperty.resolveWith((states) {
@@ -109,7 +113,13 @@ abstract final class AppTheme {
           final selected = states.contains(WidgetState.selected);
           return text.labelSmall?.copyWith(
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            color: selected ? scheme.primary : scheme.onSurfaceVariant,
+            color: selected
+                ? (isLight
+                    ? AppColors.brandBlueDeepLight
+                    : scheme.primary)
+                : (isLight
+                    ? AppColors.navInactiveIconLight
+                    : scheme.onSurfaceVariant),
             fontSize: 11.5,
           );
         }),
@@ -117,12 +127,19 @@ abstract final class AppTheme {
           final selected = states.contains(WidgetState.selected);
           return IconThemeData(
             size: AppSpacing.homeNavIconSize,
-            color: selected ? scheme.primary : scheme.onSurfaceVariant,
+            color: selected
+                ? (isLight
+                    ? AppColors.navSelectedIconLight
+                    : scheme.primary)
+                : (isLight
+                    ? AppColors.navInactiveIconLight
+                    : scheme.onSurfaceVariant),
           );
         }),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: scheme.primary,
+        backgroundColor:
+            isLight ? AppColors.floatingButtonBackgroundLight : scheme.primary,
         foregroundColor: scheme.onPrimary,
         elevation: 4,
         focusElevation: 4,
@@ -162,7 +179,16 @@ abstract final class AppTheme {
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: isLight
-            ? null
+            ? SegmentedButton.styleFrom(
+                backgroundColor: AppColors.surfaceRaisedLight,
+                foregroundColor: AppColors.textSecondaryLight,
+                selectedForegroundColor: AppColors.brandBlueDeepLight,
+                selectedBackgroundColor: AppColors.brandBlueSurfaceLight,
+                side: const BorderSide(
+                  color: AppColors.outlineLight,
+                  width: 1,
+                ),
+              )
             : SegmentedButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 foregroundColor: AppColors.textSecondaryDark,
@@ -174,6 +200,7 @@ abstract final class AppTheme {
                 ),
               ),
       ),
+      extensions: [listPalette],
     );
   }
 }

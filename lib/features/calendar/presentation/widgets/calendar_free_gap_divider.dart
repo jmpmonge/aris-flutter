@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../theme/app_colors.dart';
+import '../../../../theme/aris_list_palette.dart';
 import '../../../../theme/app_spacing.dart';
 import 'calendar_event_format.dart';
 
@@ -18,10 +18,10 @@ class CalendarFreeGapDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = CalendarEventFormat.gapDuration(durationMinutes);
-    final lineColor = AppColors.calendarListBorderNormal.withValues(
+    final lineColor = context.arisList.borderNormal.withValues(
       alpha: AppSpacing.calendarDayFreeGapLineOpacity,
     );
-    final textColor = AppColors.calendarListTextMuted.withValues(
+    final textColor = context.arisList.textMuted.withValues(
       alpha: AppSpacing.calendarDayFreeGapTextOpacity,
     );
 

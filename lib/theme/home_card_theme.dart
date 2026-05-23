@@ -10,7 +10,7 @@ abstract final class HomeCardTheme {
     if (brightness == Brightness.dark) {
       return const Color(0xFF4A5C72).withValues(alpha: 0.42);
     }
-    return const Color(0xFF8FA3BC).withValues(alpha: 0.28);
+    return AppColors.outlineLight.withValues(alpha: 0.85);
   }
 
   /// Flechas de navegación de sección — siempre neutras.
@@ -18,7 +18,7 @@ abstract final class HomeCardTheme {
     if (brightness == Brightness.dark) {
       return AppColors.textPrimaryDark.withValues(alpha: 0.48);
     }
-    return AppColors.textTertiaryLight.withValues(alpha: 0.92);
+    return AppColors.textTertiaryLight.withValues(alpha: 0.95);
   }
 
   /// Enlaces «+ X más» — información secundaria.
@@ -26,15 +26,15 @@ abstract final class HomeCardTheme {
     if (brightness == Brightness.dark) {
       return AppColors.textTertiaryDark.withValues(alpha: 0.92);
     }
-    return AppColors.textSecondaryLight.withValues(alpha: 0.88);
+    return AppColors.textSecondaryLight.withValues(alpha: 0.92);
   }
 
-  /// Separador interno entre HOY | TAREAS | MAIL.
+  /// Separador interno entre HOY | TAREAS | NOTAS.
   static Color sectionDivider(ColorScheme scheme, Brightness brightness) {
     if (brightness == Brightness.dark) {
       return const Color(0xFF3A4A5E).withValues(alpha: 0.55);
     }
-    return scheme.outline.withValues(alpha: 0.12);
+    return AppColors.homeTimelineLineLight.withValues(alpha: 0.95);
   }
 
   static BoxDecoration cardDecoration({
@@ -123,7 +123,7 @@ abstract final class HomeCardTheme {
       height: 1.0,
       color: brightness == Brightness.dark
           ? AppColors.textPrimaryDark.withValues(alpha: 0.92)
-          : AppColors.primaryDeep,
+          : AppColors.homeHeaderTextLight,
     );
   }
 }

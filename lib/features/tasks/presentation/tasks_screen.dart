@@ -7,7 +7,7 @@ import '../../../core/models/task_ui_buckets.dart';
 import '../../../core/repositories/repositories.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/home_aris_reply_card.dart';
-import '../../../theme/app_colors.dart';
+import '../../../theme/aris_list_palette.dart';
 import '../../../theme/app_spacing.dart';
 import 'manual_task_editor_page.dart';
 import 'widgets/compact_expandable_task_tile.dart';
@@ -233,8 +233,8 @@ class _TasksScreenState extends State<TasksScreen> {
             style: text.labelSmall?.copyWith(
               letterSpacing: 1.1,
               color: isCompleted
-                  ? AppColors.taskListTextMuted
-                  : AppColors.taskListSectionLabel,
+                  ? context.arisList.textMuted
+                  : context.arisList.taskSectionLabel,
               fontWeight: FontWeight.w700,
             ),
           ),
