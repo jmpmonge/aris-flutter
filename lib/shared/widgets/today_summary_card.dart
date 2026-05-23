@@ -41,6 +41,7 @@ class TodaySummaryCard extends StatefulWidget {
     this.onOpenCalendar,
     this.onOpenTasks,
     this.onOpenNotes,
+    this.onHomeEventExpandChanged,
   });
 
   final List<EventModel> events;
@@ -52,14 +53,18 @@ class TodaySummaryCard extends StatefulWidget {
   final VoidCallback? onOpenCalendar;
   final VoidCallback? onOpenTasks;
   final VoidCallback? onOpenNotes;
+  /// Notifica al Home cuando se abre/cierra la ficha de un evento.
+  final ValueChanged<bool>? onHomeEventExpandChanged;
 
   @override
-  State<TodaySummaryCard> createState() => _TodaySummaryCardState();
+  State<TodaySummaryCard> createState() => TodaySummaryCardState();
 }
 
-class _TodaySummaryCardState extends State<TodaySummaryCard> {
+class TodaySummaryCardState extends State<TodaySummaryCard> {
   String? _expandedTaskId;
   String? _expandedHomeEventId;
+
+  bool get hasExpandedHomeEvent => _expandedHomeEventId != null;
 
   /// Copias temporales de tareas recién completadas (persisten aunque salgan de
   /// [widget.tasks] tras el PATCH).
@@ -80,6 +85,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
         .toSet();
     if (_expandedHomeEventId != null && !visibleIds.contains(_expandedHomeEventId)) {
       _expandedHomeEventId = null;
+      widget.onHomeEventExpandChanged?.call(false);
     }
   }
 
@@ -87,6 +93,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
     setState(() {
       _expandedHomeEventId = _expandedHomeEventId == id ? null : id;
     });
+    widget.onHomeEventExpandChanged?.call(_expandedHomeEventId != null);
   }
 
   Future<void> _openHomeEventEditor(EventModel event) async {
@@ -745,7 +752,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
   }
 }
 
-/// Calendario HOY: timeline por fila; mini ficha en columna contenido (v0.49.91).
+/// Calendario HOY: línea vertical cuando todas las filas están compactas.
 class _EventCalendarStackedTable extends StatelessWidget {
   const _EventCalendarStackedTable({
     required this.events,
@@ -766,63 +773,85 @@ class _EventCalendarStackedTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lineColor =
-        _TodaySummaryCardState._eventTimelineLineColor(isDark);
-    final lineW = _TodaySummaryCardState._eventTimelineLineWidth;
-    final tw = _TodaySummaryCardState._eventTimeColWidth;
-    final cw = _TodaySummaryCardState._eventTimelineColWidth;
-    final gw = _TodaySummaryCardState._eventTimelineTextGap;
-    final dotSize = _TodaySummaryCardState._eventDotSize;
-    final dotPadTop = _TodaySummaryCardState._eventDotAlignPaddingTop;
-    final rowH = _TodaySummaryCardState._eventRowHeight;
-    final trim = _TodaySummaryCardState._eventTimelineLineTrim;
+        TodaySummaryCardState._eventTimelineLineColor(isDark);
+    final lineW = TodaySummaryCardState._eventTimelineLineWidth;
+    final tw = TodaySummaryCardState._eventTimeColWidth;
+    final cw = TodaySummaryCardState._eventTimelineColWidth;
+    final gw = TodaySummaryCardState._eventTimelineTextGap;
+    final dotSize = TodaySummaryCardState._eventDotSize;
+    final dotPadTop = TodaySummaryCardState._eventDotAlignPaddingTop;
+    final rowH = TodaySummaryCardState._eventRowHeight;
+    final trim = TodaySummaryCardState._eventTimelineLineTrim;
     final n = events.length;
     final dotColor = isDark ? _kCalendarBlueDark : _kCalendarBlueLight;
-    final rowGap = _TodaySummaryCardState._eventRowGap;
-    final textTopOffset = _TodaySummaryCardState._eventTextTopOffset;
-    final textPadH = _TodaySummaryCardState._eventTextInkPaddingH;
-    final textPadV = _TodaySummaryCardState._eventTextInkPaddingV;
-    final textRadius = _TodaySummaryCardState._eventTextInkBorderRadius;
-    final secondaryText = _TodaySummaryCardState.homeCardSecondaryText(
+    final rowGap = TodaySummaryCardState._eventRowGap;
+    final textTopOffset = TodaySummaryCardState._eventTextTopOffset;
+    final textPadH = TodaySummaryCardState._eventTextInkPaddingH;
+    final textPadV = TodaySummaryCardState._eventTextInkPaddingV;
+    final textRadius = TodaySummaryCardState._eventTextInkBorderRadius;
+    final secondaryText = TodaySummaryCardState.homeCardSecondaryText(
       scheme,
       isDark,
     );
+    final allCompact = expandedEventId == null;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    final axisLeft = tw + (cw - lineW) / 2;
+    final showSpine = allCompact && n >= 2;
+    final dotCenterOffsetY = dotPadTop + dotSize / 2;
+    final spineTop = dotCenterOffsetY + trim;
+    final spineHeight = (n - 1) * (rowH + rowGap) - 2 * trim;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topLeft,
       children: [
-        for (var i = 0; i < n; i++)
-          HomeEventTimelineRow(
-            key: ValueKey('home-event-${events[i].id}'),
-            event: events[i],
-            timeLabel: events[i].timeText.trim().isNotEmpty
-                ? events[i].timeText.trim()
-                : events[i].timeHm,
-            subtitle: homeEventCompactSubtitle(events[i]),
-            isExpanded: expandedEventId == events[i].id,
-            isDark: isDark,
-            isLastInList: i == n - 1,
-            onToggle: () => onToggleEvent(events[i].id),
-            onEdit: () => onEditEvent(events[i]),
-            timeColumnWidth: tw,
-            timelineColumnWidth: cw,
-            timelineTextGap: gw,
-            rowHeight: rowH,
-            rowGap: rowGap,
-            lineColor: lineColor,
-            lineWidth: lineW,
-            lineTrim: trim,
-            dotSize: dotSize,
-            dotPaddingTop: dotPadTop,
-            dotColor: dotColor,
-            timeTextColor: scheme.onSurfaceVariant,
-            titleTextColor: scheme.onSurface,
-            subtitleTextColor: secondaryText,
-            textPaddingH: textPadH,
-            textPaddingV: textPadV,
-            textBorderRadius: textRadius,
-            textTopOffset: textTopOffset,
+        if (showSpine && spineHeight > 0)
+          Positioned(
+            left: axisLeft,
+            top: spineTop,
+            child: IgnorePointer(
+              child: Container(
+                width: lineW,
+                height: spineHeight,
+                color: lineColor,
+              ),
+            ),
           ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < n; i++) ...[
+              if (i > 0) SizedBox(height: rowGap),
+              HomeEventTimelineRow(
+                key: ValueKey('home-event-${events[i].id}'),
+                event: events[i],
+                timeLabel: events[i].timeText.trim().isNotEmpty
+                    ? events[i].timeText.trim()
+                    : events[i].timeHm,
+                subtitle: homeEventCompactSubtitle(events[i]),
+                isExpanded: expandedEventId == events[i].id,
+                isDark: isDark,
+                onToggle: () => onToggleEvent(events[i].id),
+                onEdit: () => onEditEvent(events[i]),
+                timeColumnWidth: tw,
+                timelineColumnWidth: cw,
+                timelineTextGap: gw,
+                rowHeight: rowH,
+                dotSize: dotSize,
+                dotPaddingTop: dotPadTop,
+                dotColor: dotColor,
+                timeTextColor: scheme.onSurfaceVariant,
+                titleTextColor: scheme.onSurface,
+                subtitleTextColor: secondaryText,
+                textPaddingH: textPadH,
+                textPaddingV: textPadV,
+                textBorderRadius: textRadius,
+                textTopOffset: textTopOffset,
+              ),
+            ],
+          ],
+        ),
       ],
     );
   }
@@ -869,7 +898,7 @@ class _TaskRow extends StatelessWidget {
 
   /// Misma tabulación que el texto «TAREAS» en la cabecera de sección.
   static const double _titleTextInset =
-      _TodaySummaryCardState._sectionTitleTextInset;
+      TodaySummaryCardState._sectionTitleTextInset;
 
   /// Cápsula hover del bloque textual.
   static const double _textBlockInkPaddingH = 9;
@@ -955,7 +984,7 @@ class _TaskRow extends StatelessWidget {
       fontSize: 12,
       height: 1.18,
       fontWeight: FontWeight.w400,
-      color: _TodaySummaryCardState.homeCardSecondaryText(scheme, isDark),
+      color: TodaySummaryCardState.homeCardSecondaryText(scheme, isDark),
     );
 
     final Widget? expandedPanel = _buildExpandedPanel(
@@ -1072,7 +1101,7 @@ class _TaskRow extends StatelessWidget {
       pieces.add(
         Text(
           desc,
-          style: _TodaySummaryCardState.homeCardBodyDescriptionStyle(
+          style: TodaySummaryCardState.homeCardBodyDescriptionStyle(
             scheme,
             isDark,
           ),

@@ -16,8 +16,16 @@ abstract final class HomeScrollLayout {
   /// Slack: HOY renderizado suele superar la estimación analítica.
   static const double hoyRenderSlack = 24;
 
-  static double scrollContentBottomPadding(BuildContext context) {
-    return AppSpacing.xxs;
+  static double scrollContentBottomPadding(
+    BuildContext context, {
+    bool homeEventExpanded = false,
+  }) {
+    if (!homeEventExpanded) return AppSpacing.xxs;
+    return HomeArisFixedInputBar.dockHeight +
+        AppSpacing.homeNavBarHeight +
+        12 +
+        MediaQuery.paddingOf(context).bottom +
+        AppSpacing.md;
   }
 
   static double sectionGapBeforeAris(BuildContext context) {
