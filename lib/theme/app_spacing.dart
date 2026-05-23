@@ -35,8 +35,17 @@ abstract final class AppSpacing {
   /// Columna de hora en filas tipo agenda.
   static const double calendarTimeColumnWidth = 52;
 
-  /// Padding vertical hueco libre vista Día (v0.49.57).
-  static const double calendarDayFreeGapPaddingV = 2;
+  /// Padding vertical hueco libre vista Día — por lado (v0.49.59).
+  static const double calendarDayFreeGapPaddingV = 4;
+
+  /// Padding horizontal texto duración en hueco libre (v0.49.59).
+  static const double calendarDayFreeGapTextPaddingH = 10;
+
+  /// Opacidad línea separador hueco libre vista Día (v0.49.59).
+  static const double calendarDayFreeGapLineOpacity = 0.34;
+
+  /// Opacidad texto duración hueco libre vista Día (v0.49.59).
+  static const double calendarDayFreeGapTextOpacity = 0.58;
 
   /// Vista Día — padding vertical tarjeta evento (v0.49.58).
   static const double calendarDayEventCardPaddingV = 7;
