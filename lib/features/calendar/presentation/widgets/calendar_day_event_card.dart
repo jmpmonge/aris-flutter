@@ -6,7 +6,7 @@ import '../../../../theme/app_spacing.dart';
 import 'calendar_event_format.dart';
 import 'calendar_event_icon.dart';
 
-/// Tarjeta de evento en agenda Día — colapsada o desplegada (v0.49.58).
+/// Tarjeta de evento en agenda Día — colapsada o desplegada (v0.49.62).
 class CalendarDayEventCard extends StatelessWidget {
   const CalendarDayEventCard({
     super.key,
@@ -27,7 +27,6 @@ class CalendarDayEventCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final icon = CalendarEventIconResolver.resolve(event);
     final timeSimple = CalendarEventFormat.timeHm(event.start);
-    final category = CalendarEventIconResolver.categoryLabel(event);
 
     return Material(
       color: Colors.transparent,
@@ -92,27 +91,16 @@ class CalendarDayEventCard extends StatelessWidget {
                       ),
                   ],
                 ),
-                SizedBox(height: AppSpacing.calendarDayEventTitleTimeGap),
-                Text(
-                  timeSimple,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    height: 1.2,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.calendarListAccentSky,
-                  ),
-                ),
-                if (isExpanded && category.isNotEmpty) ...[
-                  const SizedBox(height: 1),
+                if (!isExpanded) ...[
+                  SizedBox(height: AppSpacing.calendarDayEventTitleTimeGap),
                   Text(
-                    category,
+                    timeSimple,
                     style: const TextStyle(
                       fontSize: 12,
                       height: 1.2,
-                      color: AppColors.calendarListTextMuted,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.calendarListAccentSky,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
                 if (isExpanded)
@@ -129,9 +117,7 @@ class CalendarDayEventCard extends StatelessWidget {
   }
 }
 
-/// Cuerpo desplegado de evento en agenda Día (v0.49.45).
-///
-/// No contiene [CalendarDayEventCard] para evitar recursión.
+/// Cuerpo desplegado compacto de evento en agenda Día (v0.49.62).
 class CalendarDayEventExpandedContent extends StatelessWidget {
   const CalendarDayEventExpandedContent({
     super.key,
@@ -142,29 +128,50 @@ class CalendarDayEventExpandedContent extends StatelessWidget {
   final EventModel event;
   final VoidCallback onEdit;
 
+  String? _secondaryDetail() {
+    final location = event.location.trim();
+    if (location.isNotEmpty) return location;
+    final notes = CalendarEventFormat.notesText(event);
+    if (notes.isNotEmpty) return notes;
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final notes = CalendarEventFormat.notesText(event);
-    final location = event.location.trim();
+    final detail = _secondaryDetail();
+    final metaStyle = TextStyle(
+      fontSize: 12,
+      height: 1.25,
+      fontWeight: FontWeight.w400,
+      color: AppColors.calendarListTextMuted.withValues(alpha: 0.88),
+    );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(height: AppSpacing.calendarDayExpandedTopGap),
-        _DayDetailRow(
-          label: 'Fecha',
-          value: CalendarEventFormat.shortDate(event),
+        SizedBox(height: AppSpacing.calendarDayExpandedMetaTopGap),
+        Text(
+          CalendarEventFormat.compactDateTimeLine(event),
+          style: metaStyle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-        _DayDetailRow(
-          label: 'Hora',
-          value: CalendarEventFormat.timeHm(event.start),
-        ),
-        if (location.isNotEmpty)
-          _DayDetailRow(label: 'Ubicación', value: location),
-        if (notes.isNotEmpty)
-          _DayDetailRow(label: 'Notas', value: notes, multiline: true),
-        SizedBox(height: AppSpacing.xxs),
+        if (detail != null) ...[
+          const SizedBox(height: 3),
+          Text(
+            detail,
+            style: const TextStyle(
+              fontSize: 12.5,
+              height: 1.28,
+              fontWeight: FontWeight.w400,
+              color: AppColors.calendarListTextSecondary,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+        const SizedBox(height: AppSpacing.xxs),
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton(
@@ -185,55 +192,6 @@ class CalendarDayEventExpandedContent extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _DayDetailRow extends StatelessWidget {
-  const _DayDetailRow({
-    required this.label,
-    required this.value,
-    this.multiline = false,
-  });
-
-  final String label;
-  final String value;
-  final bool multiline;
-
-  @override
-  Widget build(BuildContext context) {
-    if (value.trim().isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.calendarDayDetailRowGap),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 68,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: AppColors.calendarListTextMuted.withValues(alpha: 0.85),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 13,
-                height: 1.32,
-                color: AppColors.calendarListTextSecondary,
-              ),
-              maxLines: multiline ? 4 : 2,
-              overflow: multiline ? TextOverflow.visible : TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

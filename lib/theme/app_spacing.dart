@@ -80,8 +80,8 @@ abstract final class AppSpacing {
   /// Vista Día — altura línea vertical timeline (v0.49.58).
   static const double calendarDayTimelineLineHeight = 40;
 
-  /// Vista Día — gap antes contenido expandido (v0.49.58).
-  static const double calendarDayExpandedTopGap = 8;
+  /// Vista Día — respiro título → meta expandida (v0.49.62).
+  static const double calendarDayExpandedMetaTopGap = 6;
 
   /// Vista Día — separación entre filas de detalle (v0.49.58).
   static const double calendarDayDetailRowGap = 4;

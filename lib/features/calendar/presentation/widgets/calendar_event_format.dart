@@ -34,6 +34,15 @@ abstract final class CalendarEventFormat {
     return '$wd, ${d.day} ${_monthsShort[d.month - 1]} ${d.year}';
   }
 
+  /// Fecha corta + hora para tarjeta expandida Día (v0.49.62).
+  /// Ejemplo: `Sáb, 23 may · 09:00`
+  static String compactDateTimeLine(EventModel event) {
+    final d = event.start;
+    final wd = _weekdays[d.weekday - DateTime.monday].substring(0, 3);
+    final datePart = '$wd, ${d.day} ${_monthsShort[d.month - 1]}';
+    return '$datePart · ${timeHm(d)}';
+  }
+
   static String timeHm(DateTime dt) {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
