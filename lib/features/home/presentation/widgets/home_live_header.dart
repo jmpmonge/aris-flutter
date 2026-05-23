@@ -17,7 +17,10 @@ const _kMockCity = 'Madrid';
 /// Altura nominal del bloque clima a escala 1 (icono + ciudad).
 const _kWeatherBlockNominalHeight = 38.0;
 
-/// Cabecera viva de Home: saludo temporal + clima que colapsa (v0.49.53).
+/// Offset vertical óptico del clima compacto (v0.49.54).
+const _kWeatherCompactTopOffset = -6.0;
+
+/// Cabecera viva de Home: saludo temporal + clima que colapsa (v0.49.54).
 class HomeLiveHeader extends StatefulWidget {
   const HomeLiveHeader({super.key});
 
@@ -109,7 +112,7 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
     final weatherHeight = _kWeatherBlockNominalHeight * weatherBlockScale;
     final expandedTop =
         dateRowHeight + AppSpacing.homeGreetingSlotHeight - weatherHeight;
-    return lerpDouble(expandedTop, 0, collapseT)!;
+    return lerpDouble(expandedTop, _kWeatherCompactTopOffset, collapseT)!;
   }
 
   @override
@@ -305,13 +308,16 @@ class _CompactHeaderRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        HomeWeatherBlock(
-          temperature: temperature,
-          city: city,
-          sunColor: sunColor,
-          scheme: scheme,
-          isDark: isDark,
-          weatherBlockScale: HomeWeatherBlock.weatherBlockCompactScale,
+        Transform.translate(
+          offset: const Offset(0, _kWeatherCompactTopOffset),
+          child: HomeWeatherBlock(
+            temperature: temperature,
+            city: city,
+            sunColor: sunColor,
+            scheme: scheme,
+            isDark: isDark,
+            weatherBlockScale: HomeWeatherBlock.weatherBlockCompactScale,
+          ),
         ),
       ],
     );

@@ -77,17 +77,17 @@ abstract final class AppSpacing {
   /// Solo texto de saludo; el clima se posiciona en Stack aparte.
   static const double homeGreetingSlotHeight = 38;
 
-  /// Respiro bajo cabecera viva con saludo visible (v0.49.53).
-  static const double homeLiveHeaderBottomWithGreeting = 7;
+  /// Respiro bajo cabecera viva con saludo visible (v0.49.54).
+  static const double homeLiveHeaderBottomWithGreeting = 5;
 
-  /// Respiro bajo cabecera compacta sin saludo (v0.49.53).
-  static const double homeLiveHeaderBottomCompact = 9;
+  /// Respiro bajo cabecera compacta sin saludo (v0.49.54).
+  static const double homeLiveHeaderBottomCompact = 7;
 
-  /// ListView → HOY mientras el saludo ocupa cabecera (v0.49.53).
-  static const double homeGreetingToHoyGapVisible = 6;
+  /// ListView → HOY mientras el saludo ocupa cabecera (v0.49.54).
+  static const double homeGreetingToHoyGapVisible = 5;
 
-  /// Fecha fija → HOY cuando el saludo temporal está oculto (v0.49.53).
-  static const double homeFixedDateToHoyWhenGreetingHidden = 8;
+  /// Fecha fija → HOY cuando el saludo temporal está oculto (v0.49.54).
+  static const double homeFixedDateToHoyWhenGreetingHidden = 6;
 
   /// Inset izquierdo del texto de fecha fija (margen pantalla + sangría; v0.48.37).
   static const double homeFixedDateLeftInsetH =
