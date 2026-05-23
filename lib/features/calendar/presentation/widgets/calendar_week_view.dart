@@ -31,7 +31,7 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
   late DateTime _weekStart;
   String? _selectedEventId;
   int? _selectedDayIndex;
-  bool _detailExpanded = true;
+  bool _detailExpanded = false;
 
   static const int _dayCount = 7;
   static const int _firstHour = 7;
@@ -52,7 +52,7 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
       _weekStart = _weekStart.add(Duration(days: 7 * delta));
       _selectedEventId = null;
       _selectedDayIndex = null;
-      _detailExpanded = true;
+      _detailExpanded = false;
     });
   }
 
@@ -91,12 +91,10 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
   }
 
   void _onWeekEventTap(EventModel event, int dayIndex) {
-    final sameSelection =
-        _selectedEventId == event.id && _selectedDayIndex == dayIndex;
     setState(() {
       _selectedEventId = event.id;
       _selectedDayIndex = dayIndex;
-      _detailExpanded = sameSelection ? !_detailExpanded : true;
+      _detailExpanded = false;
     });
   }
 
@@ -338,7 +336,7 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
             CalendarWeekSelectedEventCard(
               event: selection.event!,
               isExpanded: _detailExpanded,
-              onToggle: () => setState(() => _detailExpanded = !_detailExpanded),
+              onExpand: () => setState(() => _detailExpanded = true),
               onEdit: () => _openEventEditor(selection.event!),
             ),
             SizedBox(height: AppSpacing.calendarWeekBottomClearanceExtra),

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/models/event_model.dart';
 import '../../../../core/repositories/calendar_repository.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import 'calendar_week_view.dart';
-import 'calendar_event_card.dart';
 import 'calendar_event_format.dart';
+import 'calendar_week_selected_event_card.dart';
 import 'event_detail_sheet.dart';
 
 /// Cuadrícula mensual + lista del día seleccionado (v0.49.45).
@@ -30,6 +31,7 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
   late DateTime _month;
   late int _selectedDay;
   String? _selectedEventId;
+  bool _detailExpanded = false;
 
   String get _monthTitleLabel =>
       '${_monthNames[_month.month - 1]} ${_month.year}';
@@ -47,7 +49,12 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
       _month = DateTime(_month.year, _month.month + delta);
       _selectedDay = 1;
       _selectedEventId = null;
+      _detailExpanded = false;
     });
+  }
+
+  void _openEventEditor(EventModel event) {
+    EventDetailSheet.show(context, event);
   }
 
   @override
@@ -144,6 +151,7 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
                 onTap: () => setState(() {
                   _selectedDay = dayNum;
                   _selectedEventId = null;
+                  _detailExpanded = false;
                 }),
                 borderRadius: BorderRadius.circular(8),
                 child: DecoratedBox(
@@ -213,15 +221,14 @@ class _CalendarMonthViewState extends State<CalendarMonthView> {
             ...selectedEvents.map(
               (e) => Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                child: CalendarEventCard(
+                child: CalendarWeekSelectedEventCard(
                   event: e,
-                  compact: true,
-                  showTimePrefix: true,
-                  isSelected: _selectedEventId == e.id,
-                  onTap: () {
-                    setState(() => _selectedEventId = e.id);
-                    EventDetailSheet.show(context, e);
-                  },
+                  isExpanded: _selectedEventId == e.id && _detailExpanded,
+                  onExpand: () => setState(() {
+                    _selectedEventId = e.id;
+                    _detailExpanded = true;
+                  }),
+                  onEdit: () => _openEventEditor(e),
                 ),
               ),
             ),
