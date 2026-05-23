@@ -5,8 +5,8 @@ import '../../../../shared/widgets/premium_pressable.dart';
 import '../../../../shared/widgets/smooth_card_expand.dart';
 import '../../../../theme/aris_list_palette.dart';
 import '../../../../theme/app_spacing.dart';
-import 'calendar_event_format.dart';
 import 'calendar_event_icon.dart';
+import 'event_expanded_details_content.dart';
 
 /// Tarjeta de evento en agenda Día — despliegue instantáneo fiable (v0.49.84).
 class CalendarDayEventCard extends StatelessWidget {
@@ -122,107 +122,10 @@ class CalendarDayEventExpandedContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final location =
-        hideLocation ? null : CalendarEventFormat.expandedLocation(event);
-    final reminder = CalendarEventFormat.expandedReminder(event);
-    final observations = CalendarEventFormat.expandedObservations(event);
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (location != null ||
-            reminder != null ||
-            observations != null) ...[
-          SizedBox(height: AppSpacing.calendarDayExpandedDetailTopGap),
-          if (location != null)
-            _ExpandedIconLine(
-              icon: Icons.place_outlined,
-              text: location,
-            ),
-          if (reminder != null) ...[
-            if (location != null)
-              SizedBox(height: AppSpacing.calendarDayExpandedDetailRowGap),
-            _ExpandedIconLine(
-              icon: Icons.notifications_outlined,
-              text: reminder,
-            ),
-          ],
-          if (observations != null) ...[
-            if (location != null || reminder != null)
-              SizedBox(height: AppSpacing.calendarDayExpandedDetailRowGap),
-            _ExpandedIconLine(
-              icon: Icons.notes_outlined,
-              text: observations,
-            ),
-          ],
-        ],
-        SizedBox(
-          height: location != null || reminder != null || observations != null
-              ? AppSpacing.calendarDayExpandedEditTopGap
-              : AppSpacing.xxs,
-        ),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton(
-            onPressed: onEdit,
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              foregroundColor: context.arisList.accent,
-            ),
-            child: const Text(
-              'Editar',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ExpandedIconLine extends StatelessWidget {
-  const _ExpandedIconLine({
-    required this.icon,
-    required this.text,
-  });
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 1),
-          child: Icon(
-            icon,
-            size: 15,
-            color: context.arisList.textMuted.withValues(alpha: 0.9),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 12.5,
-              height: 1.28,
-              fontWeight: FontWeight.w400,
-              color: context.arisList.textSecondary,
-            ),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
+    return EventExpandedDetailsContent(
+      event: event,
+      onEdit: onEdit,
+      hideLocation: hideLocation,
     );
   }
 }
