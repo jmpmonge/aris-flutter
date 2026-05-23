@@ -27,6 +27,8 @@ class CalendarDayView extends StatefulWidget {
 class _CalendarDayViewState extends State<CalendarDayView> {
   late DateTime _day;
   String? _expandedDayEventId;
+  final Map<String, EventModel> _localEventOverrides = {};
+  final Set<String> _localDeletedEventIds = {};
 
   @override
   void initState() {
@@ -42,10 +44,26 @@ class _CalendarDayViewState extends State<CalendarDayView> {
     });
   }
 
+  Future<void> _openEventEditor(EventModel event) async {
+    final result = await EventDetailSheet.show(context, event);
+    if (!mounted || result == null) return;
+    setState(() {
+      if (result.isDeleted) {
+        _localDeletedEventIds.add(result.deletedEventId!);
+        _localEventOverrides.remove(event.id);
+        if (_expandedDayEventId == event.id) _expandedDayEventId = null;
+      } else if (result.event != null) {
+        _localEventOverrides[event.id] = result.event!;
+      }
+    });
+  }
+
   List<EventModel> _dayEvents() {
     return widget.calendarRepository
         .getTodayEvents(_day)
         .where((e) => e.hasCivilCalendarDate)
+        .where((e) => !_localDeletedEventIds.contains(e.id))
+        .map((e) => _localEventOverrides[e.id] ?? e)
         .toList()
       ..sort((a, b) => a.start.compareTo(b.start));
   }
@@ -90,7 +108,7 @@ class _CalendarDayViewState extends State<CalendarDayView> {
                         _expandedDayEventId == id ? null : id;
                   });
                 },
-                onEdit: () => EventDetailSheet.show(context, events[i]),
+                onEdit: () => _openEventEditor(events[i]),
               ),
             ],
           const SizedBox(height: AppSpacing.lg),

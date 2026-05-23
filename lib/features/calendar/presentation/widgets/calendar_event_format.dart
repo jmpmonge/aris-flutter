@@ -79,6 +79,24 @@ abstract final class CalendarEventFormat {
     return 'Aviso $minutesBefore min antes';
   }
 
+  /// Opciones del selector de aviso en edición (v0.49.66).
+  static const List<MapEntry<int?, String>> reminderEditOptions = [
+    MapEntry(null, 'Sin aviso'),
+    MapEntry(5, '5 min antes'),
+    MapEntry(10, '10 min antes'),
+    MapEntry(15, '15 min antes'),
+    MapEntry(30, '30 min antes'),
+    MapEntry(60, '1 h antes'),
+    MapEntry(1440, '1 día antes'),
+  ];
+
+  static String reminderEditLabel(int? minutesBefore) {
+    for (final o in reminderEditOptions) {
+      if (o.key == minutesBefore) return o.value;
+    }
+    return reminderLabel(minutesBefore) ?? 'Sin aviso';
+  }
+
   static String timeHm(DateTime dt) {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
