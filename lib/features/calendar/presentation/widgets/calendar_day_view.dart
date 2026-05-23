@@ -9,7 +9,7 @@ import 'calendar_event_format.dart';
 import 'calendar_free_gap_divider.dart';
 import 'event_detail_sheet.dart';
 
-/// Agenda vertical del día con línea temporal (v0.49.57).
+/// Agenda vertical del día con línea temporal (v0.49.58).
 class CalendarDayView extends StatefulWidget {
   const CalendarDayView({
     super.key,
@@ -171,14 +171,16 @@ class _TimelineEventRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.only(bottom: AppSpacing.calendarDayEventRowGap),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: AppSpacing.calendarTimeColumnWidth,
             child: Padding(
-              padding: const EdgeInsets.only(top: 12),
+              padding: const EdgeInsets.only(
+                top: AppSpacing.calendarDayTimeColumnTop,
+              ),
               child: Text(
                 CalendarEventFormat.timeHm(event.start),
                 style: const TextStyle(
@@ -193,7 +195,9 @@ class _TimelineEventRow extends StatelessWidget {
           const _TimelineDot(filled: true),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(left: AppSpacing.sm),
+              padding: const EdgeInsets.only(
+                left: AppSpacing.calendarDayTimelineContentGap,
+              ),
               child: CalendarDayEventCard(
                 event: event,
                 isExpanded: isExpanded,
@@ -219,7 +223,7 @@ class _TimelineDot extends StatelessWidget {
       width: 16,
       child: Column(
         children: [
-          const SizedBox(height: 14),
+          SizedBox(height: AppSpacing.calendarDayTimelineDotTop),
           Container(
             width: filled ? 9 : 7,
             height: filled ? 9 : 7,
@@ -238,7 +242,7 @@ class _TimelineDot extends StatelessWidget {
           ),
           Container(
             width: 1,
-            height: 48,
+            height: AppSpacing.calendarDayTimelineLineHeight,
             color: AppColors.calendarListBorderNormal.withValues(alpha: 0.9),
           ),
         ],

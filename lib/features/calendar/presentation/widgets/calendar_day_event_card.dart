@@ -6,7 +6,7 @@ import '../../../../theme/app_spacing.dart';
 import 'calendar_event_format.dart';
 import 'calendar_event_icon.dart';
 
-/// Tarjeta de evento en agenda Día — colapsada o desplegada (v0.49.45).
+/// Tarjeta de evento en agenda Día — colapsada o desplegada (v0.49.58).
 class CalendarDayEventCard extends StatelessWidget {
   const CalendarDayEventCard({
     super.key,
@@ -49,8 +49,8 @@ class CalendarDayEventCard extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm + 2,
-              vertical: 10,
+              horizontal: AppSpacing.calendarDayEventCardPaddingH,
+              vertical: AppSpacing.calendarDayEventCardPaddingV,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -67,7 +67,7 @@ class CalendarDayEventCard extends StatelessWidget {
                         color: AppColors.calendarListAccent,
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: AppSpacing.xs),
                     Expanded(
                       child: Text(
                         event.title,
@@ -92,7 +92,7 @@ class CalendarDayEventCard extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 3),
+                SizedBox(height: AppSpacing.calendarDayEventTitleTimeGap),
                 Text(
                   timeSimple,
                   style: const TextStyle(
@@ -103,7 +103,7 @@ class CalendarDayEventCard extends StatelessWidget {
                   ),
                 ),
                 if (isExpanded && category.isNotEmpty) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 1),
                   Text(
                     category,
                     style: const TextStyle(
@@ -151,7 +151,7 @@ class CalendarDayEventExpandedContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: AppSpacing.sm),
+        SizedBox(height: AppSpacing.calendarDayExpandedTopGap),
         _DayDetailRow(
           label: 'Fecha',
           value: CalendarEventFormat.shortDate(event),
@@ -164,7 +164,7 @@ class CalendarDayEventExpandedContent extends StatelessWidget {
           _DayDetailRow(label: 'Ubicación', value: location),
         if (notes.isNotEmpty)
           _DayDetailRow(label: 'Notas', value: notes, multiline: true),
-        const SizedBox(height: AppSpacing.xs),
+        SizedBox(height: AppSpacing.xxs),
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton(
@@ -205,7 +205,7 @@ class _DayDetailRow extends StatelessWidget {
     if (value.trim().isEmpty) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: AppSpacing.calendarDayDetailRowGap),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

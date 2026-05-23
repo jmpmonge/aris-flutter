@@ -38,6 +38,36 @@ abstract final class AppSpacing {
   /// Padding vertical hueco libre vista Día (v0.49.57).
   static const double calendarDayFreeGapPaddingV = 2;
 
+  /// Vista Día — padding vertical tarjeta evento (v0.49.58).
+  static const double calendarDayEventCardPaddingV = 7;
+
+  /// Vista Día — padding horizontal tarjeta evento (v0.49.58).
+  static const double calendarDayEventCardPaddingH = 10;
+
+  /// Vista Día — gap título ↔ hora en tarjeta (v0.49.58).
+  static const double calendarDayEventTitleTimeGap = 2;
+
+  /// Vista Día — margen inferior entre filas de evento (v0.49.58).
+  static const double calendarDayEventRowGap = 6;
+
+  /// Vista Día — gap timeline ↔ tarjeta (v0.49.58).
+  static const double calendarDayTimelineContentGap = 8;
+
+  /// Vista Día — offset superior columna hora (v0.49.58).
+  static const double calendarDayTimeColumnTop = 8;
+
+  /// Vista Día — offset superior punto timeline (v0.49.58).
+  static const double calendarDayTimelineDotTop = 10;
+
+  /// Vista Día — altura línea vertical timeline (v0.49.58).
+  static const double calendarDayTimelineLineHeight = 40;
+
+  /// Vista Día — gap antes contenido expandido (v0.49.58).
+  static const double calendarDayExpandedTopGap = 8;
+
+  /// Vista Día — separación entre filas de detalle (v0.49.58).
+  static const double calendarDayDetailRowGap = 4;
+
   static const double profileAvatarRadius = 28;
 
   /// Altura fija de la franja horizontal de chips en Notas.
