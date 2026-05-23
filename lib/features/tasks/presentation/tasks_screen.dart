@@ -11,12 +11,13 @@ import '../../../theme/aris_list_palette.dart';
 import '../../../theme/app_spacing.dart';
 import 'manual_task_editor_page.dart';
 import 'widgets/compact_expandable_task_tile.dart';
+import 'widgets/task_detail_sheet.dart';
 
-/// Tareas desde **GET /tasks** · tarjetas compactas y desplegables (v0.47.34).
+/// Tareas — filas compactas + ficha inferior al pulsar (v0.49.97).
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key, this.initialExpandedTaskId});
 
-  /// Al abrir desde Home (HOY): expandir la misma tarea por id.
+  /// Al abrir desde Home: abre ficha de la tarea por id.
   final String? initialExpandedTaskId;
 
   @override
@@ -27,7 +28,6 @@ class _TasksScreenState extends State<TasksScreen> {
   final Set<String> _busyTaskIds = <String>{};
   final Map<String, bool> _localCompletionOverride = <String, bool>{};
   bool _arisSending = false;
-  String? _expandedTaskId;
 
   static const _taskBackendFail =
       'No he podido actualizar la tarea. Revisa la conexión con el backend.';
@@ -81,10 +81,7 @@ class _TasksScreenState extends State<TasksScreen> {
 
     if (yes != true || !mounted) return;
 
-    setState(() {
-      _busyTaskIds.add(t.id);
-      if (_expandedTaskId == t.id) _expandedTaskId = null;
-    });
+    setState(() => _busyTaskIds.add(t.id));
     try {
       final ok = await Repositories.task.deleteTask(t.id);
       if (!mounted) return;
@@ -118,12 +115,27 @@ class _TasksScreenState extends State<TasksScreen> {
     return TaskGroupedLists.partition(byId.values.toList(), now);
   }
 
+  (TaskModel, TaskBucketSection)? _findTaskById(String id) {
+    final grouped = _effectiveGrouped();
+    for (final row in grouped.nonEmptySectionsInOrder()) {
+      for (final t in row.$2) {
+        if (t.id == id) return (t, row.$1);
+      }
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
-    _expandedTaskId = widget.initialExpandedTaskId;
     unawaited(Repositories.task.refreshFromBackend());
     Repositories.task.readRevision.addListener(_onTaskReads);
+    final id = widget.initialExpandedTaskId;
+    if (id != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _openTaskDetailById(id);
+      });
+    }
   }
 
   @override
@@ -156,14 +168,29 @@ class _TasksScreenState extends State<TasksScreen> {
     Repositories.assistant.sendVoicePendingNotice();
   }
 
-  void _toggleExpanded(String taskId) {
-    setState(() {
-      _expandedTaskId = _expandedTaskId == taskId ? null : taskId;
-    });
-  }
-
   void _onEditTask(TaskModel t) {
     unawaited(ManualTaskEditorPage.showEdit(context, task: t));
+  }
+
+  void _openTaskDetail(TaskModel t, TaskBucketSection section) {
+    TaskDetailSheet.show(
+      context,
+      task: t,
+      section: section,
+      busy: _busyTaskIds.contains(t.id),
+      onToggleComplete: () => _onTaskCheckbox(t, !t.completed),
+      onEdit: () => _onEditTask(t),
+      onDelete: Repositories.task.readsFromBackend
+          ? () => _deleteBackendTask(t)
+          : null,
+    );
+  }
+
+  void _openTaskDetailById(String id) {
+    if (!mounted) return;
+    final found = _findTaskById(id);
+    if (found == null) return;
+    _openTaskDetail(found.$1, found.$2);
   }
 
   Future<void> _onTaskCheckbox(TaskModel t, bool? nextCompleted) async {
@@ -178,12 +205,6 @@ class _TasksScreenState extends State<TasksScreen> {
     }
 
     if (_busyTaskIds.contains(t.id)) return;
-
-    if (nextCompleted) {
-      setState(() {
-        if (_expandedTaskId == t.id) _expandedTaskId = null;
-      });
-    }
 
     debugPrint(
       '[TaskList] checkbox taskId=${t.id} '
@@ -250,14 +271,9 @@ class _TasksScreenState extends State<TasksScreen> {
             child: CompactExpandableTaskTile(
               task: t,
               section: bucket,
-              isExpanded: _expandedTaskId == t.id,
               busy: _busyTaskIds.contains(t.id),
-              onToggleExpand: () => _toggleExpanded(t.id),
+              onOpenDetail: () => _openTaskDetail(t, bucket),
               onCheckboxChanged: (v) => _onTaskCheckbox(t, v),
-              onEdit: () => _onEditTask(t),
-              onDelete: Repositories.task.readsFromBackend
-                  ? () => _deleteBackendTask(t)
-                  : null,
             ),
           ),
         ),
