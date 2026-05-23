@@ -48,7 +48,7 @@ class EventDetailSheetResult {
   bool get isDeleted => deletedEventId != null;
 }
 
-/// Ficha editable compacta de evento — bottom sheet (v0.49.68).
+/// Ficha editable compacta de evento — bottom sheet (v0.49.67).
 abstract final class EventDetailSheet {
   EventDetailSheet._();
 
@@ -69,18 +69,7 @@ abstract final class EventDetailSheet {
           top: Radius.circular(AppSpacing.radiusXl),
         ),
       ),
-      builder: (ctx) {
-        final viewBottom = MediaQuery.viewInsetsOf(ctx).bottom;
-        final sheetH = MediaQuery.sizeOf(ctx).height *
-            AppSpacing.calendarEventSheetHeightFactor;
-        return Padding(
-          padding: EdgeInsets.only(bottom: viewBottom),
-          child: SizedBox(
-            height: sheetH,
-            child: _EventEditSheetBody(event: event),
-          ),
-        );
-      },
+      builder: (ctx) => _EventEditSheetBody(event: event),
     );
   }
 }
@@ -227,46 +216,33 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
     final color = active
         ? AppColors.calendarListAccent
         : AppColors.calendarListTextMuted.withValues(alpha: 0.55);
+    final iconSize = iconOnly ? 18.0 : 17.0;
 
     return Material(
       color: active
-          ? AppColors.calendarListAccent.withValues(
-              alpha: ManualEditorTimeMetaChipStyle.fillAlpha,
-            )
+          ? AppColors.calendarListAccent.withValues(alpha: 0.14)
           : AppColors.calendarListElevated,
-      borderRadius: BorderRadius.circular(
-        ManualEditorTimeMetaChipStyle.borderRadius,
-      ),
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: _saving ? null : onTap,
-        borderRadius: BorderRadius.circular(
-          ManualEditorTimeMetaChipStyle.borderRadius,
-        ),
+        borderRadius: BorderRadius.circular(20),
         child: Padding(
-          padding: iconOnly
-              ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
-              : ManualEditorTimeMetaChipStyle.padding,
+          padding: EdgeInsets.symmetric(
+            horizontal: iconOnly ? 8 : 10,
+            vertical: 6,
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                size: ManualEditorTimeMetaChipStyle.iconSize,
-                color: color,
-              ),
+              Icon(icon, size: iconSize, color: color),
               if (!iconOnly && valueLabel != null && valueLabel.isNotEmpty) ...[
-                const SizedBox(
-                  width: ManualEditorTimeMetaChipStyle.iconLabelGap,
-                ),
+                const SizedBox(width: 5),
                 Text(
                   valueLabel,
                   style: tt.labelSmall?.copyWith(
                     color: color,
-                    fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    letterSpacing: 0.05,
-                    height: 1.1,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+                    letterSpacing: 0.1,
                   ),
                 ),
               ],
@@ -430,9 +406,7 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
       child: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
-          vertical: titleField
-              ? AppSpacing.calendarEventSheetFieldPaddingV
-              : AppSpacing.calendarEventSheetFieldPaddingV,
+          vertical: titleField ? 10 : AppSpacing.sm + 2,
         ),
         child: child,
       ),
@@ -442,6 +416,7 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     final reminderActive =
         _reminderMinutes != null && _reminderMinutes! > 0;
     final reminderChipLabel =
@@ -465,135 +440,133 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
       color: AppColors.calendarListTextMuted.withValues(alpha: 0.55),
     );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.xs,
-            AppSpacing.sm,
-            0,
-          ),
-          child: Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Editar evento',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.calendarListTextPrimary,
-                  ),
-                ),
-              ),
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                icon: Icon(
-                  Icons.close_rounded,
-                  size: 22,
-                  color: AppColors.calendarListTextMuted,
-                ),
-                tooltip: 'Cerrar',
-                onPressed: _saving ? null : () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: SingleChildScrollView(
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.lg,
               AppSpacing.xs,
-              AppSpacing.lg,
-              AppSpacing.xs,
+              AppSpacing.sm,
+              0,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            child: Row(
               children: [
-                _textSurface(
-                  titleField: true,
-                  child: TextField(
-                    controller: _titleCtrl,
-                    style: titleStyle,
-                    enabled: !_saving,
-                    maxLines: 1,
-                    decoration: _inlineDecoration(
-                      'Título del evento',
-                      titleHint,
+                const Expanded(
+                  child: Text(
+                    'Editar evento',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.calendarListTextPrimary,
                     ),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Row(
-                  children: [
-                    _metaChip(
-                      icon: Icons.calendar_today_outlined,
-                      active: true,
-                      onTap: _pickDate,
-                      valueLabel: _dateLabel(_selectedDate),
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    ManualEditorTimeMetaChip(
-                      accent: AppColors.calendarListAccent,
-                      active: true,
-                      onTap: _pickTime,
-                      enabled: !_saving,
-                      valueLabel: _previewTime,
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    _metaChip(
-                      icon: reminderActive
-                          ? Icons.notifications_active_outlined
-                          : Icons.notifications_outlined,
-                      active: reminderActive,
-                      onTap: _pickReminder,
-                      valueLabel: reminderChipLabel,
-                      iconOnly: !reminderActive,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                _textSurface(
-                  child: TextField(
-                    controller: _locationCtrl,
-                    style: bodyStyle,
-                    enabled: !_saving,
-                    maxLines: 1,
-                    decoration: _inlineDecoration('Lugar', bodyHint),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 22,
+                    color: AppColors.calendarListTextMuted,
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                _textSurface(
-                  child: TextField(
-                    controller: _notesCtrl,
-                    style: bodyStyle,
-                    enabled: !_saving,
-                    minLines: 2,
-                    maxLines: 4,
-                    textAlignVertical: TextAlignVertical.top,
-                    keyboardType: TextInputType.multiline,
-                    decoration: _inlineDecoration(
-                      'Añadir observaciones...',
-                      bodyHint,
-                    ),
-                  ),
+                  tooltip: 'Cerrar',
+                  onPressed: _saving ? null : () => Navigator.pop(context),
                 ),
               ],
             ),
           ),
-        ),
-        SafeArea(
-          top: false,
-          minimum: const EdgeInsets.only(
-            bottom: AppSpacing.calendarEventSheetFooterBottom,
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _textSurface(
+                    titleField: true,
+                    child: TextField(
+                      controller: _titleCtrl,
+                      style: titleStyle,
+                      enabled: !_saving,
+                      maxLines: 1,
+                      decoration: _inlineDecoration(
+                        'Título del evento',
+                        titleHint,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Row(
+                    children: [
+                      _metaChip(
+                        icon: Icons.calendar_today_outlined,
+                        active: true,
+                        onTap: _pickDate,
+                        valueLabel: _dateLabel(_selectedDate),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      ManualEditorTimeMetaChip(
+                        accent: AppColors.calendarListAccent,
+                        active: true,
+                        onTap: _pickTime,
+                        enabled: !_saving,
+                        valueLabel: _previewTime,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      _metaChip(
+                        icon: reminderActive
+                            ? Icons.notifications_active_outlined
+                            : Icons.notifications_outlined,
+                        active: reminderActive,
+                        onTap: _pickReminder,
+                        valueLabel: reminderChipLabel,
+                        iconOnly: !reminderActive,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _textSurface(
+                    child: TextField(
+                      controller: _locationCtrl,
+                      style: bodyStyle,
+                      enabled: !_saving,
+                      maxLines: 1,
+                      decoration: _inlineDecoration('Lugar', bodyHint),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _textSurface(
+                    child: TextField(
+                      controller: _notesCtrl,
+                      style: bodyStyle,
+                      enabled: !_saving,
+                      minLines: 3,
+                      maxLines: 5,
+                      textAlignVertical: TextAlignVertical.top,
+                      keyboardType: TextInputType.multiline,
+                      decoration: _inlineDecoration(
+                        'Añadir observaciones...',
+                        bodyHint,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          child: Padding(
+          Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.lg,
               AppSpacing.xs,
               AppSpacing.lg,
-              AppSpacing.sm,
+              AppSpacing.lg,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -623,13 +596,13 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
                           ),
                         ),
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: AppSpacing.md),
                 TextButton(
                   onPressed: _saving ? null : _confirmDelete,
                   style: TextButton.styleFrom(
                     foregroundColor:
                         AppColors.calendarListDestructive.withValues(alpha: 0.9),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   child: const Text(
                     'Eliminar evento',
@@ -642,8 +615,8 @@ class _EventEditSheetBodyState extends State<_EventEditSheetBody> {
               ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
