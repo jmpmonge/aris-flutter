@@ -9,7 +9,7 @@ import 'calendar_event_format.dart';
 import 'calendar_free_gap_divider.dart';
 import 'event_detail_sheet.dart';
 
-/// Agenda vertical del día con línea temporal (v0.49.60).
+/// Agenda vertical del día con línea temporal (v0.49.61).
 class CalendarDayView extends StatefulWidget {
   const CalendarDayView({
     super.key,
@@ -186,7 +186,13 @@ class _TimelineGapRow extends StatelessWidget {
             ),
             child: SizedBox(
               height: minHeight,
-              child: Center(child: child),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 1),
+                  child: child,
+                ),
+              ),
             ),
           ),
         ),

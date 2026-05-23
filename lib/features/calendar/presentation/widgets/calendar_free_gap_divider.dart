@@ -4,10 +4,9 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import 'calendar_event_format.dart';
 
-/// Separador compacto de hueco libre en vista Día (v0.49.60).
+/// Separador compacto de hueco libre en vista Día (v0.49.61).
 ///
-/// Solo contenido (línea — duración — línea). El padding vertical lo define
-/// el contenedor en [CalendarDayView].
+/// Líneas cortas — duración — líneas cortas, ligeramente elevado en el hueco.
 class CalendarFreeGapDivider extends StatelessWidget {
   const CalendarFreeGapDivider({
     super.key,
@@ -26,43 +25,44 @@ class CalendarFreeGapDivider extends StatelessWidget {
       alpha: AppSpacing.calendarDayFreeGapTextOpacity,
     );
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Align(
-            alignment: Alignment.center,
+    return Transform.translate(
+      offset: const Offset(0, AppSpacing.calendarDayFreeGapVerticalOffset),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: AppSpacing.calendarDayFreeGapLineWidth,
             child: Container(
-              height: 0.5,
+              height: 1,
               color: lineColor,
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.calendarDayFreeGapTextPaddingH,
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 10.5,
-              height: 1.15,
-              fontWeight: FontWeight.w400,
-              letterSpacing: 0.12,
-              color: textColor,
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.calendarDayFreeGapTextPaddingH,
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 10.5,
+                height: 1.15,
+                fontWeight: FontWeight.w400,
+                letterSpacing: 0.12,
+                color: textColor,
+              ),
             ),
           ),
-        ),
-        Expanded(
-          child: Align(
-            alignment: Alignment.center,
+          SizedBox(
+            width: AppSpacing.calendarDayFreeGapLineWidth,
             child: Container(
-              height: 0.5,
+              height: 1,
               color: lineColor,
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

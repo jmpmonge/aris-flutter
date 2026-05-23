@@ -39,10 +39,16 @@ abstract final class AppSpacing {
   static const double calendarDayFreeGapPaddingV = 4;
 
   /// Padding horizontal texto duración en hueco libre (v0.49.59).
-  static const double calendarDayFreeGapTextPaddingH = 10;
+  static const double calendarDayFreeGapTextPaddingH = 11;
 
-  /// Opacidad línea separador hueco libre vista Día (v0.49.59).
-  static const double calendarDayFreeGapLineOpacity = 0.34;
+  /// Ancho de cada línea lateral del separador (v0.49.61).
+  static const double calendarDayFreeGapLineWidth = 56;
+
+  /// Desplazamiento vertical hacia arriba del separador (v0.49.61).
+  static const double calendarDayFreeGapVerticalOffset = -6;
+
+  /// Opacidad línea separador hueco libre vista Día (v0.49.61).
+  static const double calendarDayFreeGapLineOpacity = 0.44;
 
   /// Opacidad texto duración hueco libre vista Día (v0.49.59).
   static const double calendarDayFreeGapTextOpacity = 0.58;
