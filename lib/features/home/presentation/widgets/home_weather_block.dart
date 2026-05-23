@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/widgets/home_weather_icon.dart';
 
-/// Bloque de clima escalable para Home (v0.49.46).
+/// Bloque de clima escalable para Home (v0.49.50).
 ///
 /// Misma composición en todos los estados: icono · grados · ciudad debajo.
 /// [scale] reduce proporcionalmente icono, tipografías y separaciones.
+/// [sunIconScale] solo afecta al icono del sol, centrado en su caja fija.
 class HomeWeatherBlock extends StatelessWidget {
   const HomeWeatherBlock({
     super.key,
@@ -15,6 +16,7 @@ class HomeWeatherBlock extends StatelessWidget {
     required this.scheme,
     required this.isDark,
     this.scale = 1,
+    this.sunIconScale = 1,
     this.shiftLeft = 5.0,
   });
 
@@ -32,6 +34,7 @@ class HomeWeatherBlock extends StatelessWidget {
   final ColorScheme scheme;
   final bool isDark;
   final double scale;
+  final double sunIconScale;
   final double shiftLeft;
 
   @override
@@ -62,7 +65,17 @@ class HomeWeatherBlock extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          HomeWeatherIcon(size: iconSize, sunColor: sunColor),
+          SizedBox(
+            width: iconSize,
+            height: iconSize,
+            child: Center(
+              child: Transform.scale(
+                scale: sunIconScale.clamp(0.01, 2.0),
+                alignment: Alignment.center,
+                child: HomeWeatherIcon(size: iconSize, sunColor: sunColor),
+              ),
+            ),
+          ),
           SizedBox(width: iconGap),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
