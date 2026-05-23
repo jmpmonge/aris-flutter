@@ -15,7 +15,7 @@ const _kMockTemperature = '21°';
 const _kMockCity = 'Madrid';
 const _kWeatherRiseOffset = 36.0;
 
-/// Cabecera viva de Home: saludo temporal + clima que colapsa (v0.49.48).
+/// Cabecera viva de Home: saludo temporal + clima que colapsa (v0.49.49).
 class HomeLiveHeader extends StatefulWidget {
   const HomeLiveHeader({super.key});
 
@@ -28,6 +28,9 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
   static const Duration _visibleDuration = Duration(seconds: 7);
   static const Duration _fadeInDuration = Duration(milliseconds: 300);
   static const Duration _collapseDuration = Duration(milliseconds: 600);
+
+  /// Fracción inicial reservada solo a animación visual (sin mover HOY).
+  static const double _kLayoutDelay = 0.45;
 
   AnimationController? _fadeInController;
   AnimationController? _collapseController;
@@ -62,7 +65,12 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
     final t = Curves.easeInOutCubic
         .transform(_collapseController!.value)
         .clamp(0.0, 1.0);
-    HomeGreetingSession.collapseProgress.value = t;
+    HomeGreetingSession.collapseProgress.value = _layoutProgress(t);
+  }
+
+  double _layoutProgress(double t) {
+    if (t <= _kLayoutDelay) return 0.0;
+    return ((t - _kLayoutDelay) / (1.0 - _kLayoutDelay)).clamp(0.0, 1.0);
   }
 
   void _beginCollapse() {
@@ -112,7 +120,7 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
           sunColor: sunColor,
           scheme: scheme,
           isDark: isDark,
-          compactProgress: 1,
+          layoutProgress: 1,
           weatherScale: HomeWeatherBlock.compactScale,
         ),
       );
@@ -129,13 +137,19 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
           _collapseController!.value,
         );
         final t = collapse.clamp(0.0, 1.0);
+        final layoutT = _layoutProgress(t);
         final greetingOpacity = (1 - t) * fadeIn;
         final greetingSlide = 4 * (1 - fadeIn);
         final weatherScale = lerpDouble(1.0, HomeWeatherBlock.compactScale, t)!;
-        final greetingHeight = _greetingSlotHeight(t);
+        final greetingHeight = _greetingSlotHeight(layoutT);
+        final greetingWeatherOpacity =
+            layoutT <= 0 ? 1.0 : (1.0 - layoutT).clamp(0.0, 1.0);
+        final greetingWeatherLift = layoutT <= 0
+            ? _kWeatherRiseOffset * (t / _kLayoutDelay).clamp(0.0, 1.0)
+            : 0.0;
 
         return _HeaderShell(
-          bottomPadding: _headerBottomPadding(t),
+          bottomPadding: _headerBottomPadding(layoutT),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
@@ -147,7 +161,7 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
                 sunColor: sunColor,
                 scheme: scheme,
                 isDark: isDark,
-                compactProgress: t,
+                layoutProgress: layoutT,
                 weatherScale: weatherScale,
               ),
               SizedBox(
@@ -170,7 +184,9 @@ class _HomeLiveHeaderState extends State<HomeLiveHeader>
                             sunColor: sunColor,
                             scheme: scheme,
                             isDark: isDark,
-                            weatherOpacity: (1 - t).clamp(0.0, 1.0),
+                            weatherOpacity: greetingWeatherOpacity,
+                            weatherScale: weatherScale,
+                            weatherLift: greetingWeatherLift,
                           ),
                         ),
                       ),
@@ -199,9 +215,9 @@ class _HeaderShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        AppSpacing.homePageMarginH,
+        AppSpacing.homeHeaderHorizontalInset,
         AppSpacing.homeFixedDateTopGap,
-        AppSpacing.homePageMarginH,
+        AppSpacing.homeHeaderHorizontalInset,
         bottomPadding,
       ),
       child: child,
@@ -218,7 +234,7 @@ class _CompactHeaderRow extends StatelessWidget {
     required this.sunColor,
     required this.scheme,
     required this.isDark,
-    required this.compactProgress,
+    required this.layoutProgress,
     required this.weatherScale,
   });
 
@@ -228,24 +244,24 @@ class _CompactHeaderRow extends StatelessWidget {
   final Color sunColor;
   final ColorScheme scheme;
   final bool isDark;
-  final double compactProgress;
+  final double layoutProgress;
   final double weatherScale;
 
   @override
   Widget build(BuildContext context) {
-    final double t = compactProgress.clamp(0.0, 1.0);
-    final dateSize = lerpDouble(12.0, 14.5, t)!;
+    final double layoutT = layoutProgress.clamp(0.0, 1.0);
+    final dateSize = lerpDouble(12.0, 14.5, layoutT)!;
     final dateColor = isDark
         ? AppColors.textSecondaryDark.withValues(alpha: 0.88)
         : AppColors.textSecondaryLight;
-    final weatherOffsetY = lerpDouble(_kWeatherRiseOffset, 0.0, t)!;
+    final weatherOffsetY = lerpDouble(_kWeatherRiseOffset, 0.0, layoutT)!;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Padding(
-            padding: EdgeInsets.only(top: 2 * t),
+            padding: EdgeInsets.only(top: 2 * layoutT),
             child: Text(
               date,
               style: TextStyle(
@@ -258,10 +274,10 @@ class _CompactHeaderRow extends StatelessWidget {
             ),
           ),
         ),
-        if (t > 0.001) ...[
+        if (layoutT > 0.001) ...[
           const SizedBox(width: 12),
           Opacity(
-            opacity: t,
+            opacity: layoutT.clamp(0.0, 1.0),
             child: Transform.translate(
               offset: Offset(0, weatherOffsetY),
               child: Padding(
@@ -292,6 +308,8 @@ class _ExpandedGreetingRow extends StatelessWidget {
     required this.scheme,
     required this.isDark,
     this.weatherOpacity = 1,
+    this.weatherScale = 1,
+    this.weatherLift = 0,
   });
 
   final String greeting;
@@ -301,6 +319,8 @@ class _ExpandedGreetingRow extends StatelessWidget {
   final ColorScheme scheme;
   final bool isDark;
   final double weatherOpacity;
+  final double weatherScale;
+  final double weatherLift;
 
   @override
   Widget build(BuildContext context) {
@@ -326,13 +346,16 @@ class _ExpandedGreetingRow extends StatelessWidget {
         const SizedBox(width: 8),
         Opacity(
           opacity: weatherOpacity.clamp(0.0, 1.0),
-          child: HomeWeatherBlock(
-            temperature: temperature,
-            city: city,
-            sunColor: sunColor,
-            scheme: scheme,
-            isDark: isDark,
-            scale: 1,
+          child: Transform.translate(
+            offset: Offset(0, -weatherLift),
+            child: HomeWeatherBlock(
+              temperature: temperature,
+              city: city,
+              sunColor: sunColor,
+              scheme: scheme,
+              isDark: isDark,
+              scale: weatherScale,
+            ),
           ),
         ),
       ],

@@ -146,6 +146,11 @@ abstract final class AppSpacing {
 
   static const double homeCardPadding = 14;
 
+  /// Tabulado óptico cabecera viva Home (v0.49.49): punto medio entre margen
+  /// exterior de tarjeta y padding interno — simétrico izquierda/derecha.
+  static const double homeHeaderHorizontalInset =
+      homePageMarginH + homeCardPadding / 2;
+
   static const double homeCardPaddingCompact = 12;
 
   /// Cabeceras de tarjetas Home — **HOY**, **CHAT CON ARIS** (v0.48.29 compacto real).
