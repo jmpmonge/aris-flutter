@@ -745,7 +745,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
   }
 }
 
-/// Calendario HOY: línea vertical cuando todas las filas están compactas.
+/// Calendario HOY: timeline por fila con línea continua (v0.49.90).
 class _EventCalendarStackedTable extends StatelessWidget {
   const _EventCalendarStackedTable({
     required this.events,
@@ -786,65 +786,43 @@ class _EventCalendarStackedTable extends StatelessWidget {
       scheme,
       isDark,
     );
-    final allCompact = expandedEventId == null;
 
-    final axisLeft = tw + (cw - lineW) / 2;
-    final showSpine = allCompact && n >= 2;
-    final dotCenterOffsetY = dotPadTop + dotSize / 2;
-    final spineTop = dotCenterOffsetY + trim;
-    final spineHeight = (n - 1) * (rowH + rowGap) - 2 * trim;
-
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.topLeft,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (showSpine && spineHeight > 0)
-          Positioned(
-            left: axisLeft,
-            top: spineTop,
-            child: IgnorePointer(
-              child: Container(
-                width: lineW,
-                height: spineHeight,
-                color: lineColor,
-              ),
-            ),
+        for (var i = 0; i < n; i++)
+          HomeEventTimelineRow(
+            key: ValueKey('home-event-${events[i].id}'),
+            event: events[i],
+            timeLabel: events[i].timeText.trim().isNotEmpty
+                ? events[i].timeText.trim()
+                : events[i].timeHm,
+            subtitle: homeEventCompactSubtitle(events[i]),
+            isExpanded: expandedEventId == events[i].id,
+            isDark: isDark,
+            isLastInList: i == n - 1,
+            onToggle: () => onToggleEvent(events[i].id),
+            onEdit: () => onEditEvent(events[i]),
+            timeColumnWidth: tw,
+            timelineColumnWidth: cw,
+            timelineTextGap: gw,
+            rowHeight: rowH,
+            rowGap: rowGap,
+            lineColor: lineColor,
+            lineWidth: lineW,
+            lineTrim: trim,
+            dotSize: dotSize,
+            dotPaddingTop: dotPadTop,
+            dotColor: dotColor,
+            timeTextColor: scheme.onSurfaceVariant,
+            titleTextColor: scheme.onSurface,
+            subtitleTextColor: secondaryText,
+            textPaddingH: textPadH,
+            textPaddingV: textPadV,
+            textBorderRadius: textRadius,
+            textTopOffset: textTopOffset,
           ),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var i = 0; i < n; i++) ...[
-              if (i > 0) SizedBox(height: rowGap),
-              HomeEventTimelineRow(
-                key: ValueKey('home-event-${events[i].id}'),
-                event: events[i],
-                timeLabel: events[i].timeText.trim().isNotEmpty
-                    ? events[i].timeText.trim()
-                    : events[i].timeHm,
-                subtitle: homeEventCompactSubtitle(events[i]),
-                isExpanded: expandedEventId == events[i].id,
-                isDark: isDark,
-                onToggle: () => onToggleEvent(events[i].id),
-                onEdit: () => onEditEvent(events[i]),
-                timeColumnWidth: tw,
-                timelineColumnWidth: cw,
-                timelineTextGap: gw,
-                rowHeight: rowH,
-                dotSize: dotSize,
-                dotPaddingTop: dotPadTop,
-                dotColor: dotColor,
-                timeTextColor: scheme.onSurfaceVariant,
-                titleTextColor: scheme.onSurface,
-                subtitleTextColor: secondaryText,
-                textPaddingH: textPadH,
-                textPaddingV: textPadV,
-                textBorderRadius: textRadius,
-                textTopOffset: textTopOffset,
-              ),
-            ],
-          ],
-        ),
       ],
     );
   }
