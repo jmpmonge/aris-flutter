@@ -27,6 +27,39 @@ abstract final class CalendarEventFormat {
     return '$wd, $day de ${_months[d.month - 1]}';
   }
 
+  /// Título mes/año para cabecera Semana (v0.49.70).
+  static String monthYearTitle(DateTime anchor) {
+    final name = _months[anchor.month - 1];
+    final capitalized = name.isEmpty ? name : '${name[0].toUpperCase()}${name.substring(1)}';
+    return '$capitalized ${anchor.year}';
+  }
+
+  /// Subtítulo compacto tarjeta inferior Semana: «09:00 · Lugar» o rango horario.
+  static String weekSelectedCardSubtitle(EventModel event) {
+    final timePart = _weekCardTimePart(event);
+    final loc = event.location.trim();
+    if (loc.isNotEmpty) return '$timePart · $loc';
+    final fallbackLoc = expandedLocation(event);
+    if (fallbackLoc != null && fallbackLoc != event.title.trim()) {
+      return '$timePart · $fallbackLoc';
+    }
+    return timePart;
+  }
+
+  static String _weekCardTimePart(EventModel event) {
+    final start = timeHm(event.start);
+    final end = event.end;
+    if (end != null && end.isAfter(event.start)) {
+      return '$start – ${timeHm(end)}';
+    }
+    final mins = durationMinutes(event);
+    if (mins != null && mins > 0) {
+      final endCalc = event.start.add(Duration(minutes: mins));
+      return '$start – ${timeHm(endCalc)}';
+    }
+    return start;
+  }
+
   static String shortDate(EventModel event) {
     if (event.dateText.trim().isNotEmpty) return event.dateText.trim();
     final d = event.start;

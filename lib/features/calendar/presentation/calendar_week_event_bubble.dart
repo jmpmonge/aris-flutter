@@ -9,10 +9,12 @@ class CalendarWeekEventBubble extends StatelessWidget {
     super.key,
     required this.event,
     this.isSelected = false,
+    this.iconOnly = false,
   });
 
   final EventModel event;
   final bool isSelected;
+  final bool iconOnly;
 
   static const double _minWidthForLabel = 46;
   static const double _iconWellSize = 18;
@@ -38,7 +40,8 @@ class CalendarWeekEventBubble extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final label = badge.label;
-        final showLabel = constraints.maxWidth >= _minWidthForLabel &&
+        final showLabel = !iconOnly &&
+            constraints.maxWidth >= _minWidthForLabel &&
             label.isNotEmpty &&
             label != '·' &&
             label.length <= 8;

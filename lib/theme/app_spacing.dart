@@ -116,6 +116,16 @@ abstract final class AppSpacing {
   /// Extra bajo la rejilla Semana (FAB centerFloat + nav; v0.49.4).
   static const double calendarWeekBottomClearanceExtra = 48;
 
+  /// Vista Semana — cabecera, días y rejilla (v0.49.70).
+  static const double calendarWeekHeaderTitleSize = 17;
+  static const double calendarWeekDayLetterSize = 10;
+  static const double calendarWeekDayNumberSize = 13;
+  static const double calendarWeekDayCircleSize = 28;
+  static const double calendarWeekGridLineOpacity = 0.26;
+  static const double calendarWeekHourLabelOpacity = 0.72;
+  static const double calendarWeekSlotHeight = 30;
+  static const double calendarWeekSelectedCardTopGap = 16;
+
   /// Espacio vertical **uniforme** entre bloques de Inicio (cabecera, tarjetas, reciente)
   /// y respiro final antes de la barra de chat. Valor intermedio (16–24) para ritmo premium.
   static const double homeSectionSpacing = 20;

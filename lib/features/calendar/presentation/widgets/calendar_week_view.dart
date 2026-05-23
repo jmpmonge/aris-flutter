@@ -6,9 +6,11 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import '../calendar_body_views.dart' show calendarSameLocalDay, mondayOfWeek;
 import '../calendar_week_event_bubble.dart';
+import 'calendar_event_format.dart';
+import 'calendar_week_selected_event_card.dart';
 import 'event_detail_sheet.dart';
 
-/// Rejilla horaria semanal compacta (v0.49.45).
+/// Rejilla horaria semanal compacta (v0.49.70).
 class CalendarWeekView extends StatefulWidget {
   const CalendarWeekView({
     super.key,
@@ -33,7 +35,10 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
   static const int _dayCount = 7;
   static const int _firstHour = 7;
   static const int _lastHour = 21;
-  static const double _kWeekSlotHeight = 32;
+
+  static Color get _gridLineColor => AppColors.calendarListBorderNormal.withValues(
+        alpha: AppSpacing.calendarWeekGridLineOpacity,
+      );
 
   @override
   void initState() {
@@ -57,11 +62,40 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
     return null;
   }
 
+  ({EventModel? event, int? dayIndex}) _resolveSelection(
+    List<List<EventModel>> eventsByDay,
+  ) {
+    if (_selectedEventId != null && _selectedDayIndex != null) {
+      final idx = _selectedDayIndex!;
+      if (idx >= 0 && idx < _dayCount) {
+        for (final e in eventsByDay[idx]) {
+          if (e.id == _selectedEventId) {
+            return (event: e, dayIndex: idx);
+          }
+        }
+      }
+    }
+
+    for (var i = 0; i < _dayCount; i++) {
+      final sorted = [...eventsByDay[i]]
+        ..sort((a, b) => a.start.compareTo(b.start));
+      for (final e in sorted) {
+        if (e.hasCivilCalendarDate) {
+          return (event: e, dayIndex: i);
+        }
+      }
+    }
+    return (event: null, dayIndex: null);
+  }
+
   void _onWeekEventTap(EventModel event, int dayIndex) {
     setState(() {
       _selectedEventId = event.id;
       _selectedDayIndex = dayIndex;
     });
+  }
+
+  void _openSelectedDetail(EventModel event) {
     EventDetailSheet.show(context, event);
   }
 
@@ -71,52 +105,70 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
     required bool isToday,
     required bool isSelected,
   }) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: isSelected
-            ? AppColors.calendarListAccent.withValues(alpha: 0.18)
-            : isToday
-                ? AppColors.calendarListElevated
-                : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isSelected
-              ? AppColors.calendarListBorderSelected
-              : AppColors.calendarListBorderNormal,
+    final highlight = isSelected || isToday;
+    final dayNumberColor = highlight
+        ? AppColors.calendarListCanvas
+        : AppColors.calendarListTextPrimary;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          CalendarWeekView.weekdayShortLabels[dayIndex],
+          style: TextStyle(
+            fontSize: AppSpacing.calendarWeekDayLetterSize,
+            fontWeight: FontWeight.w600,
+            height: 1.1,
+            color: AppColors.calendarListTextMuted.withValues(alpha: 0.9),
+          ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Column(
-          children: [
-            Text(
-              CalendarWeekView.weekdayShortLabels[dayIndex],
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: AppColors.calendarListTextMuted,
+        const SizedBox(height: 3),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.calendarListAccent
+                : isToday
+                    ? AppColors.calendarListAccent.withValues(alpha: 0.16)
+                    : Colors.transparent,
+            shape: BoxShape.circle,
+            border: isToday && !isSelected
+                ? Border.all(
+                    color: AppColors.calendarListAccent.withValues(alpha: 0.45),
+                  )
+                : null,
+          ),
+          child: SizedBox(
+            width: AppSpacing.calendarWeekDayCircleSize,
+            height: AppSpacing.calendarWeekDayCircleSize,
+            child: Center(
+              child: Text(
+                '${day.day}',
+                style: TextStyle(
+                  fontSize: AppSpacing.calendarWeekDayNumberSize,
+                  fontWeight: FontWeight.w700,
+                  height: 1,
+                  color: isSelected
+                      ? dayNumberColor
+                      : isToday
+                          ? AppColors.calendarListAccent
+                          : AppColors.calendarListTextPrimary,
+                ),
               ),
             ),
-            Text(
-              '${day.day}',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                height: 1.1,
-                color: isSelected || isToday
-                    ? AppColors.calendarListAccent
-                    : AppColors.calendarListTextPrimary,
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _weekEventBlock(BuildContext context, EventModel event, int dayIndex) {
+  Widget _weekEventBlock(
+    EventModel event,
+    int dayIndex, {
+    required EventModel? selectedEvent,
+    required int? selectedDayIndex,
+  }) {
     final isSelected =
-        _selectedEventId == event.id && _selectedDayIndex == dayIndex;
+        selectedEvent?.id == event.id && selectedDayIndex == dayIndex;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -125,6 +177,7 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
         child: CalendarWeekEventBubble(
           event: event,
           isSelected: isSelected,
+          iconOnly: true,
         ),
       ),
     );
@@ -134,23 +187,34 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
     required int hour,
     required List<EventModel> dayEvents,
     required int dayIndex,
+    required bool isLastHour,
+    required EventModel? selectedEvent,
+    required int? selectedDayIndex,
   }) {
     final match = _eventStartingAtHour(dayEvents, hour);
     return SizedBox(
-      height: _kWeekSlotHeight,
-      child: Container(
-        padding: const EdgeInsets.only(left: 2),
+      height: AppSpacing.calendarWeekSlotHeight,
+      child: DecoratedBox(
         decoration: BoxDecoration(
           border: Border(
-            left: BorderSide(
-              color: AppColors.calendarListBorderNormal.withValues(alpha: 0.85),
-            ),
+            left: BorderSide(color: _gridLineColor),
+            bottom: isLastHour ? BorderSide.none : BorderSide(color: _gridLineColor),
           ),
         ),
-        alignment: Alignment.centerLeft,
-        child: match == null
-            ? null
-            : _weekEventBlock(context, match, dayIndex),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 3, top: 2, right: 2),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: match == null
+                ? null
+                : _weekEventBlock(
+                    match,
+                    dayIndex,
+                    selectedEvent: selectedEvent,
+                    selectedDayIndex: selectedDayIndex,
+                  ),
+          ),
+        ),
       ),
     );
   }
@@ -162,35 +226,41 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
       final d = _weekStart.add(Duration(days: i));
       return widget.calendarRepository.getWeekEvents(d);
     });
+    final selection = _resolveSelection(eventsByDay);
+    final selectedDayIndex = selection.dayIndex;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                onPressed: () => _shiftWeek(-1),
-                icon: Icon(
-                  Icons.chevron_left_rounded,
-                  color: AppColors.calendarListAccent,
-                ),
-              ),
               Expanded(
                 child: Text(
-                  'Semana del ${_weekStart.day}/${_weekStart.month}',
-                  textAlign: TextAlign.center,
+                  CalendarEventFormat.monthYearTitle(_weekStart),
                   style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontSize: AppSpacing.calendarWeekHeaderTitleSize,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
                     color: AppColors.calendarListTextPrimary,
                   ),
                 ),
               ),
               IconButton(
                 visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                onPressed: () => _shiftWeek(-1),
+                icon: Icon(
+                  Icons.chevron_left_rounded,
+                  color: AppColors.calendarListAccent,
+                ),
+              ),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 onPressed: () => _shiftWeek(1),
                 icon: Icon(
                   Icons.chevron_right_rounded,
@@ -199,59 +269,73 @@ class _CalendarWeekViewState extends State<CalendarWeekView> {
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.xs),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(width: AppSpacing.calendarTimeColumnWidth),
               for (var i = 0; i < _dayCount; i++)
                 Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(left: i == 0 ? 2 : 1),
-                    child: _weekDayHeader(
-                      dayIndex: i,
-                      day: _weekStart.add(Duration(days: i)),
-                      isToday: calendarSameLocalDay(
-                        _weekStart.add(Duration(days: i)),
-                        now,
-                      ),
-                      isSelected: _selectedDayIndex == i,
+                  child: _weekDayHeader(
+                    dayIndex: i,
+                    day: _weekStart.add(Duration(days: i)),
+                    isToday: calendarSameLocalDay(
+                      _weekStart.add(Duration(days: i)),
+                      now,
                     ),
+                    isSelected: selectedDayIndex == i,
                   ),
                 ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
           for (int h = _firstHour; h <= _lastHour; h++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 2),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: AppSpacing.calendarTimeColumnWidth,
-                    child: Text(
-                      '${h.toString().padLeft(2, '0')}:00',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.calendarListTextMuted,
-                        height: 1.2,
-                      ),
-                    ),
-                  ),
-                  for (var i = 0; i < _dayCount; i++)
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(left: i == 0 ? 2 : 1),
-                        child: _weekHourSlot(
-                          hour: h,
-                          dayEvents: eventsByDay[i],
-                          dayIndex: i,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: AppSpacing.calendarTimeColumnWidth,
+                  height: AppSpacing.calendarWeekSlotHeight,
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 1, right: 6),
+                      child: Text(
+                        '${h.toString().padLeft(2, '0')}:00',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.calendarListTextMuted.withValues(
+                            alpha: AppSpacing.calendarWeekHourLabelOpacity,
+                          ),
+                          height: 1.1,
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
                     ),
-                ],
-              ),
+                  ),
+                ),
+                for (var i = 0; i < _dayCount; i++)
+                  Expanded(
+                    child: _weekHourSlot(
+                      hour: h,
+                      dayEvents: eventsByDay[i],
+                      dayIndex: i,
+                      isLastHour: h == _lastHour,
+                      selectedEvent: selection.event,
+                      selectedDayIndex: selection.dayIndex,
+                    ),
+                  ),
+              ],
             ),
+          if (selection.event != null) ...[
+            SizedBox(height: AppSpacing.calendarWeekSelectedCardTopGap),
+            CalendarWeekSelectedEventCard(
+              event: selection.event!,
+              onOpenDetail: () => _openSelectedDetail(selection.event!),
+            ),
+            SizedBox(height: AppSpacing.calendarWeekBottomClearanceExtra),
+          ],
         ],
       ),
     );
