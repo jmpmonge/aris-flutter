@@ -77,11 +77,11 @@ abstract final class AppSpacing {
   /// Solo texto de saludo; el clima se posiciona en Stack aparte.
   static const double homeGreetingSlotHeight = 38;
 
-  /// Respiro bajo cabecera viva con saludo visible (v0.49.55).
-  static const double homeLiveHeaderBottomWithGreeting = 10;
+  /// Respiro bajo cabecera viva con saludo visible (v0.49.56).
+  static const double homeLiveHeaderBottomWithGreeting = 16;
 
-  /// Respiro bajo cabecera compacta sin saludo (v0.49.55).
-  static const double homeLiveHeaderBottomCompact = 10;
+  /// Respiro bajo cabecera compacta sin saludo (v0.49.56).
+  static const double homeLiveHeaderBottomCompact = 16;
 
   /// ListView → HOY mientras el saludo ocupa cabecera (v0.49.54).
   static const double homeGreetingToHoyGapVisible = 5;

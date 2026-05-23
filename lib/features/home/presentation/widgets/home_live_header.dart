@@ -17,10 +17,10 @@ const _kMockCity = 'Madrid';
 /// Altura nominal del bloque clima a escala 1 (icono + ciudad).
 const _kWeatherBlockNominalHeight = 38.0;
 
-/// Offset vertical óptico del clima compacto (v0.49.54).
-const _kWeatherCompactTopOffset = -6.0;
+/// Offset vertical óptico del clima compacto (v0.49.56).
+const _kWeatherCompactTopOffset = -12.0;
 
-/// Cabecera viva de Home: saludo temporal + clima que colapsa (v0.49.54).
+/// Cabecera viva de Home: saludo temporal + clima que colapsa (v0.49.56).
 class HomeLiveHeader extends StatefulWidget {
   const HomeLiveHeader({super.key});
 
