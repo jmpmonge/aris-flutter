@@ -27,11 +27,9 @@ abstract final class HomeScrollLayout {
     return 14;
   }
 
-  /// Altura no-HOY que debe reservarse en el viewport.
+  /// Altura no-HOY dentro del ListView (saludo ya está en cabecera fija).
   static double scrollChromeExcludingSummaryCard(BuildContext context) {
-    return AppSpacing.homeFixedDateToEphemeralGap +
-        AppSpacing.homeGreetingToHoyGap +
-        greetingBlockHeight +
+    return AppSpacing.homeFixedDateToHoyWhenGreetingHidden +
         arisCardLayoutReserve +
         sectionGapBeforeAris(context) +
         scrollContentBottomPadding(context) +

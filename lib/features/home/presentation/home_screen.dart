@@ -7,8 +7,7 @@ import '../../../core/services/chat_service.dart';
 import '../../../core/services/local_action_service.dart';
 import 'widgets/home_aris_chat_inside_sheet.dart';
 import 'widgets/home_aris_conversation_utils.dart';
-import 'widgets/home_ephemeral_greeting_header.dart';
-import 'widgets/home_fixed_date_header.dart';
+import 'widgets/home_live_header.dart';
 import 'widgets/home_scroll_layout.dart';
 import 'widgets/home_visible_counts.dart';
 import '../../../shared/widgets/home_aris_reply_card.dart';
@@ -305,7 +304,7 @@ class HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const HomeFixedDateHeader(),
+          const HomeLiveHeader(),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -327,18 +326,12 @@ class HomeScreenState extends State<HomeScreen> {
                   controller: _scrollController,
                   physics: const ClampingScrollPhysics(),
                   padding: EdgeInsets.only(
+                    top: AppSpacing.homeFixedDateToHoyWhenGreetingHidden,
                     bottom: HomeScrollLayout.scrollContentBottomPadding(
                       context,
                     ),
                   ),
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        top: AppSpacing.homeFixedDateToEphemeralGap,
-                        bottom: AppSpacing.homeGreetingToHoyGap,
-                      ),
-                      child: const HomeEphemeralGreetingHeader(),
-                    ),
                     TodaySummaryCard(
                       key: _todaySummaryKey,
                       events: homeEvents,

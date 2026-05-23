@@ -19,8 +19,8 @@ abstract final class UserService {
     return 'Buenas noches, $name';
   }
 
-  /// Saludo principal del Home diario: «Hola, José».
-  static String getHomeGreetingShort() => 'Hola, ${getCurrentUser().displayName}';
+  /// Saludo temporal del Home: «Buenos días, José» (según hora).
+  static String getHomeGreetingShort() => getGreetingForNow();
 
   /// Fecha orientadora: «Hoy · Martes, 19 de mayo» (es-ES, día civil local).
   static String getHomeDateLine([DateTime? reference]) {
