@@ -20,6 +20,12 @@ abstract final class AppSpacing {
   static const double editorMetaFieldGap = 6;
   static const double editorMetaFieldPaddingH = sm;
 
+  /// Apertura suave tarjetas expandibles — sin rebote (v0.49.76).
+  static const int cardExpandSizeMs = 200;
+  static const int cardExpandFadeMs = 140;
+  static const int cardExpandChevronMs = 180;
+  static const double cardExpandContentSlide = 3;
+
   /// Esquina “cola” en burbujas de chat.
   static const double radiusTail = 4;
 

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/models/event_model.dart';
+import '../../../../shared/widgets/smooth_card_expand.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import 'calendar_event_format.dart';
 import 'calendar_event_icon.dart';
 
-/// Tarjeta de evento en agenda Día — colapsada o desplegada (v0.49.64).
+/// Tarjeta de evento en agenda Día — colapsada o desplegada (v0.49.76).
 class CalendarDayEventCard extends StatelessWidget {
   const CalendarDayEventCard({
     super.key,
@@ -23,6 +24,9 @@ class CalendarDayEventCard extends StatelessWidget {
 
   static const double _radius = 12;
 
+  static Duration get _surfaceDuration =>
+      Duration(milliseconds: AppSpacing.cardExpandSizeMs);
+
   @override
   Widget build(BuildContext context) {
     final icon = CalendarEventIconResolver.resolve(event);
@@ -32,7 +36,9 @@ class CalendarDayEventCard extends StatelessWidget {
       child: InkWell(
         onTap: onToggle,
         borderRadius: BorderRadius.circular(_radius),
-        child: DecoratedBox(
+        child: AnimatedContainer(
+          duration: _surfaceDuration,
+          curve: isExpanded ? Curves.easeOutCubic : Curves.easeInOutCubic,
           decoration: BoxDecoration(
             color: isExpanded
                 ? AppColors.calendarListCardExpanded
@@ -79,22 +85,22 @@ class CalendarDayEventCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (isExpanded)
-                      Padding(
-                        padding: const EdgeInsets.only(left: AppSpacing.xs),
-                        child: Icon(
-                          Icons.expand_less_rounded,
-                          size: 20,
-                          color: AppColors.calendarListTextMuted,
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: AppSpacing.xs),
+                      child: SmoothCardExpandChevron(
+                        isExpanded: isExpanded,
+                        color: AppColors.calendarListTextMuted,
                       ),
+                    ),
                   ],
                 ),
-                if (isExpanded)
-                  CalendarDayEventExpandedContent(
+                SmoothCardExpandReveal(
+                  isExpanded: isExpanded,
+                  child: CalendarDayEventExpandedContent(
                     event: event,
                     onEdit: onEdit,
                   ),
+                ),
               ],
             ),
           ),

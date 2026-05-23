@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/models/task_model.dart';
 import '../../../../core/models/task_ui_buckets.dart';
+import '../../../../shared/widgets/smooth_card_expand.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import 'task_expanded_card.dart';
@@ -68,8 +69,8 @@ class CompactExpandableTaskTile extends StatelessWidget {
         : _closedPadV;
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
+      duration: Duration(milliseconds: AppSpacing.cardExpandSizeMs),
+      curve: isExpanded ? Curves.easeOutCubic : Curves.easeInOutCubic,
       decoration: BoxDecoration(
         color: cardFill.withValues(alpha: muted && !isExpanded ? 0.72 : 1),
         borderRadius: BorderRadius.circular(_cardRadius),
@@ -136,11 +137,8 @@ class CompactExpandableTaskTile extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: AppSpacing.xxs),
-                            Icon(
-                              isExpanded
-                                  ? Icons.expand_less_rounded
-                                  : Icons.expand_more_rounded,
-                              size: 20,
+                            SmoothCardExpandChevron(
+                              isExpanded: isExpanded,
                               color: AppColors.taskListTextMuted
                                   .withValues(alpha: 0.82),
                             ),
@@ -149,20 +147,15 @@ class CompactExpandableTaskTile extends StatelessWidget {
                       ),
                     ),
                   ),
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOutCubic,
-                    alignment: Alignment.topLeft,
-                    clipBehavior: Clip.none,
-                    child: isExpanded
-                        ? TaskExpandedCard(
-                            key: ValueKey('expanded-${task.id}'),
-                            task: task,
-                            section: section,
-                            onEdit: onEdit,
-                            onDelete: onDelete,
-                          )
-                        : const SizedBox(width: double.infinity, height: 0),
+                  SmoothCardExpandReveal(
+                    isExpanded: isExpanded,
+                    child: TaskExpandedCard(
+                      key: ValueKey('expanded-${task.id}'),
+                      task: task,
+                      section: section,
+                      onEdit: onEdit,
+                      onDelete: onDelete,
+                    ),
                   ),
                 ],
               ),
