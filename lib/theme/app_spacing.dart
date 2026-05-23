@@ -104,8 +104,10 @@ abstract final class AppSpacing {
   static const double calendarDayTimelineLineHeight = 40;
 
   /// Spine vertical continua entre puntos de evento (v0.49.74).
+  /// Spine timeline Día — ancho y opacidad (v0.49.74); tramos adaptativos v0.49.79.
   static const double calendarDayTimelineSpineWidth = 1;
   static const double calendarDayTimelineSpineOpacity = 0.9;
+  static const int calendarDayTimelineSpineAnimationPadMs = 40;
 
   /// Vista Día — respiro hora → detalles expandidos (v0.49.63).
   static const double calendarDayExpandedDetailTopGap = 6;

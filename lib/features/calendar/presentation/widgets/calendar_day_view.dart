@@ -9,7 +9,7 @@ import 'calendar_event_format.dart';
 import 'calendar_free_gap_divider.dart';
 import 'event_detail_sheet.dart';
 
-/// Agenda vertical del día con línea temporal continua (v0.49.74).
+/// Agenda vertical del día con timeline adaptativa (v0.49.79).
 class CalendarDayView extends StatefulWidget {
   const CalendarDayView({
     super.key,
@@ -105,7 +105,7 @@ class _CalendarDayViewState extends State<CalendarDayView> {
                 });
               },
               onEdit: _openEventEditor,
-              gapBetween: _maybeGapRow,
+              buildGapBetween: _buildGapBetween,
             ),
           const SizedBox(height: AppSpacing.lg),
         ],
@@ -113,7 +113,7 @@ class _CalendarDayViewState extends State<CalendarDayView> {
     );
   }
 
-  Widget _maybeGapRow(EventModel prev, EventModel next) {
+  Widget _buildGapBetween(EventModel prev, EventModel next) {
     final gapEnd = prev.end ?? prev.start.add(const Duration(minutes: 30));
     final gapMinutes = next.start.difference(gapEnd).inMinutes;
     if (gapMinutes < 45) {
@@ -129,21 +129,21 @@ class _CalendarDayViewState extends State<CalendarDayView> {
   }
 }
 
-/// Lista del día con spine vertical único (primer → último punto).
+/// Lista del día con spine vertical por tramos (centro punto → centro punto).
 class _DayTimelineStack extends StatefulWidget {
   const _DayTimelineStack({
     required this.events,
     required this.expandedEventId,
     required this.onToggle,
     required this.onEdit,
-    required this.gapBetween,
+    required this.buildGapBetween,
   });
 
   final List<EventModel> events;
   final String? expandedEventId;
   final ValueChanged<String> onToggle;
   final ValueChanged<EventModel> onEdit;
-  final Widget Function(EventModel prev, EventModel next) gapBetween;
+  final Widget Function(EventModel prev, EventModel next) buildGapBetween;
 
   @override
   State<_DayTimelineStack> createState() => _DayTimelineStackState();
@@ -152,9 +152,8 @@ class _DayTimelineStack extends StatefulWidget {
 class _DayTimelineStackState extends State<_DayTimelineStack> {
   final _stackKey = GlobalKey();
   final List<GlobalKey> _dotKeys = [];
-  double _spineTop = 0;
-  double _spineHeight = 0;
-  bool _showSpine = false;
+  List<(double top, double height)> _spineSegments = [];
+  int _spineUpdateGeneration = 0;
 
   static const double _timelineColWidth = 16;
   static const double _spineWidth = AppSpacing.calendarDayTimelineSpineWidth;
@@ -175,7 +174,7 @@ class _DayTimelineStackState extends State<_DayTimelineStack> {
         oldWidget.events.map((e) => e.id).join() !=
             widget.events.map((e) => e.id).join();
     if (keysChanged) _syncDotKeys();
-    if (layoutChanged) _scheduleSpineUpdate();
+    if (layoutChanged) _scheduleSpineUpdate(trackExpandAnimation: true);
   }
 
   void _syncDotKeys() {
@@ -187,50 +186,96 @@ class _DayTimelineStackState extends State<_DayTimelineStack> {
     }
   }
 
-  void _scheduleSpineUpdate() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _updateSpineGeometry();
-    });
+  void _scheduleSpineUpdate({bool trackExpandAnimation = false}) {
+    final generation = ++_spineUpdateGeneration;
+
+    void measure() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || generation != _spineUpdateGeneration) return;
+        _updateSpineGeometry();
+      });
+    }
+
+    measure();
+
+    if (!trackExpandAnimation) return;
+
+    // AnimatedSize de tarjeta (~cardExpandSizeMs): remediar spine durante el despliegue.
+    final totalMs =
+        AppSpacing.cardExpandSizeMs + AppSpacing.calendarDayTimelineSpineAnimationPadMs;
+    const stepMs = 16;
+    for (var elapsed = stepMs; elapsed <= totalMs; elapsed += stepMs) {
+      Future<void>.delayed(Duration(milliseconds: elapsed), () {
+        if (!mounted || generation != _spineUpdateGeneration) return;
+        measure();
+      });
+    }
   }
 
   void _updateSpineGeometry() {
     if (widget.events.length < 2) {
-      if (_showSpine) setState(() => _showSpine = false);
+      if (_spineSegments.isNotEmpty) setState(() => _spineSegments = []);
       return;
     }
 
     final stackBox = _stackKey.currentContext?.findRenderObject() as RenderBox?;
-    final firstBox =
-        _dotKeys.first.currentContext?.findRenderObject() as RenderBox?;
-    final lastBox =
-        _dotKeys.last.currentContext?.findRenderObject() as RenderBox?;
-    if (stackBox == null || firstBox == null || lastBox == null) return;
+    if (stackBox == null) return;
 
     final stackOrigin = stackBox.localToGlobal(Offset.zero);
-    final firstCenter = firstBox.localToGlobal(
-      Offset(firstBox.size.width / 2, firstBox.size.height / 2),
-    );
-    final lastCenter = lastBox.localToGlobal(
-      Offset(lastBox.size.width / 2, lastBox.size.height / 2),
-    );
+    final nextSegments = <(double top, double height)>[];
 
-    final top = firstCenter.dy - stackOrigin.dy;
-    final height = lastCenter.dy - firstCenter.dy;
-    if (height <= 0.5) {
-      if (_showSpine) setState(() => _showSpine = false);
-      return;
+    for (var i = 0; i < widget.events.length - 1; i++) {
+      final boxA = _dotKeys[i].currentContext?.findRenderObject() as RenderBox?;
+      final boxB =
+          _dotKeys[i + 1].currentContext?.findRenderObject() as RenderBox?;
+      if (boxA == null || boxB == null) return;
+
+      final centerA = boxA.localToGlobal(
+        Offset(boxA.size.width / 2, boxA.size.height / 2),
+      );
+      final centerB = boxB.localToGlobal(
+        Offset(boxB.size.width / 2, boxB.size.height / 2),
+      );
+
+      final top = centerA.dy - stackOrigin.dy;
+      final height = centerB.dy - centerA.dy;
+      if (height > 0.5) {
+        nextSegments.add((top, height));
+      }
     }
 
-    final changed =
-        !_showSpine || (top - _spineTop).abs() > 0.5 || (height - _spineHeight).abs() > 0.5;
-    if (!changed) return;
+    if (_segmentsEqual(_spineSegments, nextSegments)) return;
 
-    setState(() {
-      _spineTop = top;
-      _spineHeight = height;
-      _showSpine = true;
-    });
+    setState(() => _spineSegments = nextSegments);
+  }
+
+  bool _segmentsEqual(
+    List<(double top, double height)> a,
+    List<(double top, double height)> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if ((a[i].$1 - b[i].$1).abs() > 0.5 || (a[i].$2 - b[i].$2).abs() > 0.5) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Widget _buildGapRow(int index) {
+    final prev = widget.events[index - 1];
+    final next = widget.events[index];
+    final prevExpanded = widget.expandedEventId == prev.id;
+    final nextExpanded = widget.expandedEventId == next.id;
+
+    if (prevExpanded || nextExpanded) {
+      return _TimelineGapRow(
+        minHeight: AppSpacing.calendarDayEventRowGap,
+        child: const SizedBox.shrink(),
+      );
+    }
+
+    return widget.buildGapBetween(prev, next);
   }
 
   @override
@@ -243,35 +288,42 @@ class _DayTimelineStackState extends State<_DayTimelineStack> {
       key: _stackKey,
       clipBehavior: Clip.none,
       children: [
-        if (_showSpine)
+        for (final segment in _spineSegments)
           Positioned(
             left: spineLeft,
-            top: _spineTop,
+            top: segment.$1,
             child: IgnorePointer(
               child: Container(
                 width: _spineWidth,
-                height: _spineHeight,
+                height: segment.$2,
                 color: AppColors.calendarListBorderNormal.withValues(
                   alpha: AppSpacing.calendarDayTimelineSpineOpacity,
                 ),
               ),
             ),
           ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var i = 0; i < widget.events.length; i++) ...[
-              if (i > 0)
-                widget.gapBetween(widget.events[i - 1], widget.events[i]),
-              _TimelineEventRow(
-                event: widget.events[i],
-                dotKey: _dotKeys[i],
-                isExpanded: widget.expandedEventId == widget.events[i].id,
-                onToggle: () => widget.onToggle(widget.events[i].id),
-                onEdit: () => widget.onEdit(widget.events[i]),
-              ),
+        NotificationListener<SizeChangedLayoutNotification>(
+          onNotification: (_) {
+            _scheduleSpineUpdate();
+            return false;
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < widget.events.length; i++) ...[
+                if (i > 0) _buildGapRow(i),
+                SizeChangedLayoutNotifier(
+                  child: _TimelineEventRow(
+                    event: widget.events[i],
+                    dotKey: _dotKeys[i],
+                    isExpanded: widget.expandedEventId == widget.events[i].id,
+                    onToggle: () => widget.onToggle(widget.events[i].id),
+                    onEdit: () => widget.onEdit(widget.events[i]),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ],
     );
