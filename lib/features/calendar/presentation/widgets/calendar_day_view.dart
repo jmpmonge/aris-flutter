@@ -144,7 +144,9 @@ class _DayTimelineStackState extends State<_DayTimelineStack> {
   final List<GlobalKey> _dotKeys = [];
   final ValueNotifier<int> _spineRemeasureTick = ValueNotifier(0);
   final ValueNotifier<String?> _expandedEventId = ValueNotifier(null);
+  final ValueNotifier<bool> _hideTimeLabelsDuringExpand = ValueNotifier(false);
   int _spineAnimationGeneration = 0;
+  int _timeHideGeneration = 0;
 
   static const double _timelineColWidth = 16;
 
@@ -159,6 +161,7 @@ class _DayTimelineStackState extends State<_DayTimelineStack> {
   void dispose() {
     _spineRemeasureTick.dispose();
     _expandedEventId.dispose();
+    _hideTimeLabelsDuringExpand.dispose();
     super.dispose();
   }
 
@@ -183,8 +186,18 @@ class _DayTimelineStackState extends State<_DayTimelineStack> {
   void _toggleEvent(String id) {
     final next = _expandedEventId.value == id ? null : id;
     if (_expandedEventId.value == next) return;
+
+    _hideTimeLabelsDuringExpand.value = true;
     _expandedEventId.value = next;
     _requestSpineRemeasure(trackExpandAnimation: true);
+
+    final generation = ++_timeHideGeneration;
+    final totalMs = AppSpacing.cardExpandSizeMs +
+        AppSpacing.calendarDayTimelineSpineAnimationPadMs;
+    Future<void>.delayed(Duration(milliseconds: totalMs), () {
+      if (!mounted || generation != _timeHideGeneration) return;
+      _hideTimeLabelsDuringExpand.value = false;
+    });
   }
 
   void _syncDotKeys() {
@@ -261,6 +274,7 @@ class _DayTimelineStackState extends State<_DayTimelineStack> {
                 event: widget.events[i],
                 dotKey: _dotKeys[i],
                 expandedListenable: _expandedEventId,
+                timeLabelsVisible: _hideTimeLabelsDuringExpand,
                 onToggle: () => _toggleEvent(widget.events[i].id),
                 onEdit: () => widget.onEdit(widget.events[i]),
                 onCardSizeChanged: _requestSpineRemeasure,
@@ -479,11 +493,16 @@ class _TimelineGapRow extends StatelessWidget {
   }
 }
 
-/// Hora anclada — fuera de ListenableBuilder / animación de tarjeta (v0.49.81).
+/// Hora anclada — oculta durante expand/collapse sin fade (v0.49.83).
 class _DayEventTimeLabel extends StatelessWidget {
-  const _DayEventTimeLabel({super.key, required this.label});
+  const _DayEventTimeLabel({
+    super.key,
+    required this.label,
+    required this.visible,
+  });
 
   final String label;
+  final bool visible;
 
   static const TextStyle _style = TextStyle(
     fontSize: 12,
@@ -500,7 +519,13 @@ class _DayEventTimeLabel extends StatelessWidget {
         padding: const EdgeInsets.only(
           top: AppSpacing.calendarDayTimeColumnTop,
         ),
-        child: Text(label, style: _style),
+        child: Visibility(
+          visible: visible,
+          maintainSize: true,
+          maintainState: true,
+          maintainAnimation: true,
+          child: Text(label, style: _style),
+        ),
       ),
     );
   }
@@ -512,6 +537,7 @@ class _TimelineEventRow extends StatelessWidget {
     required this.event,
     required this.dotKey,
     required this.expandedListenable,
+    required this.timeLabelsVisible,
     required this.onToggle,
     required this.onEdit,
     required this.onCardSizeChanged,
@@ -520,6 +546,7 @@ class _TimelineEventRow extends StatelessWidget {
   final EventModel event;
   final GlobalKey dotKey;
   final ValueListenable<String?> expandedListenable;
+  final ValueListenable<bool> timeLabelsVisible;
   final VoidCallback onToggle;
   final VoidCallback onEdit;
   final VoidCallback onCardSizeChanged;
@@ -531,9 +558,15 @@ class _TimelineEventRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _DayEventTimeLabel(
-          key: ValueKey('day-time-${event.id}'),
-          label: timeLabel,
+        ListenableBuilder(
+          listenable: timeLabelsVisible,
+          builder: (context, _) {
+            return _DayEventTimeLabel(
+              key: ValueKey('day-time-${event.id}'),
+              label: timeLabel,
+              visible: !timeLabelsVisible.value,
+            );
+          },
         ),
         _TimelineDot(key: dotKey, filled: true),
         Expanded(
