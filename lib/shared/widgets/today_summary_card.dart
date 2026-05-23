@@ -21,9 +21,9 @@ const Color _kTimelineSpineDark = Color(0xFF416A98);
 const Color _kTasksSectionIconLight = Color(0xFFF59E0B);
 const Color _kTasksSectionIconDark = AppColors.tasksOrangeDark;
 
-/// Icono sección NOTAS — azul Aris (v0.49.73).
-const Color _kNotesSectionIconLight = AppColors.noteArisBlue;
-const Color _kNotesSectionIconDark = AppColors.noteArisBlue;
+/// Icono sección NOTAS en Home — verde Aris (v0.49.74).
+const Color _kNotesSectionIconLight = AppColors.suggestionGreen;
+const Color _kNotesSectionIconDark = AppColors.suggestionGreenDark;
 
 /// Overlay cabecera HOY → Calendario (claro azul; oscuro neutro v0.48.33).
 WidgetStateProperty<Color?> _hoyHeaderOverlayColor(bool isDark) {
@@ -102,7 +102,7 @@ class TodaySummaryCard extends StatefulWidget {
     required this.notes,
     this.maxAgendaItems = 2,
     this.maxTaskItems = 3,
-    this.maxNoteItems = 3,
+    this.maxNoteItems = 2,
     this.onOpenCalendar,
     this.onOpenTasks,
     this.onOpenNotes,
@@ -583,7 +583,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
         isDark ? _kCalendarBlueDark : _kCalendarBlueLight;
     final tasksOrange =
         isDark ? _kTasksSectionIconDark : _kTasksSectionIconLight;
-    final notesBlue =
+    final notesIconColor =
         isDark ? _kNotesSectionIconDark : _kNotesSectionIconLight;
 
     final maxEvents = widget.maxAgendaItems.clamp(0, widget.events.length);
@@ -678,7 +678,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
                 child: _buildNotesHeaderRow(
                   scheme: scheme,
                   isDark: isDark,
-                  notesIconColor: notesBlue,
+                  notesIconColor: notesIconColor,
                   chevronColor: neutralChevron,
                 ),
               ),
@@ -689,7 +689,7 @@ class _TodaySummaryCardState extends State<TodaySummaryCard> {
             child: _buildNotesHeaderRow(
               scheme: scheme,
               isDark: isDark,
-              notesIconColor: notesBlue,
+              notesIconColor: notesIconColor,
               chevronColor: neutralChevron,
               showChevron: false,
             ),

@@ -13,7 +13,7 @@ class HomeVisibleCounts {
 
   static const int agendaMin = 2;
   static const int taskMin = 3;
-  static const int noteMin = 3;
+  static const int noteMin = 2;
 
   final int agendaItems;
   final int taskItems;
