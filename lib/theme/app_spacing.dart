@@ -47,6 +47,9 @@ abstract final class AppSpacing {
   /// Opacidad texto duración hueco libre vista Día (v0.49.59).
   static const double calendarDayFreeGapTextOpacity = 0.58;
 
+  /// Altura mínima zona hueco libre entre tarjetas (v0.49.60).
+  static const double calendarDayFreeGapMinHeight = 22;
+
   /// Vista Día — padding vertical tarjeta evento (v0.49.58).
   static const double calendarDayEventCardPaddingV = 7;
 

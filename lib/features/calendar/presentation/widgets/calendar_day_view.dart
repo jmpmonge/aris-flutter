@@ -9,7 +9,7 @@ import 'calendar_event_format.dart';
 import 'calendar_free_gap_divider.dart';
 import 'event_detail_sheet.dart';
 
-/// Agenda vertical del día con línea temporal (v0.49.58).
+/// Agenda vertical del día con línea temporal (v0.49.60).
 class CalendarDayView extends StatefulWidget {
   const CalendarDayView({
     super.key,
@@ -102,8 +102,16 @@ class _CalendarDayViewState extends State<CalendarDayView> {
   Widget _maybeGapRow(EventModel prev, EventModel next) {
     final gapEnd = prev.end ?? prev.start.add(const Duration(minutes: 30));
     final gapMinutes = next.start.difference(gapEnd).inMinutes;
-    if (gapMinutes < 45) return const SizedBox(height: AppSpacing.xxs);
-    return CalendarFreeGapDivider(durationMinutes: gapMinutes);
+    if (gapMinutes < 45) {
+      return _TimelineGapRow(
+        minHeight: AppSpacing.xxs,
+        child: const SizedBox.shrink(),
+      );
+    }
+    return _TimelineGapRow(
+      minHeight: AppSpacing.calendarDayFreeGapMinHeight,
+      child: CalendarFreeGapDivider(durationMinutes: gapMinutes),
+    );
   }
 }
 
@@ -155,6 +163,59 @@ class _DayNavHeader extends StatelessWidget {
   }
 }
 
+class _TimelineGapRow extends StatelessWidget {
+  const _TimelineGapRow({
+    required this.minHeight,
+    required this.child,
+  });
+
+  final double minHeight;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(width: AppSpacing.calendarTimeColumnWidth),
+        _TimelineGapSpine(height: minHeight),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(
+              left: AppSpacing.calendarDayTimelineContentGap,
+            ),
+            child: SizedBox(
+              height: minHeight,
+              child: Center(child: child),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TimelineGapSpine extends StatelessWidget {
+  const _TimelineGapSpine({required this.height});
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 16,
+      height: height,
+      child: Center(
+        child: Container(
+          width: 1,
+          height: height,
+          color: AppColors.calendarListBorderNormal.withValues(alpha: 0.22),
+        ),
+      ),
+    );
+  }
+}
+
 class _TimelineEventRow extends StatelessWidget {
   const _TimelineEventRow({
     required this.event,
@@ -170,44 +231,41 @@ class _TimelineEventRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.calendarDayEventRowGap),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: AppSpacing.calendarTimeColumnWidth,
-            child: Padding(
-              padding: const EdgeInsets.only(
-                top: AppSpacing.calendarDayTimeColumnTop,
-              ),
-              child: Text(
-                CalendarEventFormat.timeHm(event.start),
-                style: const TextStyle(
-                  fontSize: 12,
-                  height: 1.2,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.calendarListTextSecondary,
-                ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: AppSpacing.calendarTimeColumnWidth,
+          child: Padding(
+            padding: const EdgeInsets.only(
+              top: AppSpacing.calendarDayTimeColumnTop,
+            ),
+            child: Text(
+              CalendarEventFormat.timeHm(event.start),
+              style: const TextStyle(
+                fontSize: 12,
+                height: 1.2,
+                fontWeight: FontWeight.w500,
+                color: AppColors.calendarListTextSecondary,
               ),
             ),
           ),
-          const _TimelineDot(filled: true),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: AppSpacing.calendarDayTimelineContentGap,
-              ),
-              child: CalendarDayEventCard(
-                event: event,
-                isExpanded: isExpanded,
-                onToggle: onToggle,
-                onEdit: onEdit,
-              ),
+        ),
+        const _TimelineDot(filled: true),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(
+              left: AppSpacing.calendarDayTimelineContentGap,
+            ),
+            child: CalendarDayEventCard(
+              event: event,
+              isExpanded: isExpanded,
+              onToggle: onToggle,
+              onEdit: onEdit,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
