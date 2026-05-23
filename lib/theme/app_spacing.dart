@@ -92,6 +92,15 @@ abstract final class AppSpacing {
   /// Vista Día — separación entre filas de detalle (v0.49.58).
   static const double calendarDayDetailRowGap = 4;
 
+  /// Editor evento — fracción altura del bottom sheet (v0.49.68).
+  static const double calendarEventSheetHeightFactor = 0.62;
+
+  /// Editor evento — margen inferior mínimo del footer (v0.49.68).
+  static const double calendarEventSheetFooterBottom = 12;
+
+  /// Editor evento — padding vertical superficies de texto (v0.49.68).
+  static const double calendarEventSheetFieldPaddingV = 8;
+
   static const double profileAvatarRadius = 28;
 
   /// Altura fija de la franja horizontal de chips en Notas.
